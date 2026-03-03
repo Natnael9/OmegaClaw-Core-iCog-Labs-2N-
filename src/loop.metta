@@ -49,5 +49,5 @@
                                        ($results (RESULTS: (collapse (for $s $sexpr (COMMAND_RETURN: ($s (eval $s)))))))
                                        ($_ (println! $results)))
                                       (addToHistory $lastmessage $response $sexpr $results)) _))
-                      (sleepInterval 1)
+                      (sleep (sleepInterval))
                       (mettaclaw (+ 1 $k))))))
