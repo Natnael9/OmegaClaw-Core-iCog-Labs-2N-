@@ -30,4 +30,4 @@
           (translatePredicate (close $Out))
           True))
 
-!(import_prolog_functions_from_file (library mettaclaw ./src/skills.pl) (shell))
+!(import_prolog_functions_from_file (library mettaclaw ./src/skills.pl) (shell first_char))

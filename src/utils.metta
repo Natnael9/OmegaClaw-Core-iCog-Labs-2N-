@@ -47,3 +47,7 @@
    (if (== $k 0)
        ()
        (cons $h (take (- $k 1) $t))))
+
+(= (newline)
+   (progn (translatePredicate (atom_codes $NL (10)))
+          $NL))
