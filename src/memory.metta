@@ -20,11 +20,11 @@
    (let $ret (read-file (library mettaclaw ./memory/history.metta))
         (last_chars $ret (maxHistory))))
 
-(= (addToHistory $lastmessage $response $sexpr $results)
-   (appendToHistory (swrite ((get_time_as_string) $lastmessage $sexpr $results))))
+(= (addToHistory $lastmessage $response $sexpr)
+   (appendToHistory ((get_time_as_string) (newline) $lastmessage (newline) $response)))
 
 (= (appendToHistory $addition)
-   (append-file (library mettaclaw ./memory/history.metta) $addition))
+   (append-file (library mettaclaw ./memory/history.metta) (swrite $addition)))
 
 (= (remember $str)
    (progn (append-file (library mettaclaw ./memory/STM.metta) (repr ((get_time_as_string) $str)))

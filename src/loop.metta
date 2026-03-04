@@ -7,10 +7,11 @@
 (= (initLoop)
    (progn (configure maxLoops 10)
           (configure sleepInterval 1)
-          (configure LLM gpt-5)
+          (configure LLM gpt-5.2)
           (configure maxOutputToken 3000)
           (configure reasoningMode medium)
           (change-state! &prevmsg "")
+          (change-state! &lastresults ())
           (change-state! &loops (maxLoops))))
 
 !(change-state! &prevmsg "")
@@ -19,7 +20,7 @@
    (string-safe (py-str ("PROMPT: " (getPrompt) " SKILLS: " (getSkills)
                          " OUTPUT_FORMAT: Output a ((skillName1 args1) (skillName2 args2) (skillName3 args3)) S-expression of up to 3 commands,"
                          " each arg is an explicit string hence needs quotes, and variables are forbidden!"
-                         " MEMORY: " (getMemory) " HISTORY: " (getHistory) " TIME: " (get_time_as_string)))))
+                         " LAST_SKILL_USE_RESULTS: " (get-state &lastresults) " HISTORY: " (getHistory) " TIME: " (get_time_as_string)))))
 
 (= (mettaclaw)
    (mettaclaw 1))
@@ -46,6 +47,7 @@
                                        ($_ (println! (RESPONSE: $sexpr)))
                                        ($results (RESULTS: (collapse (for $s $sexpr (COMMAND_RETURN: ($s (eval $s)))))))
                                        ($_ (println! $results)))
-                                      (addToHistory $lastmessage $response $sexpr $results)) _))
+                                      (progn (addToHistory $lastmessage $response $sexpr)
+                                             (change-state! &lastresults (string-safe (repr $results))))) _))
                       (sleep (sleepInterval))
                       (mettaclaw (+ 1 $k))))))
