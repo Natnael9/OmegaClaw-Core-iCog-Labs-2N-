@@ -1,11 +1,12 @@
 ;Configured at runtime memory and history in amount of characters:
 (= (maxMemory) (empty))
+(= (maxFeedback) (empty))
 (= (maxRecallItems) (empty))
 (= (maxHistory) (empty))
 
 (= (initMemory)
    (progn (println! "Initializing memory")
-          (configure maxMemory 2000)
+          (configure maxFeedback 50000)
           (configure maxRecallItems 20)
           (configure maxHistory 30000)))
 
