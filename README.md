@@ -1,6 +1,6 @@
 ## MeTTaClaw
 
-<img width="362" height="346" alt="image" src="https://github.com/user-attachments/assets/400c92b3-5e69-438b-896c-f973e42251c2" />
+<img width="362" alt="image" src="https://github.com/user-attachments/assets/197d745f-1562-4d31-88c2-b813a56ccbf1" />
 
 An agentic AI system implemented in MeTTa, guided by the MeTTaClaw proposal and an agent core inspired by Nanobot.
 Beyond basic tool use, it features embedding-based long-term memory represented entirely in MeTTa AtomSpace format.
