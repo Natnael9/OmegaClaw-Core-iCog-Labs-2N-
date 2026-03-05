@@ -23,7 +23,7 @@ The following example demonstrates learning and decision-making in a textually r
 
 ![mettaclaw_in_nace_world](https://github.com/user-attachments/assets/2fadead8-af73-46fc-bec4-4b0974221311)
 
-Since the MeTTaClaw project also aims to explore the advantages of Agentic Physical AI, a ROS2 package for operating mobile robots is underway.
+This project also aims to explore the advantages of Agentic Physical AI, a ROS2 package for mobile robots with manipulators is underway.
 
 **Installation**
 
