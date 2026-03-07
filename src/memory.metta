@@ -1,5 +1,4 @@
 ;Configured at runtime memory and history in amount of characters:
-(= (maxMemory) (empty))
 (= (maxFeedback) (empty))
 (= (maxRecallItems) (empty))
 (= (maxHistory) (empty))
@@ -13,24 +12,26 @@
 (= (getPrompt)
    (read-file (library mettaclaw ./memory/prompt.txt)))
 
-(= (getMemory)
-   (let $ret (read-file (library mettaclaw ./memory/STM.metta))
-        (last_chars $ret (maxMemory))))
-
 (= (getHistory)
    (let $ret (read-file (library mettaclaw ./memory/history.metta))
         (last_chars $ret (maxHistory))))
 
-(= (addToHistory $lastmessage $response $sexpr)
-   (appendToHistory ((get_time_as_string) (newline) $lastmessage (newline) $response)))
+(= (addToHistory $lastmessage $response $sexpr $msgnew)
+   (if $msgnew
+       (if (== (get-state &error) ())
+           (appendToHistory ((get_time_as_string) (newline) "HUMAN_MESSAGE: " $lastmessage (newline) $response (newline)))
+           (appendToHistory ((get_time_as_string) (newline) "HUMAN_MESSAGE: " $lastmessage (newline) $response (newline) ERROR_FEEDBACK: (get-state &error))))
+       (if (== (get-state &error) ())
+           (appendToHistory ((get_time_as_string) (newline) $response (newline)))
+           (appendToHistory ((get_time_as_string) (newline) $response (newline) ERROR_FEEDBACK: (get-state &error))))))
 
 (= (appendToHistory $addition)
    (append-file (library mettaclaw ./memory/history.metta) (swrite $addition)))
 
-(= (remember $str)
-   (progn (append-file (library mettaclaw ./memory/STM.metta) (repr ((get_time_as_string) $str)))
-          (let $embedding (useGPTEmbedding (string-safe $str))
-               (append-file (library mettaclaw ./memory/LTM.metta) (repr ((get_time_as_string) $str $embedding))))))
+ (= (remember $str)
+    (progn (append-file (library mettaclaw ./memory/STM.metta) (repr ((get_time_as_string) $str)))
+           (let $embedding (useGPTEmbedding (string-safe $str))
+                (append-file (library mettaclaw ./memory/LTM.metta) (repr ((get_time_as_string) $str $embedding))))))
 
 (= (query $str)
    (let* (($embedding (useGPTEmbedding (string-safe $str)))

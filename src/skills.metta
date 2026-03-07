@@ -1,15 +1,18 @@
 (= (getSkills)
    (;INTERNAL:
     "- Remember a particular string such as skills and memories: (remember string)"
-    "- Query long-term memory for skills and memories: (query string)"
+    "- Query long-term embedding memory for skills and memories with short phrases: (query string)"
+    "- Pin a certain string as short-term working memory item to keep track of task state: (pin string)"
     ;SHELL AND FILE I/O:
-    "- Execute shell command without apostrophe in string: (shell string)"
+    "- Execute shell command without apostrophe in string, it returns the command output to you: (shell string)"
     "- Read file to string: (read-file filename)"
     "- Write string to file: (write-file filename string)"
     "- Append line to file: (append-file filename string)",
     ;COMMUNICATION CHANNELS:
     "- Send message to user: (send string)"
-    "- Search the web: (search string)"))
+    "- Search the web: (search string)"
+    ;CODE EXECUTION:
+    "- Execute MeTTa expression: (metta string)"))
 
 (= (read-file $file)
    (progn (translatePredicate (exists_file $file))
@@ -31,3 +34,7 @@
           True))
 
 !(import_prolog_functions_from_file (library mettaclaw ./src/skills.pl) (shell first_char))
+
+(= (metta $str)
+   (let $code (sread $str)
+        (eval $code)))

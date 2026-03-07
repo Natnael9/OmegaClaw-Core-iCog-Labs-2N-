@@ -7,7 +7,7 @@
 (= (initLoop)
    (progn (configure maxLoops 10)
           (configure sleepInterval 1)
-          (configure LLM gpt-5.2)
+          (configure LLM gpt-5.4)
           (configure maxOutputToken 3000)
           (configure reasoningMode medium)
           (change-state! &prevmsg "")
@@ -18,9 +18,14 @@
 !(change-state! &loops 10)
 (= (getContext)
    (string-safe (py-str ("PROMPT: " (getPrompt) " SKILLS: " (getSkills)
-                         " OUTPUT_FORMAT: Output a ((skillName1 args1) (skillName2 args2) (skillName3 args3)) S-expression of up to 3 commands,"
+                         " OUTPUT_FORMAT: Output a ((skillName1 args1) (skillName2 args2) (skillName3 args3)) S-expression of up to 3 sexpr commands, double-check the parentheses it must me (cmd1 ... cmdn)!"
                          " each arg is an explicit string hence needs quotes, and variables are forbidden!"
                          " LAST_SKILL_USE_RESULTS: " (last_chars (get-state &lastresults) (maxFeedback)) " HISTORY: " (getHistory) " TIME: " (get_time_as_string)))))
+
+(= (HandleError $msg $cmd $sexpr)
+   (case $sexpr (((Error $a $b) (let $new (append (get-state &error) (($msg $cmd)))
+                                          (change-state! &error $new)))
+                 ($else $sexpr))))
 
 (= (mettaclaw)
    (mettaclaw 1))
@@ -45,10 +50,12 @@
                                        ($resp (useGPT (LLM) (maxOutputToken) (reasoningMode) $send))
                                        ($response (if (== "(" (first_char $resp)) $resp (progn (println! $resp) (repr (REMEMBER:OUTPUT_NOTHING_ELSE_THAN: ((skill arg) ...))))))
                                        ($sexpr (catch (sread $response)))
+                                       ($_ (change-state! &error ()))
+                                       ($_ (HandleError MULTI_COMMAND_FAILURE_NOTHING_WAS_DONE_PLEASE_CORRECT_PARENTHESES_AND_RETRY $response $sexpr))
                                        ($_ (println! (RESPONSE: $sexpr)))
-                                       ($results (RESULTS: (collapse (for $s $sexpr (COMMAND_RETURN: ($s (eval $s)))))))
+                                       ($results (RESULTS: (collapse (let $s (superpose $sexpr) (COMMAND_RETURN: ($s (HandleError SINGLE_COMMAND_FORMAT_ERROR_NOTHING_WAS_DONE_PLEASE_FIX_AND_RETRY $s (catch (eval $s)))))))))
                                        ($_ (println! $results)))
-                                      (progn (addToHistory $lastmessage $response $sexpr)
+                                      (progn (if (or $msgnew  (not (== $sexpr ()))) (addToHistory $msg $response $sexpr $msgnew) _)
                                              (change-state! &lastresults (string-safe (repr $results))))) _))
                       (sleep (sleepInterval))
                       (mettaclaw (+ 1 $k))))))
