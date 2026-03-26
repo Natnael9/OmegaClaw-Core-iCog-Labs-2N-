@@ -73,6 +73,8 @@ WORKDIR /PeTTa
 RUN mkdir -p repos
 RUN git clone --depth 1 https://github.com/patham9/mettaclaw repos/mettaclaw
 RUN python3 -m pip install --no-cache-dir --break-system-packages openai
+RUN cp repos/mettaclaw/run.metta ./
+
 
 # 👇 Pytorch install
 RUN pip install torch --no-cache-dir --break-system-package \
