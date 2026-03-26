@@ -26,12 +26,12 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-202
 ENV PATH="/root/.cargo/bin:${PATH}"
 
 # 👇 PATHMAP INSTALL
-RUN git clone https://github.com/Adam-Vandervorst/PathMap.git /PathMap
+RUN git clone --depth 1 https://github.com/Adam-Vandervorst/PathMap.git /PathMap
 WORKDIR /PathMap
 RUN RUSTFLAGS="-C target-cpu=native" cargo build --release
 
 # 👇 MORK INSTALL
-RUN git clone https://github.com/trueagi-io/MORK.git /MORK
+RUN git clone --depth 1 https://github.com/trueagi-io/MORK.git /MORK
 WORKDIR /MORK/kernel
 RUN RUSTFLAGS="-C target-cpu=native" cargo build --release
 
@@ -40,12 +40,12 @@ RUN pip3 install --no-cache-dir --break-system-packages janus-swi
 
 # 👇 PETTA INSTALL
 #    Clone PeTTa repository directly into /PeTTa
-RUN git clone https://github.com/patham9/PeTTa.git /PeTTa
+RUN git clone --depth 1 https://github.com/patham9/PeTTa.git /PeTTa
 WORKDIR /PeTTa
 
 # 👇 METTACLAW INSTALL
 RUN mkdir -p repos
-RUN git clone https://github.com/patham9/mettaclaw repos/mettaclaw
+RUN git clone --depth 1 https://github.com/patham9/mettaclaw repos/mettaclaw
 RUN python3 -m pip install --no-cache-dir --break-system-packages openai
 
 
@@ -59,7 +59,7 @@ RUN apt-get update \
       gfortran \
       libgflags-dev \
  && rm -rf /var/lib/apt/lists/*
-RUN git clone https://github.com/facebookresearch/faiss.git
+RUN git clone --depth 1 https://github.com/facebookresearch/faiss.git
 WORKDIR /PeTTa/faiss
 RUN cmake -B build -DFAISS_ENABLE_GPU=OFF -DFAISS_ENABLE_PYTHON=OFF -DBUILD_SHARED_LIBS=OFF
 RUN cmake --build build --config Release --parallel
