@@ -50,7 +50,6 @@ RUN python3 -m pip install --no-cache-dir --break-system-packages openai
 
 
 # 👇 Install facebook research Faiss, contains several methods for similarity search.
-WORKDIR /PeTTa
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       libopenblas-dev \
@@ -59,8 +58,8 @@ RUN apt-get update \
       gfortran \
       libgflags-dev \
  && rm -rf /var/lib/apt/lists/*
-RUN git clone --depth 1 https://github.com/facebookresearch/faiss.git
-WORKDIR /PeTTa/faiss
+RUN git clone --depth 1 https://github.com/facebookresearch/faiss.git /faiss
+WORKDIR /faiss
 RUN cmake -B build -DFAISS_ENABLE_GPU=OFF -DFAISS_ENABLE_PYTHON=OFF -DBUILD_SHARED_LIBS=OFF
 RUN cmake --build build --config Release --parallel
 RUN cmake --install build
