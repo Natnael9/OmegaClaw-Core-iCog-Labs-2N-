@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "firewall Applying firewall rules..."
+echo "Applying firewall rules..."
 
 iptables -F
 iptables -P INPUT DROP
@@ -24,6 +24,9 @@ iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
 iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
 iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT
 
-echo "firewall Done. All inbound blocked. Only DNS, 80, and 443 allowed outbound."
+# Allow IRC
+iptables -A OUTPUT -p tcp --dport 6667 -j ACCEPT
+
+echo "Firewall complete."
 
 exec "$@"
