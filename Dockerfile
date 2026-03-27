@@ -24,18 +24,18 @@ FROM os as build
 
 # 👇 RUST INSTALL
 # -----------------------------------------
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2026-03-19
-ENV PATH="/root/.cargo/bin:${PATH}"
+#RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2026-03-19
+#ENV PATH="/root/.cargo/bin:${PATH}"
 
 # 👇 PATHMAP INSTALL
-RUN git clone --depth 1 https://github.com/Adam-Vandervorst/PathMap.git /PathMap
-WORKDIR /PathMap
-RUN RUSTFLAGS="-C target-cpu=native" cargo build --release
+#RUN git clone --depth 1 https://github.com/Adam-Vandervorst/PathMap.git /PathMap
+#WORKDIR /PathMap
+#RUN RUSTFLAGS="-C target-cpu=native" cargo build --release
 
 # 👇 MORK INSTALL
-RUN git clone --depth 1 https://github.com/trueagi-io/MORK.git /MORK
-WORKDIR /MORK/kernel
-RUN RUSTFLAGS="-C target-cpu=native" cargo build --release
+#RUN git clone --depth 1 https://github.com/trueagi-io/MORK.git /MORK
+#WORKDIR /MORK/kernel
+#RUN RUSTFLAGS="-C target-cpu=native" cargo build --release
 
 # 👇 PETTA INSTALL
 #    Clone PeTTa repository directly into /PeTTa
@@ -77,8 +77,8 @@ RUN cp repos/mettaclaw/run.metta ./
 
 
 # 👇 Pytorch install
-RUN pip install torch --no-cache-dir --break-system-package \
-     --index-url https://download.pytorch.org/whl/cpu
+#RUN pip install torch --no-cache-dir --break-system-package \
+#     --index-url https://download.pytorch.org/whl/cpu
 
 
 WORKDIR /PeTTa
