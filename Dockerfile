@@ -83,4 +83,4 @@ RUN cp repos/mettaclaw/run.metta ./
 
 WORKDIR /PeTTa
 
-CMD ["/bin/bash"]
+CMD ["sh", "run.sh", "run.metta", "default"]
