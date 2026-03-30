@@ -3,7 +3,7 @@ import socket, threading, random
 _running = False
 _sock = None
 _sock_lock = threading.Lock()
-_last_message = None
+_last_message = ""
 _msg_lock = threading.Lock()
 _channel = None
 _connected = False
