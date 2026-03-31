@@ -1,18 +1,18 @@
 (= (getSkills)
    (;INTERNAL:
-    "- Remember a particular string such as skills and memories: (remember string)"
-    "- Query long-term embedding memory for skills and memories with short phrases only: (query string)"
-    "- Pin a certain string as short-term working memory item to keep track of task state: (pin string)"
+    "- Remember a particular string such as skills and memories: (remember string_in_quotes)"
+    "- Query long-term embedding memory for skills and memories with short phrases only: (query string_in_quotes)"
+    "- Pin a certain string as short-term working memory item to keep track of task state: (pin string_in_quotes)"
     ;SHELL AND FILE I/O:
-    "- Execute shell command without apostrophe in string, it returns the command output to you: (shell string)"
-    "- Read file to string: (read-file filename)"
-    "- Write string to file: (write-file filename string)"
-    "- Append line to file: (append-file filename string)",
+    "- Execute shell command without apostrophe in string, it returns the command output to you: (shell string_in_quotes)"
+    "- Read file to string: (read-file filename_in_quotes)"
+    "- Write string to file: (write-file filename_in_quotes string_in_quotes)"
+    "- Append line to file: (append-file filename_in_quotes string_in_quotes)",
     ;COMMUNICATION CHANNELS:
-    "- Send message to user: (send string)"
-    "- Search the web: (search string)"
+    "- Send message to user: (send string_in_quotes)"
+    "- Search the web: (search string_in_quotes)"
     ;CODE EXECUTION:
-    "- Execute MeTTa expression: (metta string)"
+    "- Execute MeTTa expression: (metta sexpression)"
     "Example to invoke Non-Axiomatic Logic via MeTTa: "
     "(metta (|- ((--> (× sam garfield) friend) (stv 1.0 0.9))"
     "           ((--> garfield animal) (stv 1.0 0.9))))"

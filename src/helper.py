@@ -1,4 +1,5 @@
 def balance_parentheses(s):
+    s=s.replace("_quote_", '"')
     s = s.strip()
     left = 0
     while left < len(s) and s[left] == '(':

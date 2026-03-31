@@ -3,11 +3,13 @@
 (= (LLM) (empty))
 (= (maxOutputToken) (empty))
 (= (reasoningMode) (empty))
+(= (provider) (empty))
 
 (= (initLoop)
    (progn (configure maxLoops 50) ;20
           (configure sleepInterval 1) ;10
           (configure LLM gpt-5.4)
+          (configure provider ASICloud) ;OpenAI or ASICloud
           (configure maxOutputToken 6000)
           (configure reasoningMode medium)
           (change-state! &prevmsg "")
@@ -46,12 +48,14 @@
                                        ($_ (println! $lastmessage))
                                        ($send (py-str ($prompt $lastmessage)))
                                        ($_ (println! (CHARS_SENT: (string_length $send) $send)))
-                                       ($respi (useGPT (LLM) (maxOutputToken) (reasoningMode) $send))
+                                       ($respi (if (== (provider) OpenAI)
+                                                   (useGPT (LLM) (maxOutputToken) (reasoningMode) $send)
+                                                   (py-call (llm.useMiniMax $send))))
                                        ($resp (py-call (helper.balance_parentheses $respi)))
                                        ($response (if (== "(" (first_char $resp)) $resp (progn (println! $resp) (repr (REMEMBER:OUTPUT_NOTHING_ELSE_THAN: ((skill arg) ...))))))
                                        ($sexpr (catch (sread $response)))
                                        ($_ (change-state! &error ()))
-                                       ($_ (HandleError MULTI_COMMAND_FAILURE_NOTHING_WAS_DONE_PLEASE_CORRECT_PARENTHESES_AND_RETRY $response $sexpr))
+                                       ($_ (HandleError MULTI_COMMAND_FAILURE_NOTHING_WAS_DONE_PLEASE_CORRECT_PARENTHESES_AND_USE_QUOTES_AND_RETRY $response $sexpr))
                                        ($_ (println! (RESPONSE: $sexpr)))
                                        ($results (RESULTS: (collapse (let $s (superpose $sexpr) (COMMAND_RETURN: ($s (HandleError SINGLE_COMMAND_FORMAT_ERROR_NOTHING_WAS_DONE_PLEASE_FIX_AND_RETRY $s (catch (eval $s)))))))))
                                        ($_ (println! $results)))
