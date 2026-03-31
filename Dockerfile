@@ -102,5 +102,5 @@ RUN chown 65534:65534 repos/mettaclaw/memory/history.metta \
 # The firewall script loads the container's rules as root, then reduces privileges to 65534 'nobody' user.
 ENTRYPOINT ["/firewall.sh"]
 
-# Start Mettaclaw
+# Start Mettaclaw.
 CMD ["sh", "run.sh", "run.metta", "default"]
