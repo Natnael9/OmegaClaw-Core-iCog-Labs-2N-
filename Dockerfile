@@ -81,4 +81,5 @@ RUN cp /PeTTa/repos/mettaclaw/run.metta /PeTTa/run.metta \
 
 USER 65534:65534
 
-CMD ["python3","config.py"]
+ENTRYPOINT ["sh", "run.sh", "run.metta", "default"]
+CMD []
