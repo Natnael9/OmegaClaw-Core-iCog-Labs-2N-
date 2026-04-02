@@ -2,6 +2,7 @@
    (;INTERNAL:
     "- Remember a particular string such as skills and memories: (remember string_in_quotes)"
     "- Query long-term embedding memory for skills and memories with short phrases only: (query string_in_quotes)"
+    "- Episodes searches history for episodes around a time stamp, time format is same as in TIME: (episodes time_string_in_quotes)"
     "- Pin a certain string as short-term working memory item to keep track of task state: (pin string_in_quotes)"
     ;SHELL AND FILE I/O:
     "- Execute shell command without apostrophe in string, it returns the command output to you: (shell string_in_quotes)"
