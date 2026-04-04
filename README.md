@@ -59,7 +59,7 @@ Requirement: Docker
 
 OmegaClaw can be installed and started with:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jazzbox35/mettaclaw/main/scripts/omegaclaw_setup.sh | bash
+curl -fsSL https://github.com/asi-alliance/OmegaClaw-Core/blob/main/scripts/omegaclaw_setup.sh | bash
 ```
 When prompted, enter your OpenAI API key and a unique IRC channel name, then interact with your OmegaClaw at [webchat.quakenet.org](https://webchat.quakenet.org) or any IRC portal. 
 
