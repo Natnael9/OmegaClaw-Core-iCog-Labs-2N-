@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+########################################################
+#  Required parameter is Docker image 
+#  Invoke this script:  "./omegaclaw_setup.sh <image>  
+#######################################################
+image="${1:?usage: $0 <container-image>}"
+
+
 tmp_channel_file="$(mktemp)"
 tmp_token_file="$(mktemp)"
 tmp_py_file="$(mktemp --suffix=.py)"
@@ -115,5 +122,5 @@ docker run -d -it \
   --tmpfs /run:size=16m,mode=755 \
   --tmpfs /var/tmp:size=64m,mode=1777 \
   -e OPENAI_API_KEY="$token" \
-  jazzbox35/omegaclaw:test \
+  "$image" \
   "$channel"
