@@ -1,20 +1,24 @@
-(= (maxLoops) (empty))
+(= (maxNewInputLoops) (empty))
+(= (maxWakeLoops) (empty))
 (= (sleepInterval) (empty))
 (= (LLM) (empty))
+(= (provider) (empty))
 (= (maxOutputToken) (empty))
 (= (reasoningMode) (empty))
-(= (provider) (empty))
+(= (wakeupInterval) (empty))
 
 (= (initLoop)
-   (progn (configure maxLoops 50) ;20
+   (progn (configure maxNewInputLoops 50) ;20
+          (configure maxWakeLoops 1)
           (configure sleepInterval 1) ;10
           (configure LLM gpt-5.4)
-          (configure provider OpenAI) ;OpenAI or ASICloud
+          (configure provider Anthropic) ;OpenAI or ASICloud
           (configure maxOutputToken 6000)
           (configure reasoningMode medium)
+          (configure wakeupInterval 600) ;600=10 minutes
           (change-state! &prevmsg "")
           (change-state! &lastresults "")
-          (change-state! &loops (maxLoops))))
+          (change-state! &loops (maxNewInputLoops))))
 
 (= (getContext)
    (string-safe (py-str ("PROMPT: " (getPrompt) " SKILLS: " (getSkills)
@@ -41,16 +45,19 @@
                                              (if (> (string_length $msgrcv) 0) (change-state! &prevmsg $msgrcv) _)))
                              ($msg (get-state &prevmsg))
                              ($_ (if (and (> $k 1) $msgnew)
-                                     (change-state! &loops (maxLoops)) _)))
+                                     (change-state! &loops (maxNewInputLoops)) _)))
                             (if (> (get-state &loops) 0)
                                 (let* (($lastmessage (HUMAN-LAST-MSG: $msg
                                                       MESSAGE-IS-NEW: $msgnew))
+                                       ($_ (change-state! &nextWakeAt (+ (get_time) (wakeupInterval))))
                                        ($_ (println! $lastmessage))
                                        ($send (py-str ($prompt $lastmessage)))
                                        ($_ (println! (CHARS_SENT: (string_length $send) $send)))
                                        ($respi (if (== (provider) OpenAI)
                                                    (useGPT (LLM) (maxOutputToken) (reasoningMode) $send)
-                                                   (py-call (lib_llm_asicloud.useMiniMax $send))))
+                                                   (if (== (provider) Anthropic)
+                                                       (py-call (lib_llm_ext.useClaude $send))
+                                                       (py-call (lib_llm_ext.useMiniMax $send)))))
                                        ($resp (py-call (helper.balance_parentheses $respi)))
                                        ($response (if (== "(" (first_char $resp)) $resp (progn (println! $resp) (repr (REMEMBER:OUTPUT_NOTHING_ELSE_THAN: ((skill arg) ...))))))
                                        ($sexpr (catch (sread $response)))
@@ -60,6 +67,8 @@
                                        ($results (RESULTS: (collapse (let $s (superpose $sexpr) (COMMAND_RETURN: ($s (HandleError SINGLE_COMMAND_FORMAT_ERROR_NOTHING_WAS_DONE_PLEASE_FIX_AND_RETRY $s (catch (eval $s)))))))))
                                        ($_ (println! $results)))
                                       (progn (if (or $msgnew  (not (== $sexpr ()))) (addToHistory $msg $response $sexpr $msgnew) _)
-                                             (change-state! &lastresults (string-safe (repr $results))))) _))
+                                             (change-state! &lastresults (string-safe (repr $results)))))
+                                (if (> (get_time) (get-state &nextWakeAt))
+                                    (change-state! &loops (+ 1 (maxWakeLoops))) _)))
                       (sleep (sleepInterval))
                       (mettaclaw (+ 1 $k))))))
