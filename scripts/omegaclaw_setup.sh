@@ -121,6 +121,6 @@ docker run -d -it \
   --tmpfs /tmp:size=64m,mode=1777 \
   --tmpfs /run:size=16m,mode=755 \
   --tmpfs /var/tmp:size=64m,mode=1777 \
-  -e OPENAI_API_KEY="$token" \
+  -e ANTHROPIC_API_KEY="$token" \
   "$image" \
   "$channel"
