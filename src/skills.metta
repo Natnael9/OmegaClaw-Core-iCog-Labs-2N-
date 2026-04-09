@@ -12,6 +12,8 @@
     ;COMMUNICATION CHANNELS:
     "- Send message to user: (send string_in_quotes)"
     "- Search the web: (search string_in_quotes)"
+    "- Search the web using the Tavily Search Agent: (tavily-search string_in_quotes)"
+    "- Get technical analysis for a stock ticker using the Technical Analysis Agent: (technical-analysis ticker_in_quotes)"
     ;CODE EXECUTION:
     "- Execute MeTTa expression: (metta sexpression)"
     "Example to invoke Non-Axiomatic Logic via MeTTa: "
@@ -41,6 +43,12 @@
           (translatePredicate (nl $Out)),
           (translatePredicate (close $Out))
           True))
+
+(= (tavily-search $query)
+   (py-call (agentverse.tavily_search $query)))
+
+(= (technical-analysis $ticker)
+   (py-call (agentverse.technical_analysis $ticker)))
 
 !(import_prolog_functions_from_file (library mettaclaw ./src/skills.pl) (shell first_char))
 
