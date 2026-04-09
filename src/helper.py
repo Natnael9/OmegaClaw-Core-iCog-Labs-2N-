@@ -53,3 +53,11 @@ def balance_parentheses(s):
         right += 1
     core = s[left:len(s) - right if right else len(s)].strip()
     return f"(({core}))"
+
+def normalize_string(x):
+    try:
+        if isinstance(x, bytes):
+            return x.decode("utf-8", errors="ignore")
+        return str(x).encode("utf-8", errors="ignore").decode("utf-8", errors="ignore")
+    except Exception:
+        return str(x)
