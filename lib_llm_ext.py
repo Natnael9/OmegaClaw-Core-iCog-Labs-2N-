@@ -1,11 +1,17 @@
 import os, openai
 
-ASI_CLIENT = openai.OpenAI(
+def _init_openai_client(api_key, base_url):
+    if api_key is not None:
+        return openai.OpenAI(api_key=api_key, base_url=base_url)
+    else:
+        return None
+
+ASI_CLIENT = _init_openai_client(
     api_key=os.environ["ASI_API_KEY"],
-    base_url="https://inference.asicloud.cudos.org/v1"
+    base_url="https://inference.asicloud.cudos.org/v1")
 )
 
-ANTHROPIC_CLIENT = openai.OpenAI(
+ANTHROPIC_CLIENT = _init_openai_client(
     api_key=os.environ["ANTHROPIC_API_KEY"],
     base_url="https://api.anthropic.com/v1/"
 )
