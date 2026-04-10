@@ -3,7 +3,6 @@
 (= (sleepInterval) (empty))
 (= (LLM) (empty))
 (= (provider) (empty))
-(= (embeddingprovider) (empty))
 (= (maxOutputToken) (empty))
 (= (reasoningMode) (empty))
 (= (wakeupInterval) (empty))
@@ -14,15 +13,12 @@
           (configure sleepInterval 1) ;10
           (configure LLM gpt-5.4)
           (configure provider Anthropic) ;Anthropic or OpenAI or ASICloud
-          (configure embeddingprovider OpenAI) ;OpenAI or Local
           (configure maxOutputToken 6000)
           (configure reasoningMode medium)
           (configure wakeupInterval 600) ;600=10 minutes
           (change-state! &prevmsg "")
           (change-state! &lastresults "")
-          (change-state! &loops (maxNewInputLoops))
-          (if (== (embeddingprovider) Local)
-              (py-call (lib_llm_ext.initLocalEmbedding)) _)))
+          (change-state! &loops (maxNewInputLoops))))
 
 (= (getContext)
    (string-safe (py-str ("PROMPT: " (getPrompt) " SKILLS: " (getSkills)

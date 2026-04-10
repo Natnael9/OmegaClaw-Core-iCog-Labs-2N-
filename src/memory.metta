@@ -3,13 +3,17 @@
 (= (maxRecallItems) (empty))
 (= (maxEpisodeRecallLines) (empty))
 (= (maxHistory) (empty))
+(= (embeddingprovider) (empty))
 
 (= (initMemory)
    (progn (println! "Initializing memory")
           (configure maxFeedback 50000)
           (configure maxRecallItems 20)
           (configure maxEpisodeRecallLines 20)
-          (configure maxHistory 30000)))
+          (configure maxHistory 30000)
+          (configure embeddingprovider OpenAI) ;OpenAI or Local
+          (if (== (embeddingprovider) Local)
+              (py-call (lib_llm_ext.initLocalEmbedding)) _)))
 
 (= (getPrompt)
    (read-file (library mettaclaw ./memory/prompt.txt)))
