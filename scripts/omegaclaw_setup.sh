@@ -10,7 +10,7 @@ image="${1:?usage: $0 <container-image>}"
 # Create temporary files
 tmp_channel_file="$(mktemp)"
 tmp_token_file="$(mktemp)"
-tmp_py_file="$(mktemp --suffix=.py)"
+tmp_py_file="$(mktemp)"
 trap 'rm -f "$tmp_channel_file" "$tmp_token_file" "$tmp_py_file"' EXIT
 
 # Lock down permissions immediately after creation
