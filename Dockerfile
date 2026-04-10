@@ -31,6 +31,8 @@ ARG PETTA_REPO=https://github.com/patham9/PeTTa.git
 ARG PETTA_REF=main
 ARG FAISS_REPO=https://github.com/facebookresearch/faiss.git
 ARG FAISS_REF=v1.8.0
+ARG CHROMADB_REPO=https://github.com/patham9/petta_lib_chromadb.git
+ARG CHROMADB_REF=master
 
 RUN git clone --depth 1 --branch "${PETTA_REF}" "${PETTA_REPO}" /PeTTa
 RUN git clone --depth 1 --branch "${FAISS_REF}" "${FAISS_REPO}" /faiss
@@ -42,6 +44,8 @@ RUN cmake -B build -DFAISS_ENABLE_GPU=OFF -DFAISS_ENABLE_PYTHON=OFF -DBUILD_SHAR
 
 WORKDIR /PeTTa
 RUN sh build.sh
+RUN mkdir -p /PeTTa/repos \
+ && git clone --depth 1 --branch "${CHROMADB_REF}" "${CHROMADB_REPO}" /PeTTa/repos/petta_lib_chromadb
 
 RUN python3 -m pip install --no-cache-dir --break-system-packages \
       janus-swi \
@@ -72,13 +76,14 @@ WORKDIR /PeTTa
 COPY --from=builder /usr/local /usr/local
 COPY --from=builder /PeTTa /PeTTa
 
-# Bring in only local MeTTaClaw source (filtered by .dockerignore).
-COPY . /PeTTa/repos/mettaclaw
+# Bring in only local OmegaClaw source (filtered by .dockerignore).
+COPY . /PeTTa/repos/omegaclaw
 
-RUN cp /PeTTa/repos/mettaclaw/run.metta /PeTTa/run.metta \
- && chown -R 65534:65534 /PeTTa/repos/mettaclaw/memory \
- && find /PeTTa/repos/mettaclaw/memory -type f -exec chmod 0644 {} \; \
- && chmod 0444 /PeTTa/repos/mettaclaw/memory/prompt.txt
+RUN cp /PeTTa/repos/omegaclaw/run.metta /PeTTa/run.metta \
+ && ln -s /PeTTa/repos/omegaclaw /PeTTa/repos/omegaClaw-Core \
+ && chown -R 65534:65534 /PeTTa/repos/omegaclaw/memory \
+ && find /PeTTa/repos/omegaclaw/memory -type f -exec chmod 0644 {} \; \
+ && chmod 0444 /PeTTa/repos/omegaclaw/memory/prompt.txt
 
 USER 65534:65534
 
