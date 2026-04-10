@@ -31,6 +31,8 @@ ARG PETTA_REPO=https://github.com/patham9/PeTTa.git
 ARG PETTA_REF=main
 ARG FAISS_REPO=https://github.com/facebookresearch/faiss.git
 ARG FAISS_REF=v1.8.0
+ARG CHROMADB_REPO=https://github.com/patham9/petta_lib_chromadb.git
+ARG CHROMADB_REF=master
 
 RUN git clone --depth 1 --branch "${PETTA_REF}" "${PETTA_REPO}" /PeTTa
 RUN git clone --depth 1 --branch "${FAISS_REF}" "${FAISS_REPO}" /faiss
@@ -42,6 +44,8 @@ RUN cmake -B build -DFAISS_ENABLE_GPU=OFF -DFAISS_ENABLE_PYTHON=OFF -DBUILD_SHAR
 
 WORKDIR /PeTTa
 RUN sh build.sh
+RUN mkdir -p /PeTTa/repos \
+ && git clone --depth 1 --branch "${CHROMADB_REF}" "${CHROMADB_REPO}" /PeTTa/repos/petta_lib_chromadb
 
 RUN python3 -m pip install --no-cache-dir --break-system-packages \
       janus-swi \
@@ -58,7 +62,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       ca-certificates \
-      git \
       python3 \
       libopenblas-dev \
       libblas-dev \
@@ -77,7 +80,7 @@ COPY --from=builder /PeTTa /PeTTa
 COPY . /PeTTa/repos/omegaclaw
 
 RUN cp /PeTTa/repos/omegaclaw/run.metta /PeTTa/run.metta \
- && chown -R 65534:65534 /PeTTa/repos \
+ && ln -s /PeTTa/repos/omegaclaw /PeTTa/repos/omegaClaw-Core \
  && chown -R 65534:65534 /PeTTa/repos/omegaclaw/memory \
  && find /PeTTa/repos/omegaclaw/memory -type f -exec chmod 0644 {} \; \
  && chmod 0444 /PeTTa/repos/omegaclaw/memory/prompt.txt
