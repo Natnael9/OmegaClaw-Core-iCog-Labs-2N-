@@ -3,6 +3,7 @@
 !(import! &self (library lib_vector))
 !(import! &self (library lib_combinatorics))
 !(import! &self (library omegaclaw lib_nal))
+!(import! &self (library mettaclaw lib_pln))
 !(import! &self (library omegaclaw lib_llm_ext.py))
 !(import! &self (library omegaclaw ./src/helper.py))
 !(import! &self (library omegaclaw ./src/agentverse.py))
