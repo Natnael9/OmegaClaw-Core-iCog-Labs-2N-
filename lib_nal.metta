@@ -111,7 +111,9 @@
 (= (|-nal ((--> $a $b) $T1) ((--> $a $c) $T2)) ((--> $c $b) (Truth_Induction $T1 $T2)))
 (= (|-nal ((--> $a $c) $T1) ((--> $b $c) $T2)) ((--> $b $a) (Truth_Abduction $T1 $T2)))
 (= (|-nal ((--> $a $b) $T1) ((--> $b $c) $T2)) ((--> $c $a) (Truth_Exemplification $T1 $T2)))
-;;NAL-2 Rules for Similarity
+
+;;NAL-2
+;;!Rules for Similarity
 (= (|-nal ((<-> $S $P) $T)) ((<-> $P $S) (Truth_StructuralIntersection $T)))
 (= (|-nal ((<-> $M $P) $T1) ((<-> $S $M) $T2)) ((<-> $S $P) (Truth_Resemblance $T1 $T2)))
 (= (|-nal ((--> $P $M) $T1) ((--> $S $M) $T2)) ((<-> $S $P) (Truth_Comparison $T1 $T2)))
@@ -120,13 +122,14 @@
 (= (|-nal ((--> $P $M) $T1) ((<-> $S $M) $T2)) ((--> $P $S) (Truth_Analogy $T1 $T2)))
 (= (|-nal ((--> $M $P) $T1) ((<-> $M $S) $T2)) ((--> $S $P) (Truth_Analogy $T1 $T2)))
 (= (|-nal ((--> $P $M) $T1) ((<-> $M $S) $T2)) ((--> $P $S) (Truth_Analogy $T1 $T2)))
-;;Properties and instances
+;;!Properties and instances
 (= (|-nal ((--> $S (ExtSet $P)) $T)) ((<-> $S (ExtSet $P)) (Truth_StructuralIntersection $T)))
 (= (|-nal ((--> (IntSet $S) $P) $T)) ((<-> (IntSet $S) $P) (Truth_StructuralIntersection $T)))
 (= (|-nal ((--> (ExtSet $M) $P) $T1) ((<-> $S $M) $T2)) ((--> (ExtSet $S) $P) (Truth_Analogy $T1 $T2)))
 (= (|-nal ((--> $P (IntSet $M)) $T1) ((<-> $S $M) $T2)) ((--> $P (IntSet $S)) (Truth_Analogy $T1 $T2)))
 (= (|-nal ((<-> (ExtSet $A) (ExtSet $B)) $T)) ((<-> $A $B) (Truth_StructuralIntersection $T)))
 (= (|-nal ((<-> (IntSet $A) (IntSet $B)) $T)) ((<-> $A $B) (Truth_StructuralIntersection $T)))
+
 ;;NAL-3
 ;;!Set decomposition:
 (= (|-nal ((--> ({} $A $B) $M) $T)) ((--> ({} $A) $M) (Truth_StructuralDeduction $T)))
@@ -172,7 +175,7 @@
 (= (|-nal ((--> $R (× $A $B)) $T1) ((--> $C $B) $T2)) ((--> $R (× $A $C)) (Truth_Abduction $T1 $T2)))
 
 ;;NAL-5
-;;Syllogisms:
+;;!Syllogisms:
 (= (|-nal ((==> $a $b) $T1) ((==> $b $c) $T2)) ((==> $a $c) (Truth_Deduction $T1 $T2)))
 (= (|-nal ((==> $a $b) $T1) ((==> $a $c) $T2)) ((==> $c $b) (Truth_Induction $T1 $T2)))
 (= (|-nal ((==> $a $c) $T1) ((==> $b $c) $T2)) ((==> $b $a) (Truth_Abduction $T1 $T2)))
