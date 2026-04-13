@@ -16,10 +16,10 @@
               (py-call (lib_llm_ext.initLocalEmbedding)) _)))
 
 (= (getPrompt)
-   (read-file (library omegaclaw ./memory/prompt.txt)))
+   (read-file (library OmegaClaw-Core ./memory/prompt.txt)))
 
 (= (getHistory)
-   (let $ret (read-file (library omegaclaw ./memory/history.metta))
+   (let $ret (read-file (library OmegaClaw-Core ./memory/history.metta))
         (last_chars $ret (maxHistory))))
 
 (= (addToHistory $lastmessage $response $sexpr $msgnew)
@@ -37,7 +37,7 @@
        (useGPTEmbedding (string-safe $str))))
 
 (= (appendToHistory $addition)
-   (append-file (library omegaclaw ./memory/history.metta) (swrite $addition)))
+   (append-file (library OmegaClaw-Core ./memory/history.metta) (swrite $addition)))
 
 (= (remember $str)
    (py-call (lib_chromadb.remember $str (embed $str) (get_time_as_string))))
