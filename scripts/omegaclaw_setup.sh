@@ -81,7 +81,7 @@ def config_run_omegaclaw(config_output_path):
         elif c in ["1", "2", "3"]:
             provider_id = int(c) - 1
         else:
-            print("Plese enter 1-3 or 'q'", file=sys.stderr)
+            print("Please enter 1-3 or 'q'", file=sys.stderr)
             continue
 
         providers = [("Anthropic", "Local", "ANTHROPIC_API_KEY"),
