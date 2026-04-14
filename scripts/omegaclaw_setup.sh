@@ -8,14 +8,12 @@ set -euo pipefail
 image="${1:?usage: $0 <container-image>}"
 
 # Create temporary files
-tmp_channel_file="$(mktemp)"
-tmp_token_file="$(mktemp)"
+tmp_config_file="$(mktemp)"
 tmp_py_file="$(mktemp)"
-trap 'rm -f "$tmp_channel_file" "$tmp_token_file" "$tmp_py_file"' EXIT
+trap 'rm -f "$tmp_config_file" "$tmp_py_file"' EXIT
 
 # Lock down permissions immediately after creation
-chmod 0600 "$tmp_channel_file"
-chmod 0600 "$tmp_token_file"
+chmod 0600 "$tmp_config_file"
 chmod 0600 "$tmp_py_file"
 
 cat >"$tmp_py_file" <<'PY'
@@ -23,6 +21,7 @@ import sys
 import shutil
 import textwrap
 import getpass
+import secrets
 
 LICENSE_TEXT = """\
 
@@ -50,7 +49,7 @@ def require_license_acceptance():
             sys.exit(1)
         print("You must type 'accept' or 'q'.", file=sys.stderr)
 
-def config_run_omegaclaw(channel_output_path, token_output_path):
+def config_run_omegaclaw(config_output_path):
     print(" ")
     print("Welcome to OmegaClaw IRC!")
     print(" ")
@@ -81,25 +80,18 @@ def config_run_omegaclaw(channel_output_path, token_output_path):
 
         break
 
-    with open(channel_output_path, "w", encoding="utf-8") as f:
-        f.write(channel)
-
-    with open(token_output_path, "w", encoding="utf-8") as f:
-        f.write(token)
+    with open(config_output_path, "w", encoding="utf-8") as f:
+        f.write(f'IRC_channel={channel}\n')
+        f.write(f'ANTHROPIC_API_KEY={token}\n')
+        f.write(f'OMEGACLAW_AUTH_SECRET={secrets.token_urlsafe(24)}\n')
 
 if __name__ == "__main__":
-    config_run_omegaclaw(sys.argv[1], sys.argv[2])
+    config_run_omegaclaw(sys.argv[1])
 PY
 
-python3 "$tmp_py_file" "$tmp_channel_file" "$tmp_token_file" </dev/tty
+python3 "$tmp_py_file" "$tmp_config_file" </dev/tty
 
-channel="$(cat "$tmp_channel_file")"
-token="$(cat "$tmp_token_file")"
-auth_secret="$(python3 - <<'PY'
-import secrets
-print(secrets.token_urlsafe(24))
-PY
-)"
+. "$tmp_config_file"
 
 cat <<EOF
 ============================================
@@ -110,7 +102,7 @@ and enter your name and channel.
 
 Authentication step (required):
   In your channel, send this one-time secret exactly once:
-  auth ${auth_secret}
+  auth ${OMEGACLAW_AUTH_SECRET}
   The first nickname that sends it becomes the only accepted user.
   Messages from all other users will be silently ignored.
 
@@ -135,7 +127,7 @@ docker run -d -it \
   --tmpfs /tmp:size=64m,mode=1777 \
   --tmpfs /run:size=16m,mode=755 \
   --tmpfs /var/tmp:size=64m,mode=1777 \
-  -e ANTHROPIC_API_KEY="$token" \
-  -e OMEGACLAW_AUTH_SECRET="$auth_secret" \
+  -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
+  -e OMEGACLAW_AUTH_SECRET="$OMEGACLAW_AUTH_SECRET" \
   "$image" \
-  IRC_channel="$channel"
+  IRC_channel="$IRC_channel"
