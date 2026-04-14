@@ -13,7 +13,7 @@
    (progn (println! "Initializing channels")
           (configure commchannel irc)
           (if (== (commchannel) irc)
-              (progn (let $chan (argv 2) (configure IRC_channel $chan))
+              (progn (configure IRC_channel ##omegaclaw)
                      (configure IRC_server "irc.quakenet.org")
                      (configure IRC_port 6667)
                      (configure IRC_user omegaclaw)
