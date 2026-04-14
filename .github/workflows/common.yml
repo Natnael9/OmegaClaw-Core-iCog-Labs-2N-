@@ -17,9 +17,9 @@ on:
         default: 'latest'
         type: string
       platforms:
-        description: 'JSON array of platforms to be built'
+        description: 'Comma separated list of platforms to be built'
         required: false
-        default: 'linux/amd64, linux/arm64'
+        default: 'linux/amd64,linux/arm64'
         type: string
     secrets:
       DOCKERHUB_USERNAME:
