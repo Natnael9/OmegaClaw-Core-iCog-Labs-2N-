@@ -69,6 +69,31 @@ def config_run_omegaclaw(config_output_path):
         break
 
     while True:
+        print("Please select your LLM provider.")
+        print("1) Anthropic/Claude 2) OpenAI/ChatGPT 3) ASI Cloud Minimax")
+        c = input("Enter 1-3 or 'q' to exit (default: 1): ").strip()
+
+        if c.lower() == "q":
+            sys.exit(1)
+
+        if not c:
+            provider_id = 0
+        elif c in ["1", "2", "3"]:
+            provider_id = int(c) - 1
+        else:
+            print("Plese enter 1-3 or 'q'", file=sys.stderr)
+            continue
+
+        providers = [("Anthropic", "Local", "ANTHROPIC_API_KEY"),
+            ("OpenAI", "OpenAI", "OPENAI_API_KEY"),
+            ("ASICloud", "Local", "ASI_API_KEY")]
+        provider = providers[provider_id][0]
+        embeddingprovider = providers[provider_id][1]
+        api_token_var = providers[provider_id][2]
+
+        break
+
+    while True:
         token = getpass.getpass("Please paste your LLM token and press ENTER or 'q' to exit: ").strip()
 
         if token.lower() == "q":
@@ -81,9 +106,12 @@ def config_run_omegaclaw(config_output_path):
         break
 
     with open(config_output_path, "w", encoding="utf-8") as f:
-        f.write(f'IRC_channel={channel}\n')
-        f.write(f'ANTHROPIC_API_KEY={token}\n')
+        f.write(f'api_token_var={api_token_var}\n')
+        f.write(f'api_token={token}\n')
         f.write(f'OMEGACLAW_AUTH_SECRET={secrets.token_urlsafe(24)}\n')
+        f.write(f'IRC_channel={channel}\n')
+        f.write(f'provider={provider}\n')
+        f.write(f'embeddingprovider={embeddingprovider}\n')
 
 if __name__ == "__main__":
     config_run_omegaclaw(sys.argv[1])
@@ -127,7 +155,9 @@ docker run -d -it \
   --tmpfs /tmp:size=64m,mode=1777 \
   --tmpfs /run:size=16m,mode=755 \
   --tmpfs /var/tmp:size=64m,mode=1777 \
-  -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
+  -e ${api_token_var}="${api_token}" \
   -e OMEGACLAW_AUTH_SECRET="$OMEGACLAW_AUTH_SECRET" \
   "$image" \
-  IRC_channel="$IRC_channel"
+  IRC_channel="$IRC_channel" \
+  provider="$provider" \
+  embeddingprovider="$embeddingprovider"
