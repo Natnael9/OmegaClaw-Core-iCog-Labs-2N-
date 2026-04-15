@@ -28,3 +28,4 @@ jobs:
       tag_name: ${{ github.sha }}
       move_latest: false
       platforms: ${{ inputs.platforms }}
+    secrets: inherit
