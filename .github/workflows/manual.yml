@@ -21,7 +21,7 @@ on:
         type: string
 
 jobs:
-  build:
+  manual:
     uses: ./.github/workflows/common.yml
     with:
       publish_docker: ${{ inputs.publish_docker }}
