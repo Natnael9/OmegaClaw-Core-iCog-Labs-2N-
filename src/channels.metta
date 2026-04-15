@@ -31,8 +31,7 @@
 
 ;Send a message to all communication channels:
 (= (send $msg)
-   (progn (change-state! &lastsend $msg)
-          (let $safemsg (string-replace $msg  "\n" "\\n")
+   (progn (let $safemsg (string-replace $msg  "\n" "\\n")
                (if (== (commchannel) irc)
                    (let $temp (cut) (py-call (irc.send_message $safemsg)))
                    (let $temp (cut) (py-call (mattermost.send_message $safemsg)))))))
