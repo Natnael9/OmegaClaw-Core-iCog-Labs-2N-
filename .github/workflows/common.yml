@@ -8,7 +8,7 @@ on:
     inputs:
       publish_docker:
         description: 'Publish Docker images to Docker Hub'
-        required: true
+        required: false
         default: false
         type: boolean
       tag_name:
@@ -18,7 +18,7 @@ on:
         type: string
       move_latest:
         description: 'Move latest version to the new one'
-        required: true
+        required: false
         default: false
         type: boolean
       platforms:
