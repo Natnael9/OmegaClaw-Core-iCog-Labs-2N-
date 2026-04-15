@@ -1,4 +1,5 @@
 import os, openai
+import llm_mock
 
 def _init_openai_client(var_name, base_url):
     if var_name in os.environ:
@@ -83,6 +84,9 @@ def useAsi1(content):
     )
     resp = resp.replace("</arg_value>", " ").replace("</tool_call>", " ").replace("<arg_value>", " ").replace("<tool_call>", " ")
     return resp
+
+def useLlmMock(content):
+    return llm_mock.LlmMockClient.singleton().chat(content)
 
 _embedding_model = None
 
