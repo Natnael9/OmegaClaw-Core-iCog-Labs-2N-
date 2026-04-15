@@ -53,3 +53,5 @@ jobs:
           tags: |
             singularitynet/omegaclaw:${{ inputs.tag_name }}
             singularitynet/omegaclaw:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
