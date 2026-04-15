@@ -35,8 +35,7 @@
           (let $safemsg (string-replace $msg  "\n" "\\n")
                (if (== (commchannel) irc)
                    (let $temp (cut) (py-call (irc.send_message $safemsg)))
-                   (let $temp (cut) (py-call (mattermost.send_message $safemsg)))
-                   SEND-SUCCESS))))
+                   (let $temp (cut) (py-call (mattermost.send_message $safemsg)))))))
 
 ;Search the internet for some information:
 (= (search $msg)
