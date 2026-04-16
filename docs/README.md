@@ -44,7 +44,7 @@ Numbered in suggested reading order. Each tutorial is self-contained.
 
 - [reference-lib-nal.md](./reference-lib-nal.md) — NAL rules with truth formulas; confirmed vs. non-functional patterns
 - [reference-lib-pln.md](./reference-lib-pln.md) — Modus Ponens, abduction, revision; current limits
-- [reference-lib-ona.md](./reference-lib-ona.md) — OpenNARS for Applications — real-time / temporal engine
+- [reference-lib-ona.md](./reference-lib-ona.md) — OpenNARS for Applications — planned real-time / temporal engine (experimental, not installed by default)
 - [reference-orchestration.md](./reference-orchestration.md) — Engine selection, stopping criteria, action thresholds, defense stack
 - [reference-failure-modes.md](./reference-failure-modes.md) — Documented failures, error rates, mitigations
 
@@ -55,7 +55,7 @@ User-facing MeTTa skills the agent invokes. Each page follows the template **Sig
 - [reference-skills-memory.md](./reference-skills-memory.md) — `remember`, `query`, `episodes`, `pin`
 - [reference-skills-io.md](./reference-skills-io.md) — `shell`, `read-file`, `write-file`, `append-file`
 - [reference-skills-communication.md](./reference-skills-communication.md) — `send`, `receive`, `search`
-- [reference-skills-reasoning.md](./reference-skills-reasoning.md) — `metta` (NAL/PLN/ONA invocation surface)
+- [reference-skills-reasoning.md](./reference-skills-reasoning.md) — `metta` (NAL/PLN invocation surface)
 - [reference-skills-remote-agents.md](./reference-skills-remote-agents.md) — `tavily-search`, `technical-analysis`
 
 ### Configuration & Adapters

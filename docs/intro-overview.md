@@ -1,6 +1,6 @@
 # Overview
 
-OmegaClaw is a **hybrid agentic AI framework** implemented in MeTTa on OpenCog Hyperon. A large language model (LLM) works together with formal logic engines — **NAL**, **PLN**, and **ONA** — to reason about the world, track uncertainty, combine evidence, and produce conclusions that are mathematically grounded rather than just plausible-sounding.
+OmegaClaw is a **hybrid agentic AI framework** implemented in MeTTa on OpenCog Hyperon. A large language model (LLM) works together with formal logic engines — **NAL** and **PLN** — to reason about the world, track uncertainty, combine evidence, and produce conclusions that are mathematically grounded rather than just plausible-sounding.
 
 The core agent loop is approximately **200 lines of MeTTa**.
 
@@ -15,10 +15,10 @@ See [intro-hybrid-reasoning.md](./intro-hybrid-reasoning.md) for the thesis in d
 ## What OmegaClaw does
 
 - Runs a token-efficient agentic loop that receives messages, selects skills, and acts.
-- Delegates reasoning to one of three formal engines, orchestrated by the LLM:
+- Delegates reasoning to one of two formal engines, orchestrated by the LLM:
   - **NAL** — Non-Axiomatic Logic, symbolic inference under uncertainty.
   - **PLN** — Probabilistic Logic Networks, probabilistic higher-order reasoning.
-  - **ONA** — OpenNARS for Applications, real-time and temporal reasoning.
+  - ONA (OpenNARS for Applications) is a planned third engine but is **not installed by default** — see [reference-lib-ona.md](./reference-lib-ona.md) for the current experimental status.
 - Maintains a **three-tier memory** architecture:
   1. **Working memory** (`pin`) — volatile, single-slot scratchpad.
   2. **Long-term embedding memory** (`remember` / `query`) — semantic recall across sessions.
@@ -38,7 +38,7 @@ Use OmegaClaw when you want:
 
 - a small, auditable agent that can explain **why** it reached a conclusion;
 - reasoning with explicit uncertainty (`stv frequency confidence`) rather than opaque probabilities;
-- a platform for experimenting with NAL / PLN / ONA inside an agent loop;
+- a platform for experimenting with NAL and PLN inside an agent loop;
 - a chat-facing agent over IRC, Mattermost, or a channel you add yourself.
 
 ## Honest limits

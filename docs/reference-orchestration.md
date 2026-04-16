@@ -1,6 +1,6 @@
 # Reference — Orchestration
 
-OmegaClaw exposes three reasoning engines (NAL, PLN, ONA) plus direct memory recall. The LLM decides which to use, when to stop, and whether to act on a result. This page catalogues those decision policies.
+OmegaClaw exposes two reasoning engines (NAL and PLN) plus direct memory recall. The LLM decides which to use, when to stop, and whether to act on a result. This page catalogues those decision policies. (ONA is a planned third engine — see [reference-lib-ona.md](./reference-lib-ona.md) for its experimental, not-installed status.)
 
 ---
 
@@ -16,7 +16,7 @@ The LLM uses **heuristic triage**: recognize the reasoning shape, then pick the 
 | Multiple instances → generalization | Induction + Revision | NAL `\|-` |
 | Property-based categorical inference | Modus Ponens | PLN `\|~` |
 | Independent evidence to merge | Revision | NAL or PLN |
-| Real-time temporal sequences | Temporal inference | ONA |
+| Real-time temporal sequences | Temporal inference | (no stock engine — ONA is the planned target but not installed; fall back to NAL with external temporal grounding) |
 | Evidence conflicts | Revision | NAL / PLN |
 | Novel hypothesis generation | Abduction / Induction | NAL |
 
@@ -65,7 +65,7 @@ When two results disagree:
 
 1. **Prefer the higher-confidence result if frequencies agree.**
 2. If **frequencies clash**, invoke revision to merge the premises as independent sources.
-3. **Respect engine domains** — NAL for inheritance-style chains, PLN for property-based inference, ONA for temporal.
+3. **Respect engine domains** — NAL for inheritance-style chains, PLN for property-based inference.
 
 Revision produces a frequency that encodes the disagreement (drifts toward the middle) while confidence grows — the new truth value makes "substantial but conflicting evidence" explicit in the math.
 
@@ -130,5 +130,5 @@ Standard recovery:
 
 - [reference-lib-nal.md](./reference-lib-nal.md) — NAL rules and truth formulas.
 - [reference-lib-pln.md](./reference-lib-pln.md) — PLN rules.
-- [reference-lib-ona.md](./reference-lib-ona.md) — ONA temporal reasoning.
+- [reference-lib-ona.md](./reference-lib-ona.md) — ONA temporal reasoning (experimental, not installed).
 - [reference-failure-modes.md](./reference-failure-modes.md) — documented failure modes and mitigations.

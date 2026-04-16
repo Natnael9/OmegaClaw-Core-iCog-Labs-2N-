@@ -26,13 +26,14 @@ When the agent outputs a conclusion, you can trace it back through every step: w
 
 ---
 
-## The three reasoning engines
+## The reasoning engines
 
-OmegaClaw ships three complementary engines, all reachable through the `(metta ...)` skill:
+OmegaClaw ships two formal engines — NAL and PLN — both reachable through the `(metta ...)` skill:
 
 - **NAL** — *Non-Axiomatic Logic*. Symbolic inference under uncertainty, with evidence-based `(stv frequency confidence)` truth values. See [reference-lib-nal.md](./reference-lib-nal.md).
 - **PLN** — *Probabilistic Logic Networks*. Higher-order probabilistic reasoning over inheritance and implication relations. See [reference-lib-pln.md](./reference-lib-pln.md).
-- **ONA** — *OpenNARS for Applications*. Real-time, high-throughput NARS implementation with temporal reasoning. See [reference-lib-ona.md](./reference-lib-ona.md).
+
+ONA (OpenNARS for Applications) is a prospective third engine for real-time and temporal reasoning — **not installed by default**. See [reference-lib-ona.md](./reference-lib-ona.md) for its experimental status.
 
 Which engine to use is not a fixed mapping — the LLM orchestrates by pattern. See [reference-orchestration.md](./reference-orchestration.md).
 
@@ -76,7 +77,7 @@ Hybrid reasoning needs a matching memory layout:
 
 1. **Working memory (`pin`)** — a single-slot scratchpad holding the agent's current task state. Overwritten each cycle. Volatile.
 2. **Long-term embedding memory (`remember` / `query`)** — persistent, semantic recall across thousands of cycles.
-3. **AtomSpace** — atomized knowledge in formal `(stv ...)` form, used by NAL / PLN / ONA. The knowledge graph the engines reason over.
+3. **AtomSpace** — atomized knowledge in formal `(stv ...)` form, used by NAL and PLN. The knowledge graph the engines reason over.
 
 Atomization (converting natural language to AtomSpace atoms) is a first-class concept — raw text cannot participate in inference. See [reference-internals-memory-store.md](./reference-internals-memory-store.md).
 
@@ -101,5 +102,5 @@ These are not surprises — they are measured properties of the current system. 
 ## See also
 
 - [intro-concepts.md](./intro-concepts.md) — the vocabulary in detail.
-- [intro-architecture.md](./intro-architecture.md) — how the three engines plug into the agent loop.
+- [intro-architecture.md](./intro-architecture.md) — how the engines plug into the agent loop.
 - [reference-orchestration.md](./reference-orchestration.md) — engine selection, stopping criteria, action thresholds.

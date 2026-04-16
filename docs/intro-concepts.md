@@ -46,15 +46,16 @@ exp = c × (f - 0.5) + 0.5
 
 Maps an `(f, c)` pair to a single value in `[0, 1]`, useful for priority queues and ranking.
 
-## The three reasoning engines
+## The reasoning engines
 
 | Engine | MeTTa operator | Strength |
 |---|---|---|
 | **NAL** — Non-Axiomatic Logic | `\|-` | Symbolic inference under uncertainty, revision, evidence merging |
 | **PLN** — Probabilistic Logic Networks | `\|~` | Probabilistic higher-order reasoning |
-| **ONA** — OpenNARS for Applications | (ONA bindings) | High-throughput real-time temporal reasoning |
 
-Dedicated pages: [reference-lib-nal.md](./reference-lib-nal.md), [reference-lib-pln.md](./reference-lib-pln.md), [reference-lib-ona.md](./reference-lib-ona.md).
+ONA (OpenNARS for Applications) is a planned third engine for real-time temporal reasoning but is **not installed by default** — see [reference-lib-ona.md](./reference-lib-ona.md) for the current experimental status.
+
+Dedicated pages: [reference-lib-nal.md](./reference-lib-nal.md), [reference-lib-pln.md](./reference-lib-pln.md), [reference-lib-ona.md](./reference-lib-ona.md) (experimental, not installed).
 
 ## Orchestration
 
@@ -66,7 +67,7 @@ Three distinct stores with different semantics:
 
 1. **Working memory (`pin`)** — volatile single-slot scratchpad. Overwritten each cycle.
 2. **Long-term embedding memory (`remember` / `query`)** — persistent semantic recall. Survives restarts.
-3. **AtomSpace** — atomized, truth-valued knowledge used by NAL / PLN / ONA.
+3. **AtomSpace** — atomized, truth-valued knowledge used by NAL and PLN.
 
 Full detail in [reference-internals-memory-store.md](./reference-internals-memory-store.md).
 

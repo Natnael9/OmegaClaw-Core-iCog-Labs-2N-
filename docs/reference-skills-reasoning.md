@@ -1,6 +1,6 @@
 # Reference — Reasoning Skill
 
-Defined in `src/skills.metta`. Backed by three reasoning engines in `lib_nal.metta`, `lib_pln.metta`, and the ONA bindings.
+Defined in `src/skills.metta`. Backed by two reasoning engines in `lib_nal.metta` and `lib_pln.metta`.
 
 ---
 
@@ -12,7 +12,7 @@ Defined in `src/skills.metta`. Backed by three reasoning engines in `lib_nal.met
 ```
 
 ### Purpose
-Evaluate an arbitrary MeTTa s-expression in the agent's AtomSpace. Primary use is to invoke **NAL** (`|-`), **PLN** (`|~`), or **ONA** (temporal) inference from within the agent loop.
+Evaluate an arbitrary MeTTa s-expression in the agent's AtomSpace. Primary use is to invoke **NAL** (`|-`) or **PLN** (`|~`) inference from within the agent loop.
 
 ### Parameters
 - `sexpression` — a MeTTa s-expression. Read by `sread`, evaluated by `eval`.
@@ -56,7 +56,6 @@ Pattern-to-engine mapping (summary — see [reference-orchestration.md](./refere
 | Multiple instances → generalization | NAL `\|-` + Revision |
 | Property-based categorical inference | PLN `\|~` |
 | Independent evidence to merge | NAL or PLN revision |
-| Real-time temporal sequences | ONA |
 
 Fallback rule: if an engine returns empty, reformulate premises (fix term order or missing middle). If still empty, switch engine.
 
@@ -101,6 +100,6 @@ Before acting on a conclusion's `(f, c)`:
 
 - [reference-lib-nal.md](./reference-lib-nal.md) — NAL rule catalogue.
 - [reference-lib-pln.md](./reference-lib-pln.md) — PLN rule catalogue.
-- [reference-lib-ona.md](./reference-lib-ona.md) — ONA temporal reasoning.
+- [reference-lib-ona.md](./reference-lib-ona.md) — ONA temporal reasoning (experimental, not installed).
 - [reference-orchestration.md](./reference-orchestration.md) — full orchestration policy.
 - [tutorial-06-reasoning-with-nal-pln.md](./tutorial-06-reasoning-with-nal-pln.md) — worked examples.

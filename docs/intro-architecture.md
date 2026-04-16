@@ -1,6 +1,6 @@
 # Architecture
 
-OmegaClaw is a hybrid system. A thin MeTTa core drives three formal reasoning engines and a handful of Python bridges for LLM calls, embeddings, and network I/O.
+OmegaClaw is a hybrid system. A thin MeTTa core drives two formal reasoning engines (NAL and PLN) and a handful of Python bridges for LLM calls, embeddings, and network I/O.
 
 ## Layered view
 
@@ -13,16 +13,15 @@ OmegaClaw is a hybrid system. A thin MeTTa core drives three formal reasoning en
 │  - Contextual steering                          │
 └────────────────────┬────────────────────────────┘
                      │
-       ┌─────────────┼─────────────┐
-       ▼             ▼             ▼
-┌──────────┐   ┌──────────┐   ┌──────────┐
-│ NAL   |- │   │ PLN   |~ │   │ ONA      │
-│ Engine   │   │ Engine   │   │ (real-   │
-│          │   │          │   │  time)   │
-└────┬─────┘   └────┬─────┘   └────┬─────┘
-     │              │              │
-     └──────────────┼──────────────┘
-                    │
+       ┌─────────────┴─────────────┐
+       ▼                           ▼
+┌──────────┐                 ┌──────────┐
+│ NAL   |- │                 │ PLN   |~ │
+│ Engine   │                 │ Engine   │
+└────┬─────┘                 └────┬─────┘
+     │                            │
+     └─────────────┬──────────────┘
+                   │
        ┌────────────┴────────────┐
        ▼                         ▼
 ┌────────────────┐     ┌──────────────────┐
@@ -50,7 +49,6 @@ lib_omegaclaw.metta       loads all submodules
 ├── src/skills.pl         Prolog helpers (shell, first_char)
 ├── lib_nal.metta         NAL truth functions
 ├── lib_pln.metta         PLN rules
-├── (ONA bindings)        OpenNARS for Applications
 └── lib_llm_ext.py        Claude / GPT / MiniMax / local embeddings
 
 channels/irc.py           IRC adapter

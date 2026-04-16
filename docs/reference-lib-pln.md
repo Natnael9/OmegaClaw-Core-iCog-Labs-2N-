@@ -109,7 +109,7 @@ Conclusion: `(Inheritance robin bird) (stv 0.767 0.422)`.
 | Merging independent evidence | Either (identical formula) |
 | Property-based categorical inference | PLN `\|~` |
 | Higher-order structures (`Implication` over `Inheritance`) | PLN `\|~` |
-| Real-time or temporal reasoning | ONA — see [reference-lib-ona.md](./reference-lib-ona.md) |
+| Real-time or temporal reasoning | Not served by a stock engine — ONA is the planned future target (see [reference-lib-ona.md](./reference-lib-ona.md), experimental, not installed). Current fallback: NAL with external temporal grounding. |
 
 When in doubt, try NAL first; PLN shines on `Implication` over `Inheritance` chains.
 
@@ -118,6 +118,6 @@ When in doubt, try NAL first; PLN shines on `Implication` over `Inheritance` cha
 ## See also
 
 - [reference-lib-nal.md](./reference-lib-nal.md) — sibling symbolic engine.
-- [reference-lib-ona.md](./reference-lib-ona.md) — temporal sibling engine.
+- [reference-lib-ona.md](./reference-lib-ona.md) — planned temporal engine (experimental, not installed).
 - [reference-orchestration.md](./reference-orchestration.md) — engine selection.
 - [tutorial-06-reasoning-with-nal-pln.md](./tutorial-06-reasoning-with-nal-pln.md) — worked examples.
