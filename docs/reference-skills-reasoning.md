@@ -1,0 +1,106 @@
+# Reference — Reasoning Skill
+
+Defined in `src/skills.metta`. Backed by three reasoning engines in `lib_nal.metta`, `lib_pln.metta`, and the ONA bindings.
+
+---
+
+## `metta`
+
+### Signature
+```metta
+(metta sexpression)
+```
+
+### Purpose
+Evaluate an arbitrary MeTTa s-expression in the agent's AtomSpace. Primary use is to invoke **NAL** (`|-`), **PLN** (`|~`), or **ONA** (temporal) inference from within the agent loop.
+
+### Parameters
+- `sexpression` — a MeTTa s-expression. Read by `sread`, evaluated by `eval`.
+
+### Returns
+Whatever the inner expression returns. For NAL/PLN calls, this is a conclusion atom paired with an `(stv frequency confidence)` truth value.
+
+### Examples
+
+**NAL — deduction:**
+```metta
+(metta (|- ((--> (× sam garfield) friend) (stv 1.0 0.9))
+           ((--> garfield animal)         (stv 1.0 0.9))))
+```
+
+**NAL — implication with a variable (note `$1`):**
+```metta
+(metta (|- ((==> (--> (× $1 elephant) eat) (--> $1 ([] dangerous))) (stv 1.0 0.9))
+           ((--> (× tiger elephant) eat)                            (stv 1.0 0.9))))
+```
+
+**NAL — revision** (same term, two sources): `|-` merges the evidence.
+
+**PLN — forward chaining:**
+```metta
+(metta (|~ ((Implication (Inheritance $1 (IntSet Feathered))
+                         (Inheritance $1 Bird)) (stv 1.0 0.9))
+           ((Inheritance Pingu (IntSet Feathered)) (stv 1.0 0.9))))
+```
+
+---
+
+## Engine selection
+
+Pattern-to-engine mapping (summary — see [reference-orchestration.md](./reference-orchestration.md) for the full table):
+
+| Situation | Engine |
+|---|---|
+| Known chain `A → B → C` | NAL `\|-` |
+| Observed effect, seeking cause | NAL `\|-` |
+| Multiple instances → generalization | NAL `\|-` + Revision |
+| Property-based categorical inference | PLN `\|~` |
+| Independent evidence to merge | NAL or PLN revision |
+| Real-time temporal sequences | ONA |
+
+Fallback rule: if an engine returns empty, reformulate premises (fix term order or missing middle). If still empty, switch engine.
+
+---
+
+## Stopping criteria
+
+Halt conditions the LLM is expected to monitor:
+
+| Signal | Threshold | Action |
+|---|---|---|
+| Confidence floor | `c < 0.3` | Halt — conclusion unreliable. |
+| Sufficiency threshold | `c ≥ 0.6` | Actionable for decisions. |
+| Diminishing returns | hop reduces `c` more than it adds information | Halt. |
+| Resource budget | 5 commands per cycle | Hard ceiling (loop-enforced). |
+
+---
+
+## Action thresholds
+
+Before acting on a conclusion's `(f, c)`:
+
+| Tier | Gate | Do |
+|---|---|---|
+| **ACT** | `f ≥ 0.6 AND c ≥ 0.5` | Take the step. |
+| **HYPOTHESIZE** | `f ≥ 0.3 AND c ≥ 0.2` | Gather more evidence. |
+| **IGNORE** | below | Do nothing. |
+
+---
+
+## Notes / limits
+
+- Independent variables are written `$1`, `$2`, …
+- Negated knowledge uses `(stv 0.0 c)`.
+- `metta` evaluates **any** MeTTa expression, not just reasoning calls. Malformed input reports errors through `&error` on the next turn.
+- Confidence decays ~10% per deduction hop. Chains past 3 hops usually fall below the ACT threshold — see [tutorial-09-reliable-reasoning.md](./tutorial-09-reliable-reasoning.md).
+- Premise formulation is the primary failure surface. Verify term order, copula, and granularity before trusting a conclusion. See [reference-failure-modes.md](./reference-failure-modes.md).
+
+---
+
+## See also
+
+- [reference-lib-nal.md](./reference-lib-nal.md) — NAL rule catalogue.
+- [reference-lib-pln.md](./reference-lib-pln.md) — PLN rule catalogue.
+- [reference-lib-ona.md](./reference-lib-ona.md) — ONA temporal reasoning.
+- [reference-orchestration.md](./reference-orchestration.md) — full orchestration policy.
+- [tutorial-06-reasoning-with-nal-pln.md](./tutorial-06-reasoning-with-nal-pln.md) — worked examples.
