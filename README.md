@@ -67,9 +67,9 @@ Requirement: Docker
 
 OmegaClaw can be installed and started with:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/asi-alliance/OmegaClaw-Core/refs/heads/main/scripts/omegaclaw_setup.sh | bash -s -- singularitynet/omegaclaw:latest
+curl -fsSL https://raw.githubusercontent.com/asi-alliance/OmegaClaw-Core/refs/heads/main/scripts/omegaclaw | bash -s -- singularitynet/omegaclaw:latest
 ```
-When prompted, enter your OpenAI API key and a unique IRC channel name, then interact with your OmegaClaw at [webchat.quakenet.org](https://webchat.quakenet.org) or any IRC portal. 
+When prompted, please select from a list of available models, enter an API key and a unique IRC channel name, then interact with your OmegaClaw at [webchat.quakenet.org](https://webchat.quakenet.org) or any IRC portal. 
 
 ### Channel authentication
 
@@ -89,7 +89,10 @@ When done interacting with your OmegaClaw, please use these commands as needed:
 | Action | Command |
 |--------|---------|
 | Stop OmegaClaw | `docker stop omegaclaw` |
-| Restart OmegaClaw | `docker start omegaclaw` |
 | View logs | `docker logs -f omegaclaw` |
 
+To restart Omegaclaw simply rerun the same curl script show above.
+
 Your OmegaClaw will retain its memory for subsequent restarts.
+
+
