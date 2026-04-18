@@ -31,7 +31,7 @@ The core agent loop is approximately **200 lines of MeTTa**.
   - **NAL** — Non-Axiomatic Logic, symbolic inference under uncertainty.
   - **PLN** — Probabilistic Logic Networks, probabilistic higher-order reasoning.
   - ONA (OpenNARS for Applications) is a planned third engine but is **not installed by default** — see [reference-lib-ona.md](./reference-lib-ona.md) for the current experimental status.
-- Maintains a **three-tier memory** architecture (working, long-term, AtomSpace — described below).
+- Maintains a **three-tier memory** architecture (working, long-term, AtomSpace).
 - Exposes an extensible **skill system** covering memory, shell and file I/O, communication channels, web search, remote agents, and formal reasoning.
 
 ---
