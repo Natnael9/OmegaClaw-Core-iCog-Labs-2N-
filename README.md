@@ -87,10 +87,11 @@ When done interacting with your OmegaClaw, please use these commands as needed:
 |--------|---------|
 | Stop OmegaClaw | `docker stop omegaclaw` |
 | View Logs | `docker logs -f omegaclaw` |
+| Remove Containers | `docker rm -f omegaclaw` |
 | Clear Memory | `docker volume rm omegaclaw-memory` |
 
 To restart Omegaclaw simply rerun the single curl command show above. If there is an updated version of OmegaClaw, it will automatically be installed. When you restart OmegaClaw, you will receive a new authentication token secret to paste into your IRC channel chat for re-verification.
 
-Your OmegaClaw will retain its memory for subsequent restarts unless you clear memory. To clear OmegaClaw memory and return to its initialized state, please run the command to stop OmegaClaw, then the command to clear memory (both shown above), and then the single curl script command shown above.
+Your OmegaClaw will retain its memory for subsequent restarts unless you clear memory. To clear OmegaClaw memory and return to its initialized state, please run the command to stop OmegaClaw, the command to remove containers, the command to clear memory (all shown above), and then the single curl script command shown above.
 
 
