@@ -81,6 +81,8 @@ To activate message handling, send this command in your channel exactly once:
 auth <one-time-secret>
 ```
 
+### Stopping, Restarting, Clearing Memory, Viewing Logs
+
 The first user who sends the correct secret becomes the authenticated user.
 All messages from other users are silently ignored.
 
