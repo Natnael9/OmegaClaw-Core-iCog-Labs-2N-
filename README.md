@@ -69,7 +69,7 @@ OmegaClaw can be installed and started with:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/asi-alliance/OmegaClaw-Core/refs/heads/main/scripts/omegaclaw | bash -s -- singularitynet/omegaclaw:latest
 ```
-When prompted, please select from a list of available models, enter an API key and a unique IRC channel name, then interact with your OmegaClaw at [webchat.quakenet.org](https://webchat.quakenet.org) or any IRC portal. 
+When prompted, please select from a list of supported models, enter an API key and a unique IRC channel name, then interact with your OmegaClaw at [webchat.quakenet.org](https://webchat.quakenet.org) or any IRC portal. 
 
 ### Channel authentication
 
@@ -90,9 +90,10 @@ When done interacting with your OmegaClaw, please use these commands as needed:
 |--------|---------|
 | Stop OmegaClaw | `docker stop omegaclaw` |
 | View logs | `docker logs -f omegaclaw` |
+| Clear memory | `docker rm -f omegaclaw 2>/dev/null || true` then `docker volume rm omegaclaw-memory` |
 
-To restart Omegaclaw simply rerun the same curl script show above.
+To restart Omegaclaw simply rerun the single curl command show above. When you restart OmegaClaw, you will receive a new authentication token secret to paste into your IRC channel chat for re-verification.
 
-Your OmegaClaw will retain its memory for subsequent restarts.
+Your OmegaClaw will retain its memory for subsequent restarts unless you clear memory using the commands above.
 
 
