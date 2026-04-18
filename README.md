@@ -65,7 +65,7 @@ Each memory item is stored as a triplet:
 
 Requirement: Docker
 
-OmegaClaw can be installed and started with:
+OmegaClaw can be installed, started, and subsequently restarted with this single command:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/asi-alliance/OmegaClaw-Core/refs/heads/main/scripts/omegaclaw | bash -s -- singularitynet/omegaclaw:latest
 ```
@@ -89,11 +89,11 @@ When done interacting with your OmegaClaw, please use these commands as needed:
 | Action | Command |
 |--------|---------|
 | Stop OmegaClaw | `docker stop omegaclaw` |
-| View logs | `docker logs -f omegaclaw` |
-| Clear memory | `docker volume rm omegaclaw-memory` |
+| View Logs | `docker logs -f omegaclaw` |
+| Clear Memory | `docker volume rm omegaclaw-memory` |
 
 To restart Omegaclaw simply rerun the single curl command show above. When you restart OmegaClaw, you will receive a new authentication token secret to paste into your IRC channel chat for re-verification.
 
-Your OmegaClaw will retain its memory for subsequent restarts unless you clear memory using the commands above.
+Your OmegaClaw will retain its memory for subsequent restarts unless you clear memory. To clear OmegaClaw memory and return to its initialized state, please run the command to stop OmegaClaw, then the command to clear memory (both shown above), and then the single curl script command shown above.
 
 
