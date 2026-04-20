@@ -154,5 +154,12 @@ def stop_irc():
     _running = False
 
 def send_message(text):
-    if _connected:
-        _send(f"PRIVMSG {_channel} :{text}")
+    text = text.replace("\r", "").replace("\n", "\\n")
+    try:
+        if _connected and _channel:
+            max_len = 400
+            for i in range(0, len(text), max_len):
+                chunk = text[i:i + max_len]
+                _send(f"PRIVMSG {_channel} :{chunk}")
+    except Exception:
+        pass
