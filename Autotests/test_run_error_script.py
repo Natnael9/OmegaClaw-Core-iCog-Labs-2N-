@@ -36,8 +36,9 @@ def test_run_error_script():
         c.step("send prompt via IRC")
         prompt = make_prompt(
             c.run_id,
-            f"Run the script {SCRIPT_FILE} and save the full output "
-            f"(including any errors) to {OUTPUT_FILE}.",
+            f"Run the script {SCRIPT_FILE} and save BOTH stdout and stderr "
+            f"to {OUTPUT_FILE}. Use shell redirection `2>&1` so every error "
+            f"message lands in the file too.",
         )
         if not send_prompt(prompt):
             c.fail("irc", "could not deliver prompt within 60s")

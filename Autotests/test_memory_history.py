@@ -1,6 +1,11 @@
 """
-Test: a chat prompt is appended to history.metta, with both HUMAN_MESSAGE and
-the agent's skill-invocation s-expression recorded.
+Test: a chat prompt is appended to history.metta as an s-expression record
+that quotes our REQ-tag, together with the agent's skill-invocation response.
+
+Notes on format: the new agent writes history as top-level s-exp records
+`("YYYY-MM-DD HH:MM:SS" (...skills...))`. The old `HUMAN_MESSAGE:` line
+format is no longer emitted — we anchor on the REQ-tag the agent echoes
+back in a skill argument.
 
 Run:
     pytest test_memory_history.py -s
@@ -36,19 +41,19 @@ def test_memory_history():
             c.fail("irc", "could not deliver prompt within 60s")
         c.ok("irc", f"run-id={c.run_id}")
 
-        c.step("verify history block with HUMAN_MESSAGE for our run_id")
-        deadline = time.time() + 120
+        c.step("verify history contains an s-exp record quoting our REQ-tag")
+        deadline = time.time() + 180
         block = None
         while time.time() < deadline:
             block = _history_block_for_run_id(read_history(), c.run_id)
-            if block and "HUMAN_MESSAGE:" in block:
+            if block:
                 break
             time.sleep(2)
-        if not block or "HUMAN_MESSAGE:" not in block:
-            c.fail("HUMAN_MESSAGE block", "no HUMAN_MESSAGE: line for our run_id")
-        c.ok("HUMAN_MESSAGE block", f"{len(block)} chars")
+        if not block:
+            c.fail("history record", "no s-exp record referencing REQ-{run_id}")
+        c.ok("history record", f"{len(block)} chars since first REQ-{c.run_id}")
 
-        c.step("verify history contains agent s-expression response")
+        c.step("verify history contains (send ...) or (pin ...) for our run_id")
         send_arg = wait_for_skill_call(c.run_id, "send", timeout=120)
         pin_calls = find_skill_calls(c.run_id, "pin") or []
         if send_arg is None and not pin_calls:

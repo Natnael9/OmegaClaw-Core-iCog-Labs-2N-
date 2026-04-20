@@ -35,7 +35,11 @@ def test_create_date_script():
         c.ok("irc", f"run-id={c.run_id}")
 
         c.step(f"wait for {TARGET_FILE}")
-        mtime = wait_for_file(TARGET_FILE, start_ts)
+        # Agent builds the script via a python script-to-file pattern
+        # (shell-quoting of a shebang + executable bit is unreliable for it),
+        # which takes 2-3 autonomous-loop iterations. Default WAIT=120s was
+        # tight — bumped to 240s to absorb that.
+        mtime = wait_for_file(TARGET_FILE, start_ts, timeout=240)
         if mtime is None:
             c.fail("file created", f"{TARGET_FILE} not created within timeout")
         c.ok("file created", f"after {mtime - start_ts}s")

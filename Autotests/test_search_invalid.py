@@ -6,7 +6,7 @@ Run:
 """
 from helpers import (
     Checker, find_skill_calls, make_prompt, send_prompt,
-    wait_for_any_skill_call, wait_for_skill_call,
+    wait_for_any_skill_call, wait_for_skill_call, wait_for_skill_match,
 )
 
 GIBBERISH = "dfghjkgkfjghj"
@@ -37,22 +37,34 @@ def test_search_invalid():
         c.ok(f"{skill} invoked", f"arg={arg!r}")
 
         c.step("verify (send ...) message indicates no results / unknown term")
-        send_arg = wait_for_skill_call(c.run_id, "send", timeout=120)
-        if send_arg is None:
-            c.fail("send invoked", "agent did not reply to user")
+        # Agent typically emits a preliminary "will search..." reply first and
+        # only a later (send ...) contains the actual conclusion. Scan *every*
+        # send call in the response window and wait until one matches a
+        # negation phrase — up to 240s because searches can be slow.
         no_result_phrases = [
             "no results", "not found", "couldn't find", "could not find",
             "no information", "no matches", "no relevant", "unable to find",
             "nothing found", "no meaning", "nonsense", "random",
             "gibberish", "meaningless", "does not appear", "doesn't appear",
-            "no data", "no specific", "unknown",
+            "no data", "no specific", "unknown", "no coherent",
+            "no hits", "returned nothing", "returned no",
         ]
-        matched = [p for p in no_result_phrases if p in send_arg.lower()]
-        if not matched:
+
+        def has_negation(s):
+            low = s.lower()
+            return any(p in low for p in no_result_phrases)
+
+        send_arg = wait_for_skill_match(
+            c.run_id, "send", has_negation, timeout=240,
+        )
+        if send_arg is None:
+            all_sends = find_skill_calls(c.run_id, "send") or []
             c.fail(
                 "no-results reply",
-                f"no 'not found' phrase in send. body: {send_arg!r}",
+                f"no 'not found' phrase in any send. Got {len(all_sends)} "
+                f"send(s), last: {(all_sends[-1] if all_sends else '<none>')!r}",
             )
+        matched = [p for p in no_result_phrases if p in send_arg.lower()]
         c.ok("no-results reply", f"matched: {', '.join(matched[:3])}")
 
         c.done()

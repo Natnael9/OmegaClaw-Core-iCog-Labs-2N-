@@ -12,7 +12,7 @@ import urllib.request
 
 from helpers import (
     Checker, find_skill_calls, make_prompt, send_prompt,
-    wait_for_any_skill_call, wait_for_skill_call,
+    wait_for_any_skill_call, wait_for_skill_call, wait_for_skill_match,
 )
 
 SEARCH_SKILLS = ("search", "tavily-search")
@@ -62,18 +62,33 @@ def test_search_weather():
             c.fail("search invoked", f"no search/tavily with 'valencia' arg. Got: {seen}")
         c.ok(f"{skill} invoked", f"arg={arg!r}")
 
-        c.step("verify agent sent a (send ...) message back to user")
-        send_arg = wait_for_skill_call(c.run_id, "send", timeout=120)
+        c.step("verify agent sent a (send ...) with a plausible temperature")
+        # Agent often emits a preliminary "will search..." (send ...) first,
+        # and only a later one carries the actual number. Scan every send in
+        # the response window and wait until one contains a plausible Celsius
+        # value; 240s because searches can be slow.
+        def has_plausible_temp(s):
+            nums = [float(n) for n in re.findall(r"-?\d+(?:\.\d+)?", s)
+                    if -20 <= float(n) <= 50]
+            return bool(nums)
+
+        send_arg = wait_for_skill_match(
+            c.run_id, "send", has_plausible_temp, timeout=240,
+        )
         if send_arg is None:
-            c.fail("send invoked", "agent did not relay weather via (send ...)")
+            all_sends = find_skill_calls(c.run_id, "send") or []
+            c.fail(
+                "send with temp",
+                f"no (send ...) with plausible temperature number. "
+                f"Got {len(all_sends)} send(s), last: "
+                f"{(all_sends[-1] if all_sends else '<none>')!r}",
+            )
         c.ok("send invoked", f"{len(send_arg)} chars")
 
         c.step("cross-check temperature with open-meteo (±10°C tolerance)")
         numbers = [float(n) for n in re.findall(r"-?\d+(?:\.\d+)?", send_arg)
                    if -20 <= float(n) <= 50]
         in_range = [n for n in numbers if abs(n - ref_temp) <= 10]
-        if not numbers:
-            c.fail("cross-check", f"no temperature numbers in (send ...): {send_arg!r}")
         if not in_range:
             c.fail(
                 "cross-check",

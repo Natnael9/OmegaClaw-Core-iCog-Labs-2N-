@@ -1,8 +1,10 @@
 """Shared test infrastructure for OmegaClaw smoke tests."""
+import atexit
 import inspect
 import re
 import socket
 import subprocess
+import threading
 import time
 
 import pytest
@@ -31,48 +33,161 @@ def dexec_root(*args):
 
 
 IRC_RETRIES = 3
-IRC_RETRY_DELAY = 30
+IRC_RETRY_DELAY = 10
+
+# Stable nick for the whole pytest session. The agent's IRC channel binds
+# `auth 0000` to the FIRST nick that presents the secret; any subsequent nick
+# sending the same secret is rejected ("ignore"), so per-test nicks would
+# silently fail IRC delivery for every test after the first. Generating once
+# at import time guarantees all tests share a single authenticated identity.
+SESSION_NICK = f"qa{int(time.time()) % 100000}"
 
 
-def _try_send(prompt):
-    nick = f"Toss{int(time.time()) % 10000}"
+# --- Persistent IRC session --------------------------------------------------
+#
+# Prior design opened a new socket per test, registered, joined channel, sent
+# auth + prompt, then QUIT. With 19 tests that's 19 full register cycles in a
+# 13-minute window — quakenet rate-limits these and drops them with
+# `Connection reset by peer` under load. We keep one socket alive for the
+# whole pytest session instead: register + auth once, then just PRIVMSG per
+# test. A daemon reader thread handles server PINGs so we don't get dropped
+# during idle periods between tests. On socket death (quakenet disconnect,
+# network flake) the next send_prompt() transparently reopens and re-auths.
+
+_irc_lock = threading.Lock()  # guards all sends to the shared socket
+_irc_sock = None              # live socket once authed, else None
+_irc_reader = None            # daemon PING/PONG handler, one per live socket
+
+
+def _reader_loop(sock):
+    buf = ""
+    try:
+        while True:
+            try:
+                data = sock.recv(4096)
+            except OSError:
+                return
+            if not data:
+                return
+            buf += data.decode(errors="ignore")
+            while "\r\n" in buf:
+                line, buf = buf.split("\r\n", 1)
+                if line.startswith("PING"):
+                    token = line.split(" ", 1)[1] if " " in line else ":?"
+                    try:
+                        with _irc_lock:
+                            sock.sendall(f"PONG {token}\r\n".encode())
+                    except OSError:
+                        return
+    finally:
+        pass
+
+
+def _open_session():
+    """Connect, register, JOIN channel, send `auth 0000`. Must be called with
+    _irc_lock held. Returns the live socket or None on failure."""
+    nick = SESSION_NICK
     sock = socket.create_connection((IRC_SERVER, IRC_PORT), timeout=30)
     sock.settimeout(30)
     sock.sendall(f"NICK {nick}\r\nUSER {nick} 0 * :{nick}\r\n".encode())
 
-    sent = False
     buf = ""
+    joined = False
     deadline = time.time() + 60
-    while time.time() < deadline and not sent:
-        buf += sock.recv(4096).decode(errors="ignore")
+    while time.time() < deadline and not joined:
+        try:
+            data = sock.recv(4096)
+        except OSError:
+            sock.close()
+            return None
+        if not data:
+            sock.close()
+            return None
+        buf += data.decode(errors="ignore")
         while "\r\n" in buf:
             line, buf = buf.split("\r\n", 1)
             if line.startswith("PING"):
-                sock.sendall(f"PONG {line.split()[1]}\r\n".encode())
-            if " 001 " in line:
+                token = line.split(" ", 1)[1] if " " in line else ":?"
+                sock.sendall(f"PONG {token}\r\n".encode())
+            elif " 001 " in line:
                 sock.sendall(f"JOIN {CHANNEL}\r\n".encode())
-            if " 366 " in line:
+            elif " 366 " in line:
+                # End of NAMES list — we're in the channel.
                 sock.sendall(f"PRIVMSG {CHANNEL} :auth 0000\r\n".encode())
-                sock.sendall(f"PRIVMSG {CHANNEL} :{prompt}\r\n".encode())
-                time.sleep(2)
-                sock.sendall(b"QUIT :bye\r\n")
-                sock.close()
-                sent = True
+                joined = True
                 break
-    return sent
+    if not joined:
+        try: sock.close()
+        except OSError: pass
+        return None
+
+    sock.settimeout(None)  # reader thread blocks on recv, writes go via lock
+    return sock
+
+
+def _kill_session_locked():
+    """Close the current socket without re-raising. Must be called with
+    _irc_lock held."""
+    global _irc_sock, _irc_reader
+    if _irc_sock is not None:
+        try: _irc_sock.sendall(b"QUIT :bye\r\n")
+        except OSError: pass
+        try: _irc_sock.close()
+        except OSError: pass
+    _irc_sock = None
+    _irc_reader = None
+
+
+def _ensure_session_locked():
+    """Open a session if none is live. Must be called with _irc_lock held.
+    Returns True on success."""
+    global _irc_sock, _irc_reader
+    if _irc_sock is not None:
+        return True
+    sock = _open_session()
+    if sock is None:
+        return False
+    _irc_sock = sock
+    _irc_reader = threading.Thread(target=_reader_loop, args=(sock,), daemon=True)
+    _irc_reader.start()
+    return True
 
 
 def send_prompt(prompt):
+    """Deliver a PRIVMSG to the agent's channel over the persistent session.
+    Auto-opens the session on first call and auto-reconnects on socket errors.
+    Returns True on success."""
+    global _irc_sock
     for attempt in range(IRC_RETRIES):
-        try:
-            if _try_send(prompt):
-                return True
-        except (ConnectionResetError, ConnectionRefusedError, socket.timeout, OSError) as e:
-            print(f"       IRC attempt {attempt + 1}/{IRC_RETRIES} failed: {e}", flush=True)
+        with _irc_lock:
+            if not _ensure_session_locked():
+                print(
+                    f"       IRC session open attempt {attempt + 1}/{IRC_RETRIES} failed",
+                    flush=True,
+                )
+                if attempt < IRC_RETRIES - 1:
+                    # Release lock for backoff sleep below.
+                    pass
+            else:
+                try:
+                    _irc_sock.sendall(f"PRIVMSG {CHANNEL} :{prompt}\r\n".encode())
+                    return True
+                except (ConnectionResetError, ConnectionRefusedError,
+                        socket.timeout, BrokenPipeError, OSError) as e:
+                    print(
+                        f"       IRC send attempt {attempt + 1}/{IRC_RETRIES} failed: {e}",
+                        flush=True,
+                    )
+                    _kill_session_locked()
         if attempt < IRC_RETRIES - 1:
-            print(f"       retrying in {IRC_RETRY_DELAY}s...", flush=True)
             time.sleep(IRC_RETRY_DELAY)
     return False
+
+
+@atexit.register
+def _irc_session_shutdown():
+    with _irc_lock:
+        _kill_session_locked()
 
 
 def wait_for_file(path, after_ts, timeout=WAIT):
@@ -95,39 +210,37 @@ def cleanup_dir(path):
 
 
 def history_cleanup_by_markers(markers):
-    """Remove HUMAN_MESSAGE blocks from history.metta whose text contains any
-    of the given markers. Idempotent. Runs python3 inside the container as root.
+    """Remove top-level s-exp records from history.metta whose text contains
+    any of the given markers. A record starts with `("YYYY-MM-DD...` at a line
+    boundary and ends at the next such start (or EOF). Any trailing
+    ERROR_FEEDBACK text belongs to the preceding record.
+    Idempotent. Runs python3 inside the container as root.
     """
     if not markers:
         return 0
     py = (
-        "import sys\n"
+        "import re, sys\n"
         f"path = {HISTORY_FILE!r}\n"
         f"markers = {list(markers)!r}\n"
         "try:\n"
         "    with open(path) as f: content = f.read()\n"
         "except FileNotFoundError:\n"
         "    print('0'); sys.exit(0)\n"
-        "out = []\n"
-        "i = 0\n"
-        "n = len(content)\n"
-        "removed = 0\n"
         "markers_lc = [m.lower() for m in markers]\n"
-        "while i < n:\n"
-        "    hm = content.find('HUMAN_MESSAGE:', i)\n"
-        "    if hm == -1:\n"
-        "        out.append(content[i:]); break\n"
-        "    out.append(content[i:hm])\n"
-        "    nxt = content.find('HUMAN_MESSAGE:', hm + 14)\n"
-        "    end = nxt if nxt != -1 else n\n"
-        "    block = content[hm:end]\n"
-        "    block_lc = block.lower()\n"
-        "    if any(m in block_lc for m in markers_lc):\n"
+        "starts = [m.start() for m in re.finditer(r'\\(\"\\d{4}-\\d{2}-\\d{2}', content)]\n"
+        "if not starts:\n"
+        "    print('0'); sys.exit(0)\n"
+        "prefix = content[:starts[0]]\n"
+        "ends = starts[1:] + [len(content)]\n"
+        "kept = [prefix]\n"
+        "removed = 0\n"
+        "for s, e in zip(starts, ends):\n"
+        "    block = content[s:e]\n"
+        "    if any(m in block.lower() for m in markers_lc):\n"
         "        removed += 1\n"
         "    else:\n"
-        "        out.append(block)\n"
-        "    i = end\n"
-        "new_content = ''.join(out)\n"
+        "        kept.append(block)\n"
+        "new_content = ''.join(kept)\n"
         "if new_content != content:\n"
         "    with open(path, 'w') as f: f.write(new_content)\n"
         "print(removed)\n"
@@ -194,20 +307,23 @@ def get_size(path):
         return None
 
 
+def _prompt_tag(run_id):
+    """Unique short tag the agent is expected to quote at least once in a
+    skill argument. Used to locate the response window in history.metta.
+    """
+    return f"REQ-{run_id}"
+
+
 def _history_block_for_run_id(content, run_id):
-    marker = f"run-id {run_id}"
-    idx = content.find(marker)
-    if idx == -1:
-        return None
-    line_start = content.rfind("HUMAN_MESSAGE:", 0, idx)
-    if line_start == -1:
-        line_start = idx
-    return content[line_start:]
+    """Same as _response_window: slice from first reference onward. Kept as a
+    public helper because some tests import it directly.
+    """
+    return _response_window(content, run_id)
 
 
 def wait_for_history_keyword(run_id, keywords, timeout=WAIT, require_all=False):
     """Wait until at least one keyword (case-insensitive) appears in history
-    after the HUMAN_MESSAGE line containing the given run_id.
+    after the first mention of our prompt tag for this run_id.
     If require_all=True, waits until ALL keywords are present.
     Returns list of matched keywords, or None on timeout.
     """
@@ -227,20 +343,13 @@ def wait_for_history_keyword(run_id, keywords, timeout=WAIT, require_all=False):
 
 
 def wait_for_history_block(run_id, timeout=WAIT):
-    """Wait until any response block appears in history after the run_id marker.
-    Returns the block text, or None on timeout.
+    """Wait until the agent mentions our prompt tag in history. Returns the
+    slice from the first tag occurrence to EOF, or None on timeout.
     """
     deadline = time.time() + timeout
     while time.time() < deadline:
         block = _history_block_for_run_id(read_history(), run_id)
         if block:
-            next_human = block.find("HUMAN_MESSAGE:", 20)
-            if next_human != -1:
-                return block[:next_human]
-            time.sleep(POLL)
-            block2 = _history_block_for_run_id(read_history(), run_id)
-            if block2 and len(block2) > len(block) * 0.9:
-                return block2
             return block
         time.sleep(POLL)
     return None
@@ -257,22 +366,17 @@ def wait_for_file_mtime_change(path, initial_mtime, timeout=WAIT):
 
 
 def _response_window(content, run_id):
-    """Return the slice of history from our HUMAN_MESSAGE block up to the next
-    HUMAN_MESSAGE (or EOF). This is where the agent's skill invocations for
-    our run_id live.
+    """Return the slice of history.metta starting at the first place the agent
+    references this run. Preferred anchor is the explicit REQ-{run_id} tag;
+    fallback to the bare run_id number (the agent sometimes quotes just that
+    when it rejects or abbreviates). Window is open-ended to EOF — the new
+    agent format has no turn terminator.
     """
-    marker = f"run-id {run_id}"
-    idx = content.find(marker)
-    if idx == -1:
-        return None
-    line_start = content.rfind("HUMAN_MESSAGE:", 0, idx)
-    if line_start == -1:
-        line_start = idx
-    # find next HUMAN_MESSAGE after our prompt line
-    next_hm = content.find("HUMAN_MESSAGE:", idx + len(marker))
-    if next_hm == -1:
-        return content[line_start:]
-    return content[line_start:next_hm]
+    for anchor in (_prompt_tag(run_id), str(run_id)):
+        idx = content.find(anchor)
+        if idx != -1:
+            return content[idx:]
+    return None
 
 
 _SKILL_ARG_RE = {}
@@ -317,6 +421,23 @@ def wait_for_skill_call(run_id, skill_name, timeout=WAIT, arg_substr=None):
     return None
 
 
+def wait_for_skill_match(run_id, skill_name, predicate, timeout=WAIT):
+    """Wait until any (<skill_name> "...") call in the response window satisfies
+    predicate(arg) -> bool. Returns the matching argument, None on timeout.
+
+    Useful for multi-turn tests where the agent sends a preliminary reply
+    ("will search...") and only a later (send ...) contains the final answer.
+    """
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        calls = find_skill_calls(run_id, skill_name) or []
+        for a in calls:
+            if predicate(a):
+                return a
+        time.sleep(POLL)
+    return None
+
+
 def wait_for_any_skill_call(run_id, skill_names, timeout=WAIT, arg_substr=None):
     """Wait for a call to any of the given skills. Returns (skill_name, arg) tuple
     on success, (None, None) on timeout.
@@ -337,12 +458,14 @@ def wait_for_any_skill_call(run_id, skill_names, timeout=WAIT, arg_substr=None):
 
 
 def make_prompt(run_id, task):
-    return (
-        f"CI smoke test run-id {run_id}, never executed before - "
-        "this is a NEW request, do not consult memory. "
-        f"{task} "
-        "Confirm with one short line."
-    )
+    """Wrap a task in a minimal envelope: a unique tag the agent is expected
+    to quote in a skill argument (used by helpers to locate the response
+    window), followed by the task itself. Phrasing is deliberately plain —
+    earlier envelopes with words like "CI smoke test", "do not consult
+    memory", and a literal "auth 0000" matched the agent's anti-social-
+    engineering heuristic and got every test rejected.
+    """
+    return f"[{_prompt_tag(run_id)}] {task}"
 
 
 class Checker:
@@ -352,11 +475,11 @@ class Checker:
         self.passed = 0
         self.run_id = int(time.time())
         self._cleanup_dirs = cleanup_dirs or []
-        self._cleanup_markers = [f"run-id {self.run_id}", str(self.run_id)]
+        self._cleanup_markers = [_prompt_tag(self.run_id), str(self.run_id)]
 
     def add_cleanup_marker(self, marker):
-        """Register an extra string to match in chromadb docs / history blocks
-        during teardown. The default marker 'run-id {run_id}' is always added.
+        """Register an extra string to match in chromadb docs / history records
+        during teardown. The default prompt tag is always added.
         """
         if marker and marker not in self._cleanup_markers:
             self._cleanup_markers.append(marker)

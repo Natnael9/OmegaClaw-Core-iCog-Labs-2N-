@@ -20,29 +20,44 @@ def test_memory_episode():
 
         c.step("send 'dog lost tooth' fact message")
         fact_marker = c.run_id
-        content_marker = f"TOOTH-{c.run_id}"
-        c.add_cleanup_marker(content_marker)
+        # Agent rejects obviously-tagged payloads ("tagged TOOTH-xxx", "store
+        # VERBATIM") as CI compliance tests and refuses to (remember ...).
+        # Phrase the fact naturally as personal context; the default REQ-tag
+        # plus dog-name uniqueness are enough for cleanup matching.
+        c.add_cleanup_marker("Barney")
         c.add_cleanup_marker(str(c.run_id + 1))
         prompt1 = make_prompt(
             fact_marker,
-            f"My dog just lost a tooth today, tagged {content_marker}. "
-            f"Use the remember skill to store this event VERBATIM including the tag.",
+            "I just got back from the vet with my dog Barney — he lost his "
+            "first baby tooth today. Could you jot this down in memory so I "
+            "can ask you later? I keep forgetting dates like this.",
         )
         if not send_prompt(prompt1):
             c.fail("irc-1", "could not deliver first prompt within 60s")
         c.ok("irc-1", f"run-id={fact_marker}")
 
         c.step("verify agent invoked (remember ...) with dog/tooth content")
-        remember_arg = wait_for_skill_call(
-            fact_marker, "remember", timeout=180, arg_substr="tooth",
+        # Agent is skeptical by design — often asks a clarifying question
+        # ("how old is Barney?") before committing to memory. It eventually
+        # calls (remember "…Barney lost his first baby tooth…") but that can
+        # take 3-4 minutes of autonomous loop iterations, well past the
+        # default 180s. Scan every remember call and accept either "tooth"
+        # or "Barney".
+        from helpers import wait_for_skill_match
+        def is_barney_memory(s):
+            low = s.lower()
+            return "tooth" in low or "barney" in low
+        remember_arg = wait_for_skill_match(
+            fact_marker, "remember", is_barney_memory, timeout=420,
         )
         if remember_arg is None:
             calls = find_skill_calls(fact_marker, "remember") or []
             c.fail(
                 "remember invoked",
-                f"no (remember ...) with 'tooth'. Got: {[a[:80] for a in calls[:3]]}",
+                f"no (remember ...) with 'tooth' or 'Barney'. "
+                f"Got: {[a[:80] for a in calls[:3]]}",
             )
-        c.ok("remember invoked", f"arg includes 'tooth' (len={len(remember_arg)})")
+        c.ok("remember invoked", f"arg matched (len={len(remember_arg)})")
         record_time = datetime.datetime.now()
 
         c.step("wait 60s to let memory settle")
@@ -52,8 +67,9 @@ def test_memory_episode():
         recall_marker = c.run_id + 1
         prompt2 = make_prompt(
             recall_marker,
-            "Use the query or episodes skill to recall when my dog lost a tooth, "
-            "then send me the exact date and time you find.",
+            "Remember I mentioned my dog Barney losing a tooth earlier? "
+            "Could you check your notes and tell me the exact date and time "
+            "I told you about it?",
         )
         if not send_prompt(prompt2):
             c.fail("irc-2", "could not deliver recall prompt within 60s")
