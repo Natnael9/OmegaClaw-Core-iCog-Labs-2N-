@@ -45,38 +45,60 @@ def around_time(needle_time_str, k):
 def balance_parentheses(s):
     s = s.replace("_quote_", '"')
     sexprs = []
+    special_two_arg_cmds = {"write-file", "append-file"}
     for line in s.splitlines():
         line = line.strip()
         if not line:
             continue
+        # remove one outer (...) if present
         if line.startswith("(") and line.endswith(")"):
-            inner = line[1:-1].strip()
-            parts = inner.split(maxsplit=1)
-            cmd = parts[0]
-            arg = parts[1] if len(parts) > 1 else ""
-            if arg:
-                arg = arg.strip()
-                if not (arg.startswith('"') and arg.endswith('"')): 
-                    arg = arg.replace('"', '\\"')
-                    line = f'({cmd} "{arg}")'
-                else:
-                    line = f'({cmd} {arg})'
-            else:
-                line = f'({cmd})'
-            sexprs.append(line)
-            continue
+            line = line[1:-1].strip()
         parts = line.split(maxsplit=1)
         cmd = parts[0]
-        arg = parts[1] if len(parts) > 1 else ""
-        if arg:
-            arg = arg.strip()
-            if arg.startswith('"') and arg.endswith('"'):
-                sexprs.append(f'({cmd} {arg})')
+        rest = parts[1].strip() if len(parts) > 1 else ""
+        if cmd in special_two_arg_cmds:
+            if not rest:
+                sexprs.append(f"({cmd})")
+                continue
+            # filename is first token unless already quoted
+            if rest.startswith('"'):
+                end = 1
+                escaped = False
+                while end < len(rest):
+                    ch = rest[end]
+                    if ch == '"' and not escaped:
+                        break
+                    escaped = (ch == '\\' and not escaped)
+                    if ch != '\\':
+                        escaped = False
+                    end += 1
+                if end < len(rest) and rest[end] == '"':
+                    filename = rest[:end+1]
+                    content = rest[end+1:].strip()
+                else:
+                    filename = '"' + rest[1:].replace('"', '\\"') + '"'
+                    content = ""
             else:
-                arg = arg.replace('"', '\\"')
-                sexprs.append(f'({cmd} "{arg}")')
+                split_rest = rest.split(maxsplit=1)
+                filename = '"' + split_rest[0].replace('"', '\\"') + '"'
+                content = split_rest[1].strip() if len(split_rest) > 1 else ""
+            if content:
+                if content.startswith('"') and content.endswith('"'):
+                    sexprs.append(f"({cmd} {filename} {content})")
+                else:
+                    content = content.replace('"', '\\"')
+                    sexprs.append(f'({cmd} {filename} "{content}")')
+            else:
+                sexprs.append(f"({cmd} {filename})")
+            continue
+        if rest:
+            if rest.startswith('"') and rest.endswith('"'):
+                sexprs.append(f"({cmd} {rest})")
+            else:
+                rest = rest.replace('"', '\\"')
+                sexprs.append(f'({cmd} "{rest}")')
         else:
-            sexprs.append(f'({cmd})')
+            sexprs.append(f"({cmd})")
     ret = " ".join(sexprs)
     return "(" + ret + ")"
 
@@ -87,3 +109,27 @@ def normalize_string(x):
         return str(x).encode("utf-8", errors="ignore").decode("utf-8", errors="ignore")
     except Exception:
         return str(x)
+
+if __name__ == "__main__":
+	test_cases = [
+		('(write-file test.txt hello world)', '((write-file "test.txt" "hello world"))'),
+		('(append-file test.txt hello world)', '((append-file "test.txt" "hello world"))'),
+		('(write-file "test.txt" hello world)', '((write-file "test.txt" "hello world"))'),
+		('(write-file "test.txt" "hello world")', '((write-file "test.txt" "hello world"))'),
+		('(write-file test.txt "hello world")', '((write-file "test.txt" "hello world"))'),
+		('(send test.xt hello world)', '((send "test.xt hello world"))'),
+		('write-file test.txt hello world', '((write-file "test.txt" "hello world"))'),
+		('append-file test.txt hello world', '((append-file "test.txt" "hello world"))'),
+		('write-file "test.txt" hello world', '((write-file "test.txt" "hello world"))'),
+		('write-file "test.txt" "hello world"', '((write-file "test.txt" "hello world"))'),
+		('write-file test.txt "hello world"', '((write-file "test.txt" "hello world"))'),
+		('send test.xt hello world', '((send "test.xt hello world"))'),
+	]
+	for i, (inp, expected) in enumerate(test_cases, 1):
+		got = balance_parentheses(inp)
+		ok = got == expected
+		print(f"Test {i}: {'PASS' if ok else 'FAIL'}")
+		print(f"  input:    {inp}")
+		print(f"  got:      {got}")
+		print(f"  expected: {expected}")
+		print()
