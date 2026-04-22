@@ -164,8 +164,8 @@ help() {
     echo
     echo -e "Options:"
     echo -e "\t-s <auth secret> set secret for the communication channel (default is 0000)"
-    echo -e "\t-t <api token> set API token"
-    echo -e "\t-p <provider> set LLM API provider (default is ASICloud)"
+    echo -e "\t-p <provider> set LLM API provider (default is ASICloud)."
+    echo -e "\t              Pass API token via environment variable."
     echo -e "\t-c <IRC channel> set IRC channel"
     echo -e "\t-d <Docker image> set Docker image name (default omegaclaw:latest)"
 }
@@ -181,7 +181,6 @@ options() {
     do
         case "${flag}" in
             s) OMEGACLAW_AUTH_SECRET=${OPTARG};;
-            t) api_token=${OPTARG};;
             p) provider=${OPTARG};;
             c) IRC_channel=${OPTARG};;
             d) image=${OPTARG};;
@@ -208,6 +207,9 @@ options() {
            return 1
            ;;
     esac
+    if [[ -v ${api_token_var} ]]; then
+        api_token="${!api_token_var}"
+    fi
 }
 
 start() {
