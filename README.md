@@ -8,9 +8,11 @@
 
 ---
 
-## Documentation
+## Documentation & Demo
 
 Full documentation lives in [`docs/`](./docs/README.md): introduction, tutorials, and API reference as a flat set of markdown files.
+
+Preview a live demo of OmegaClaw running in --Coming Soon!--
 
 ---
 
@@ -60,42 +62,77 @@ When the agent outputs a conclusion, you can trace it back through every step: w
 
 ---
 
-## Quick Start - IRC Channel
+## About
 
-Requirement: Docker
+OmegaClaw agentic AI system implemented in MeTTa, guided by the MeTTaClaw proposal from Ben Goertzel, and an agent core inspired by Nanobot.
+Beyond basic tool use, it features embedding-based long-term memory represented entirely in MeTTa AtomSpace format.
 
-OmegaClaw can be installed, started, and subsequently restarted with this single command:
-```bash
-curl -fsSL https://raw.githubusercontent.com/asi-alliance/OmegaClaw-Core/refs/heads/main/scripts/omegaclaw | bash -s -- singularitynet/omegaclaw:latest
+Long-term memory is deliberately maintained by the agent via `(remember string)` for adding memory items and `(query string)` for querying related memories.
+The agent can learn and apply new skills and declarative knowledge through the use of memory items.
+
+In addition, an initial set of OpenClaw-like tools is implemented, including web search, file modification, communication channels, and access to the operating system shell and its associated tools. Additionally two Fetch.ai Agentverse tools, Tavily Search and Technical Research, are featured in its toolset.
+
+Simplicity of design, ease of prototyping, ease of extension, and transparent implementation in MeTTa were the primary design criteria.
+
+The following example demonstrates learning and decision-making in a textually represented grid-world environment adapted from [NACE](https://github.com/patham9/NACE):
+
+![mettaclaw_in_nace_world](https://github.com/user-attachments/assets/c6c01839-234d-4505-baf6-4f2f3787c7b9)
+
+
+This project also aims to explore the potential of Agentic Physical AI, a ROS2 package for mobile robots with manipulators is underway.
+
+**Installation**
+
+First, get [SWI-Prolog](https://www.swi-prolog.org/). Then:
+
 ```
-OmegaClaw requires an LLM model to run. When prompted, please select from a list of supported models, enter an API key and a unique IRC channel name, then interact with your OmegaClaw at [webchat.quakenet.org](https://webchat.quakenet.org). 
-
-### Channel authentication
-
-At startup, the setup script prints a **one-time secret**.
-
-To activate message handling, send this command in your channel exactly once:
-
-```text
-auth <one-time-secret>
+git clone https://github.com/trueagi-io/PeTTa
+cd PeTTa
+mkdir -p repos && git clone https://github.com/patham9/mettaclaw repos/mettaclaw
 ```
 
-The first user who sends the correct secret becomes the authenticated user.
-All messages from other users are silently ignored. Your agent cannot be manipulated or controlled by other users, even if they enter your channel.
+**Usage**
 
-### Stopping, Restarting, Clearing Memory, Viewing Logs
+Run the system via the following command which ensures the system is started from the root folder of PeTTa:
 
-When done interacting with your OmegaClaw, please use these commands as needed:
+```
+cp repos/mettaclaw/run.metta ./
+OPENAI_API_KEY=... sh run.sh run.metta
+```
 
-| Action | Command |
-|--------|---------|
-| Stop OmegaClaw | `docker stop omegaclaw` |
-| View Logs | `docker logs -f omegaclaw` |
-| Remove Containers | `docker rm -f omegaclaw` |
-| Clear Memory | `docker volume rm omegaclaw-memory` |
+**Auto-install/run**
 
-To restart Omegaclaw simply rerun the single curl command show above. If there is an updated version of OmegaClaw, it will automatically be installed. When you restart OmegaClaw, you will receive a new authentication token secret to paste into your IRC channel chat for re-verification.
+Alternatively, if PeTTa is already installed and the latest version pulled (v1.0.2 or latest commit), then, running the following MeTTa file from the root folder, installs and runs MeTTaClaw (assuming OPENAI_API_KEY is set):
 
-Your OmegaClaw will retain its memory for subsequent restarts unless you clear memory. To clear OmegaClaw memory and return to its initialized state, please run the command to stop OmegaClaw, the command to remove containers, the command to clear memory (all shown above), and then the single curl script command shown above.
+```
+!(import! &self (library lib_import))
+!(git-import! "https://github.com/patham9/mettaclaw.git")
+!(import! &self (library mettaclaw lib_mettaclaw))
+
+!(mettaclaw)
+```
+
+**Illustrations**
+
+Long-Term Memory Recall:
+
+<img width="638" height="125" alt="image" src="https://github.com/user-attachments/assets/0d4817ed-e743-4e44-8bd4-a10e27ea6380" />
+
+Tool use:
+
+<img width="1323" height="188" alt="image" src="https://github.com/user-attachments/assets/18ef19c4-010a-4c94-84ce-bb49277dccfc" />
+
+Shell output of the actual invocation of the generated MeTTa code:
+
+<img width="416" height="486" alt="image" src="https://github.com/user-attachments/assets/f5b27205-cdb2-47e7-821a-ffd93b3dd7c6" />
+
+System also added it into its Atom Space storage (embedding vector omitted):
+
+<img width="379" height="69" alt="image" src="https://github.com/user-attachments/assets/6aa59deb-33b4-42b9-a535-ae153b4b7a18" />
+
+
+
+
+
 
 
