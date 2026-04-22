@@ -17,6 +17,8 @@ ANTHROPIC_CLIENT = _init_openai_client(
 )
 
 def _clean(text):
+    if not text:
+        text = ""
     return text.replace("_quote_", '"').replace("_apostrophe_", "'")
 
 def _chat(client, model, content, max_tokens=6000):
