@@ -214,7 +214,7 @@ start() {
     docker rm -f omegaclaw 2>/dev/null || true
 
     docker run -d -it \
-        --pull newer \
+        --pull always \
         --name omegaclaw \
         --user 65534:65534 \
         --security-opt no-new-privileges:true \
