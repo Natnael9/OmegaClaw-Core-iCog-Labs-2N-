@@ -85,17 +85,32 @@ This project also aims to explore the potential of Agentic Physical AI, a ROS2 p
 
 Prerequisites: Git, Python3, Pip and [venv](https://docs.python.org/3/library/venv.html) library
 
-First, get [SWI-Prolog](https://www.swi-prolog.org/). Then:
+Get [SWI-Prolog 9.1.12 or later](https://www.swi-prolog.org/).
+
+Install OmegaClaw:
 ```
 git clone https://github.com/trueagi-io/PeTTa
 cd PeTTa
 mkdir -p repos
 git clone https://github.com/asi-alliance/OmegaClaw-Core.git repos/OmegaClaw-Core
 git clone https://github.com/patham9/petta_lib_chromadb.git repos/petta_lib_chromadb
+cp repos/OmegaClaw-Core/run.metta ./
+```
+
+Setup Python virtual environment (or use your own):
+```
 python3 -m venv ./.venv
 source ./.venv/bin/activate
-python3 -m pip install -r
-cp repos/OmegaClaw-Core/run.metta ./
+```
+
+If you have CPU only machine or don't want calculate embeddings on GPU:
+```
+python3 -m pip install --index-url https://download.pytorch.org/whl/cpu torch
+```
+
+Install Python dependencies:
+```
+python3 -m pip install -r ./repos/OmegaClaw-Core/requirements.txt
 ```
 
 **Usage**
