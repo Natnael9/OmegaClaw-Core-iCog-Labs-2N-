@@ -81,7 +81,7 @@ The following example demonstrates learning and decision-making in a textually r
 
 This project also aims to explore the potential of Agentic Physical AI, a ROS2 package for mobile robots with manipulators is underway.
 
-**Installation**
+## Installation
 
 Prerequisites: Git, Python3, Pip and [venv](https://docs.python.org/3/library/venv.html) library
 
@@ -113,7 +113,7 @@ Install Python dependencies:
 python3 -m pip install -r ./repos/OmegaClaw-Core/requirements.txt
 ```
 
-**Usage**
+## Usage
 
 Before running the system you need to choose your LLM API provider and export the API key as the environment variable.
 | Provider | Env var name | Notes |
@@ -135,7 +135,7 @@ The full list of the `run.metta` optinos
 | `IRC_channel` | `"#some_channel_name"` | Name of the channel on [QuakeNet IRC server](https://webchat.quakenet.org/) which agent will connect to. In order to make agent talk only to the owner the `OMEGACLAW_AUTH_SECRET` environment variable is used. After agent is joined to the channel send `auth <secret>` message for the authentication. For example if `OMEGACLAW_AUTH_SECRET=12345` then one need sending `auth 12345`. |
 | `embeddingprovider` | `Local` or `OpenAI` | The embedding provider to use for the memory. `Local` uses [sentence-transformers](https://pypi.org/project/sentence-transformers/) library locally. `OpenAI` requires `OPENAI_API_KEY` and uses OpenAI embedding API. |
 
-**Illustrations**
+## Illustrations
 
 Long-Term Memory Recall:
 
