@@ -88,12 +88,10 @@ The full list of the `run.metta` optinos
 
 ---
 
-## Documentation & Demo
+## Documentation
 
 Full documentation lives in [`docs/`](./docs/README.md): introduction,
 tutorials, and API reference as a flat set of markdown files.
-
-Preview a live demo of OmegaClaw running in --Coming Soon!--
 
 ---
 
