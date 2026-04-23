@@ -56,11 +56,13 @@ def useClaude(content):
     )
 
 def useAsi1(content):
-    return _chat(
+    resp = _chat(
         client=ASIONE_CLIENT,
         model="asi1-ultra",
         content=content
     )
+    resp = resp.replace("</arg_value>", " ").replace("</tool_call>", " ")
+    return resp
 
 _embedding_model = None
 
