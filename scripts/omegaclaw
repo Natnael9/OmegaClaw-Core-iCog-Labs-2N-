@@ -241,6 +241,7 @@ start() {
         --tmpfs /var/tmp:size=64m,mode=1777 \
         -e "${api_token_var}"="${api_token}" \
         -e OMEGACLAW_AUTH_SECRET="$OMEGACLAW_AUTH_SECRET" \
+        -e LLM_SERVER_LOCAL_URL="$llm_server_local_url" \
         "$image" \
         IRC_channel="$IRC_channel" \
         provider="$provider" \
