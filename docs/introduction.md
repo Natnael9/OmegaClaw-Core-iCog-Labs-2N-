@@ -126,6 +126,7 @@ lib_omegaclaw.metta       loads all submodules
 └── lib_llm_ext.py        Claude / GPT / MiniMax / local embeddings
 
 channels/irc.py           IRC adapter
+channels/telegram.py      Telegram adapter
 channels/mattermost.py    Mattermost adapter
 channels/websearch.py     web search
 
@@ -138,19 +139,19 @@ memory/history.metta      episodic trace (written at runtime)
 Each iteration of `(omegaclaw $k)` in `src/loop.metta` performs:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│ 1. receive()        pull latest message from channel    │
-│ 2. getContext()     PROMPT + SKILLS +                   │
-│                     LAST_SKILL_USE_RESULTS +            │
-│                     HISTORY + TIME                      │
-│ 3. LLM call         Anthropic / OpenAI / ASICloud       │
-│ 4. sread / balance  parse response into skill s-exprs   │
-│ 5. eval each skill  (remember ...), (metta ...), ...    │
-│ 6. addToHistory     append human msg + response +       │
-│                     any errors                          │
-│ 7. sleep            sleepInterval seconds               │
-│ 8. recurse          (omegaclaw (+ 1 $k))                │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│ 1. receive()        pull latest message from channel        │
+│ 2. getContext()     PROMPT + SKILLS +                       │
+│                     LAST_SKILL_USE_RESULTS +                │
+│                     HISTORY + TIME                          │
+│ 3. LLM call         Anthropic / OpenAI / ASICloud / ASI:One │
+│ 4. sread / balance  parse response into skill s-exprs       │
+│ 5. eval each skill  (remember ...), (metta ...), ...        │
+│ 6. addToHistory     append human msg + response +           │
+│                     any errors                              │
+│ 7. sleep            sleepInterval seconds                   │
+│ 8. recurse          (omegaclaw (+ 1 $k))                    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 If no new message arrives and the `loops` counter hits zero, the agent idles until `nextWakeAt`, then runs one wake loop for background work.
@@ -282,7 +283,7 @@ The set of callable operations available to the agent at each turn — plain MeT
 
 ### Channels
 
-Abstract communication endpoints. `(send ...)` and `(receive)` delegate to the active channel adapter (IRC or Mattermost by default). See [reference-channels.md](./reference-channels.md).
+Abstract communication endpoints. `(send ...)` and `(receive)` delegate to the active channel adapter (IRC, Telegram, or Mattermost by default). See [reference-channels.md](./reference-channels.md).
 
 ### Orchestration
 
@@ -343,7 +344,7 @@ A skill whose implementation is a remote agent reached through the Agentverse br
 - a small, auditable agent that can explain **why** it reached a conclusion;
 - reasoning with explicit uncertainty (`stv frequency confidence`) rather than opaque probabilities;
 - a platform for experimenting with NAL and PLN inside an agent loop;
-- a chat-facing agent over IRC, Mattermost, or a channel you add yourself.
+- a chat-facing agent over IRC, Telegram, Mattermost, or a channel you add yourself.
 
 ### Honest limits
 

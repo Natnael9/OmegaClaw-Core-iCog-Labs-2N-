@@ -35,26 +35,63 @@ class AIProvider:
         """Check if provider is configured (without initializing)."""
         return bool(os.environ.get(self._var_name))
 
-    def chat(self, model: str, content: str, max_tokens: int = 6000) -> str:
+    def chat(self, model: str, content: str, max_tokens: int = 6000, **kwargs) -> str:
         """Send chat request, initializing client if needed."""
         self._ensure_client()
 
         if self._client is None:
             raise RuntimeError(f"{self._name} not configured (set {self._var_name})")
 
-        response = self._client.chat.completions.create(
-            model=model,
-            messages=[{"role": "user", "content": content}],
-            max_tokens=max_tokens
-        )
+        content = content.replace(":-:-:-:", " ")
+        try:
+            response = self._client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": content}],
+                max_tokens=max_tokens,
+                **kwargs
+            )
 
-        return self._clean_text(response.choices[0].message.content)
+            return self._clean_text(response.choices[0].message.content)
+        except Exception as e:
+            print(f"[lib_llm_ext.AIProvider.chat] Exception while communicating with LLM: {e}")
+            return ""
 
     def _clean_text(self, text: str) -> str:
         """Unescape special characters."""
         return text.replace("_quote_", '"').replace("_apostrophe_", "'")
 
 
+class AsiOneProvider(AIProvider):
+    """Lazy AI provider with on-demand initialization."""
+
+    def __init__(self, name: str, var_name: str, model_name: str, base_url: str):
+        super().__init__(name, var_name, model_name, base_url)
+
+    def chat(self, model: str, content: str, max_tokens: int = 6000, **kwargs) -> str:
+        """Send chat request, initializing client if needed."""
+        self._ensure_client()
+
+        if self._client is None:
+            raise RuntimeError(f"{self._name} not configured (set {self._var_name})")
+
+        sysmsg, usermsg = content.split(":-:-:-:")
+        try:
+            response = self._client.chat.completions.create(
+                model=model,
+                messages=[{"role": "system", "content": sysmsg},
+                          {"role": "user", "content": usermsg}],
+                max_tokens=max_tokens,
+                extra_body={
+                    "enable_thinking": True,
+                    "thinking_budget": 6000 
+                },
+                **kwargs
+            )
+
+            return self._clean_text(response.choices[0].message.content)
+        except Exception as e:
+            print(f"[lib_llm_ext.ASIOneProvider.chat] Exception while communicating with LLM: {e}")
+            return ""
 
 # Provider registry - lazy, no initialization yet
 _provider_registry = {}
@@ -62,8 +99,11 @@ _provider_registry = {}
 
 def _register_provider(name: str, var_name: str, model_name: str, base_url: str):
     """Register a provider configuration (no instantiation yet)."""
-    _provider_registry[name] = AIProvider(name, var_name, model_name, base_url)
+    _register_provider_instance(AIProvider(name, var_name, model_name, base_url))
 
+def _register_provider_instance(provider: AIProvider):
+    """Register a pre-initialized provider configuration (no instantiation yet)."""
+    _provider_registry[name] = provider
 
 def _get_provider(name: str) -> Optional[AIProvider]:
     """Get or create provider instance on demand."""
@@ -74,6 +114,7 @@ def _get_provider(name: str) -> Optional[AIProvider]:
 _register_provider(name="ASICloud", var_name="ASI_API_KEY", model_name="minimax/minimax-m2.5", base_url="https://inference.asicloud.cudos.org/v1")
 _register_provider(name="Anthropic", var_name="ANTHROPIC_API_KEY", model_name="claude-opus-4-6", base_url="https://api.anthropic.com/v1/")
 _register_provider(name="Ollama-local", var_name="OLLAMA_API_KEY", model_name="qwen3.5:9b", base_url="http://localhost:11434/v1")
+_register_provider_instance(AsiOneProvider(name="ASIOne", var_name="ASIONE_API_KEY", model_name="asi1-ultra", base_url="https://api.asi1.ai/v1"))
 # At the moment the OpenAI model call is in PeTTa, just init a default config here
 _register_provider(name="OpenAI", var_name="OPENAI_API_KEY", model_name="gpt-5.4", base_url="https://api.openai.com/v1")
 
@@ -86,6 +127,34 @@ def callProvider(provider_name: str, content: str, max_tokens: int = 6000) -> st
     return provider.chat(model=provider._model_name, content=content, max_tokens=max_tokens)
 
 
+
+def _chatAsiOne(client, model, content, max_tokens=6000, **kwargs):
+    spl = content.split(":-:-:-:")
+    try:
+        resp = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "system", "content": spl[0]},
+                      {"role": "user", "content": spl[1]}],
+            max_tokens=max_tokens,
+            extra_body={
+                "enable_thinking": True,
+                "thinking_budget": 6000 
+            },
+            **kwargs
+        )
+        return _clean(resp.choices[0].message.content)
+    except Exception as e:
+        print(f"[lib_llm_ext._chat] Exception while communicating with LLM: {e}")
+        return ""
+
+def useAsi1(content):
+    resp = _chatAsiOne(
+        client=ASIONE_CLIENT,
+        model="asi1-ultra", # "asi1-ultra"
+        content=content
+    )
+    resp = resp.replace("</arg_value>", " ").replace("</tool_call>", " ").replace("<arg_value>", " ").replace("<tool_call>", " ")
+    return resp
 
 _embedding_model = None
 
