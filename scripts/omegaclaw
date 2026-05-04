@@ -149,6 +149,8 @@ def _choose_provider():
             ("ASIOne", "Local", "ASIONE_API_KEY"),
             ("Ollama-local", "Local", "OLLAMA_API_KEY")]
 
+        provider, embeddingprovider, api_token_var = providers[provider_id]
+
         llm_server_local_url = "http://localhost:11434"
         if provider == "Ollama-local":
             c = input(f"Enter Ollama local server address (default: {llm_server_local_url}): ").strip()
@@ -160,8 +162,7 @@ def _choose_provider():
 
             print(f"Local Ollama server url is set to {llm_server_local_url}")
 
-        provider, embeddingprovider, api_token_var = providers[provider_id]
-        return provider, embeddingprovider, api_token_var
+        return provider, embeddingprovider, api_token_var, llm_server_local_url
 
 
 def _prompt_llm_token():
@@ -189,7 +190,7 @@ def config_run_omegaclaw(config_output_path):
     require_license_acceptance()
 
     channel_config = _choose_channel()
-    provider, embeddingprovider, api_token_var = _choose_provider()
+    provider, embeddingprovider, api_token_var, llm_server_local_url = _choose_provider()
     token = _prompt_llm_token()
 
     with open(config_output_path, "w", encoding="utf-8") as f:
@@ -304,6 +305,7 @@ options() {
     provider=ASICloud
     llm_server_local_url="http://localhost:11434"
     image=singularitynet/omegaclaw:latest
+    commchannel=irc
     command=${1}
     shift 1
 
