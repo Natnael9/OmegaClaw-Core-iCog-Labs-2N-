@@ -14,7 +14,7 @@
           (configure spamShield True)
           (configure sleepInterval 1) ;10
           (configure LLM gpt-5.4)
-          (configure provider Anthropic) ;Anthropic or OpenAI or ASICloud
+          (configure provider Anthropic) ;Anthropic or OpenAI or ASICloud or ASIOne
           (configure maxOutputToken 6000)
           (configure reasoningMode medium)
           (configure wakeupInterval 600) ;600=10 minutes
@@ -56,7 +56,7 @@
                                 (let* (($lastmessage (if $msgnew (HUMAN-MSG: $msg) (if (spamShield) " DO NOT RE-SEND OR SPAM!" "")))
                                        ($_ (change-state! &nextWakeAt (+ (get_time) (wakeupInterval))))
                                        ($_ (println! $lastmessage))
-                                       ($send (py-str ($prompt $lastmessage)))
+                                       ($send (py-str ($prompt :-:-:-: $lastmessage)))
                                        ($_ (println! (CHARS_SENT: (string_length $send) $send)))
                                        ($respi (if (== (provider) OpenAI)
                                                    (useGPT (LLM) (maxOutputToken) (reasoningMode) $send)
