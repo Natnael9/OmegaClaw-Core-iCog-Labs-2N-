@@ -1,7 +1,8 @@
-import multiprocessing.connection as conn
 import logging
 import threading
-import time
+import select
+import pickle
+import socket
 
 HOST_DEFAULT = "localhost"
 PORT_DEFAULT = 9765
@@ -45,6 +46,71 @@ class Queue:
     def pop_front(self):
         with self._lock:
             return self._queue.pop(0)
+
+class RingBuffer:
+
+    def __init__(self, size=2 ** 20):
+        self._buffer = bytearray(size)
+        self._start = 0
+        self._count = 0
+        self._size = size
+        self._lock = threading.RLock()
+        self._read = threading.Condition(self._lock)
+
+    def data(self):
+        with self._lock:
+            end = (self._start + self._count) % self._size
+            return self._buffer[self._start : end]
+
+    def mark_read(self, count):
+        with self._lock:
+            self._start = (self._start + count) % self._size
+            self._count = self._count - count
+            assert self._count >= 0
+            self._read.notify_all()
+
+    def space(self):
+        with self._lock:
+            start = (self._start + self._count) % self._size
+            end = self._start if start < self._start else self._size
+            return self._buffer[start : end]
+
+    def mark_write(self, count):
+        with self._lock:
+            self._count = self._count + count
+            assert self._count <= self._size
+
+    def write_blocking(self, data, timeout=None):
+        with self._lock:
+            size = len(data)
+            logging.debug(f'Writing {size} bytes of data into the buffer, free space: {self._size - self._count} bytes')
+            if not self._read.wait_for(lambda: (self._size - self._count) >= size, timeout):
+                return False
+            end = (self._start + self._count) % self._size
+            if end >= self._start:
+                first = min(self._size - end, size)
+                self._buffer[end : end + first] = data[0 : first]
+                self._buffer[0 : size - first] = data[first : size]
+            else:
+                self._buffer[end : end + size] = data[0 : size]
+            self.mark_write(size)
+            return True
+
+    def read_aot(self, size):
+        with self._lock:
+            if self._count < size:
+                return None
+            end = (self._start + self._count) % self._size
+            if end >= self._start:
+                return self._buffer[self._start : self._start + size]
+            else:
+                result = bytes(size)
+                first = min(self._size - self._start, size)
+                result[0 : first] = self._buffer[self._start : self._start + first]
+                result[first : size] = self._buffer[0 : size - first]
+                return result
+
+
 
 class Future:
 
@@ -101,10 +167,12 @@ class Response:
 class ConnectionTransport:
 
     def __init__(self, connect):
-        self._conn = None
+        self._sock = None
         self._connect = connect
+        self._poll = None
+        self._output = RingBuffer()
+        self._input = RingBuffer()
         self._is_stopped = Shared(False)
-        self._output = Queue()
         self._handler = Shared(None)
         self._thread = threading.Thread(target=ConnectionTransport._run,
                                        args=[self], daemon=True)
@@ -114,7 +182,28 @@ class ConnectionTransport:
         assert not self._thread.is_alive()
 
     def send(self, msg):
-        self._output.push_back(msg)
+        self._write_msg(msg)
+
+    def _write_msg(self, msg):
+        logging.debug(f'Writing message: {msg}')
+        data = pickle.dumps(msg)
+        size = len(data)
+        assert self._output.write_blocking(int(size).to_bytes(4) + data)
+        logging.debug(f'Message is written')
+
+    def _read_msg(self):
+        data = self._input.read_aot(4)
+        if not data:
+            return None
+        size = int.from_bytes(data)
+        logging.debug(f'Reading {size} bytes message')
+        data = self._input.read_aot(4 + size)
+        if not data:
+            return None
+        msg = pickle.loads(data[4:])
+        self._input.mark_read(4 + size)
+        logging.debug(f'Message is read: {msg}')
+        return msg
 
     def start(self):
         self._thread.start()
@@ -125,72 +214,80 @@ class ConnectionTransport:
         if self._thread.is_alive():
             logging.error(f'Could not stop working thread')
 
-    def _send(self, msg):
-        if not self._conn:
-            return False
+    def _send(self):
+        if not self._sock:
+            return
         try:
-            self._conn.send(msg)
-            return True
+            while True:
+                data = self._output.data()
+                to_be_sent = len(data)
+                if to_be_sent == 0:
+                    break
+                count = self._sock.send(data, socket.MSG_DONTWAIT)
+                if count > 0:
+                    logging.debug(f'Sent {count} bytes of data')
+                    self._output.mark_read(count)
+                if count < to_be_sent:
+                    break
         except Exception as e:
             logging.error(f'Exception on _send: {repr(e)}')
-            return False
 
     def _recv(self):
-        if not self._conn:
-            return False
+        if not self._sock:
+            return
         try:
-            if self._conn.poll():
-                return self._conn.recv()
-            else:
-                return None
-        except EOFError as e:
-            logging.warning(f'Closing connection after _recv error: {repr(e)}')
-            self._conn = None
-            return None
-        except OSError as e:
-            logging.warning(f'Closing connection after _recv error: {repr(e)}')
-            self._conn = None
-            return None
+            while True:
+                buffer = self._input.space()
+                bufsize = len(buffer)
+                if bufsize == 0:
+                    break
+                count = self._sock.recv_into(buffer, bufsize, socket.MSG_DONTWAIT)
+                if count > 0:
+                    logging.debug(f'Received {count} bytes of data')
+                    self._input.write_blocking(buffer[0:count])
+                if count < bufsize:
+                    break
         except Exception as e:
             logging.error(f'Exception on _recv: {repr(e)}')
-            return None
+            self._sock.close()
+            self._sock = None
 
     def _run(self):
         while not self._is_stopped.get():
-            if self._conn:
-                # send messages
-                while True:
-                    msg = self._output.front()
-                    if not msg:
-                        break
-                    logging.info(f'Sending msg: {msg}')
-                    if self._send(msg):
-                        logging.info(f'Message sent')
-                        self._output.pop_front()
-
-                # receive messages
-                while True:
-                    msg = self._recv()
-                    if not msg:
-                        break
-                    logging.info(f'Recieved msg: {msg}')
-                    self._handler.get()(msg)
+            if not self._sock:
+                self._sock = self._connect()
+                self._poll = select.poll()
+                self._poll.register(self._sock.fileno())
             else:
-                self._conn = self._connect()
+                events = self._poll.poll(0.1)
 
-            time.sleep(0.1)
+                for (_, event) in events:
+                    if (event & select.POLLIN) > 0:
+                        self._recv()
+                    elif (event & select.POLLOUT) > 0:
+                        self._send()
+                    elif (event & select.POLLERR) > 0:
+                        logging.error(f'Socket error event: {event}')
+                        self._sock.close()
+                        self._sock = None
+            while True:
+                msg = self._read_msg()
+                if not msg:
+                    break
+                self._handler.get()(msg)
 
 class IPCServer:
 
     def __init__(self, address=(HOST_DEFAULT, PORT_DEFAULT)):
-        self._listener = conn.Listener(address)
+        self._server = socket.create_server(address)
+        self._address = address
         self._transport = ConnectionTransport(lambda: self._connect())
 
     def _connect(self):
         try:
-            logging.info(f'Listening on: {self._listener.address}')
-            c = self._listener.accept()
-            logging.info(f'Connected')
+            logging.info(f'Listening on: {self._address}')
+            c, a = self._server.accept()
+            logging.info(f'Connected from {a}')
             return c
         except Exception as e:
             logging.error(f'Exception on accepting the incoming connection: {repr(e)}')
@@ -200,8 +297,8 @@ class IPCServer:
         self._transport.start()
 
     def stop(self):
-        self._listener.close()
         self._transport.stop()
+        self._server.close()
 
     def set_handler(self, handler):
         self._transport.set_handler(handler)
@@ -218,7 +315,7 @@ class IPCClient():
     def _connect(self):
         try:
             logging.info(f'Connecting to: {self._address}')
-            c = conn.Client(self._address)
+            c = socket.create_connection(self._address)
             logging.info(f'Connected')
             return c
         except Exception as e:
@@ -341,9 +438,12 @@ class TestClass:
         response = server.request('foo', { 'arg': 'abcd' })
         assert response.get(1) == { 'result': 'dcba' }
 
-        client._ipc._transport._conn.close()
+        client.stop()
+        client = Rpc(IPCClient())
+        client.start()
         response = server.request('foo', { 'arg': 'abcd' })
-        assert response.get(1) == { 'result': 'dcba' }
+        assert response.get(10) == { 'result': 'dcba' }
+        client.stop()
 
     def test_send(self):
         client = Rpc(IPCClient())
