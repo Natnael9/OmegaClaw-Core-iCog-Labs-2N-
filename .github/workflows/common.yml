@@ -86,3 +86,4 @@ jobs:
             ${{ inputs.move_latest && 'singularitynet/omegaclaw:latest' || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          no-cache: ${{ inputs.no_build_cache }}
