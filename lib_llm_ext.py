@@ -103,7 +103,7 @@ def _register_provider(name: str, var_name: str, model_name: str, base_url: str)
 
 def _register_provider_instance(provider: AIProvider):
     """Register a pre-initialized provider configuration (no instantiation yet)."""
-    _provider_registry[name] = provider
+    _provider_registry[provider._name] = provider
 
 def _get_provider(name: str) -> Optional[AIProvider]:
     """Get or create provider instance on demand."""
