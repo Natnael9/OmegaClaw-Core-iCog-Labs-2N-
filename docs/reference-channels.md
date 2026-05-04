@@ -18,7 +18,9 @@ The MeTTa side reads `commchannel` and branches:
 (= (receive)
    (if (== (commchannel) irc)
        (py-call (irc.getLastMessage))
-       (py-call (mattermost.getLastMessage))))
+       (if (== (commchannel) telegram)
+           (py-call (telegram.getLastMessage))
+           (py-call (mattermost.getLastMessage)))))
 ```
 
 ## `channels/irc.py`
@@ -36,13 +38,21 @@ Mattermost adapter using a bot token.
 - `start_mattermost(url, channel_id, bot_token)` — connect to a Mattermost instance.
 - Requires `MM_BOT_TOKEN` configured (empty by default — set via `configure` or command line).
 
+## `channels/telegram.py`
+
+Telegram adapter using Bot API long polling.
+
+- `start_telegram(bot_token, chat_id, poll_timeout)` — starts a poll loop.
+- `TG_CHAT_ID` is optional; if empty, the adapter can auto-bind to the first valid inbound chat.
+- Outbound messages are chunked to Telegram-safe lengths.
+
 ## `channels/websearch.py`
 
 Not a communication channel in the `send`/`receive` sense — this is the backend for the `search` skill. Exposes `search(query)`.
 
 ## Adding a new channel
 
-See [tutorial-05-adding-a-channel.md](./tutorial-05-adding-a-channel.md).
+See [tutorial-04-adding-a-channel.md](./tutorial-04-adding-a-channel.md).
 
 ## Related reference
 

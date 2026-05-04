@@ -10,6 +10,7 @@ LLM and embedding bridges.
 |---|---|
 | `useClaude(prompt)` | Call an Anthropic Claude model. Used when `provider = Anthropic`. |
 | `useMiniMax(prompt)` | Call MiniMax. Used when `provider = ASICloud` (or similar routing). |
+| `useAsi1(prompt)` | Call ASI1. Used when `provider = ASIOne`. |
 | `useLocalEmbedding(str)` | Compute an embedding with a locally loaded model. Used when `embeddingprovider = Local`. |
 | `initLocalEmbedding()` | Load the local embedding model once at startup. |
 
@@ -24,7 +25,7 @@ Remote agent bridge.
 | `tavily_search(query)` | Forward a query to the remote Tavily search agent. |
 | `technical_analysis(ticker)` | Forward a ticker to the remote technical analysis agent. |
 
-Both use a fixed Agentverse address and return the remote agent's reply as a string. Add your own function following the same pattern — see [tutorial-07-remote-agentverse-skills.md](./tutorial-07-remote-agentverse-skills.md).
+Both use a fixed Agentverse address and return the remote agent's reply as a string. Add your own function following the same pattern — see [tutorial-06-remote-agentverse-skills.md](./tutorial-06-remote-agentverse-skills.md).
 
 ## `src/helper.py`
 

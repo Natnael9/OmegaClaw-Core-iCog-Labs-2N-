@@ -6,7 +6,7 @@ The core agent loop is approximately **200 lines of MeTTa**.
 
 > Most AI assistants generate answers that sound right. OmegaClaw-hosted agents generate answers that come with a **mathematical receipt** showing exactly how confident each conclusion is and what evidence supports it. When the agent says it is 72% confident, that number comes from formal inference — not a feeling.
 
-This page is the conceptual introduction: what OmegaClaw is, why the hybrid architecture exists, how the pieces connect at runtime, the vocabulary used throughout the rest of the docs, and the honest limits of the current system. For getting a running instance, see [intro-installation.md](./intro-installation.md). For hands-on walkthroughs, see the tutorials listed at the end.
+This page is the conceptual introduction: what OmegaClaw is, why the hybrid architecture exists, how the pieces connect at runtime, the vocabulary used throughout the rest of the docs, and the honest limits of the current system. For getting a running instance, see [installation instruction](/README.md#installation). For hands-on walkthroughs, see the tutorials listed at the end.
 
 ---
 
@@ -126,6 +126,7 @@ lib_omegaclaw.metta       loads all submodules
 └── lib_llm_ext.py        Claude / GPT / MiniMax / local embeddings
 
 channels/irc.py           IRC adapter
+channels/telegram.py      Telegram adapter
 channels/mattermost.py    Mattermost adapter
 channels/websearch.py     web search
 
@@ -138,19 +139,19 @@ memory/history.metta      episodic trace (written at runtime)
 Each iteration of `(omegaclaw $k)` in `src/loop.metta` performs:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│ 1. receive()        pull latest message from channel    │
-│ 2. getContext()     PROMPT + SKILLS +                   │
-│                     LAST_SKILL_USE_RESULTS +            │
-│                     HISTORY + TIME                      │
-│ 3. LLM call         Anthropic / OpenAI / ASICloud       │
-│ 4. sread / balance  parse response into skill s-exprs   │
-│ 5. eval each skill  (remember ...), (metta ...), ...    │
-│ 6. addToHistory     append human msg + response +       │
-│                     any errors                          │
-│ 7. sleep            sleepInterval seconds               │
-│ 8. recurse          (omegaclaw (+ 1 $k))                │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│ 1. receive()        pull latest message from channel        │
+│ 2. getContext()     PROMPT + SKILLS +                       │
+│                     LAST_SKILL_USE_RESULTS +                │
+│                     HISTORY + TIME                          │
+│ 3. LLM call         Anthropic / OpenAI / ASICloud / ASI:One │
+│ 4. sread / balance  parse response into skill s-exprs       │
+│ 5. eval each skill  (remember ...), (metta ...), ...        │
+│ 6. addToHistory     append human msg + response +           │
+│                     any errors                              │
+│ 7. sleep            sleepInterval seconds                   │
+│ 8. recurse          (omegaclaw (+ 1 $k))                    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 If no new message arrives and the `loops` counter hits zero, the agent idles until `nextWakeAt`, then runs one wake loop for background work.
@@ -187,7 +188,7 @@ user message
                   lib_chromadb.remember(str, vec, timestamp)
 ```
 
-For a **grounded** write with provenance, the pattern is the same, but the LLM first queries memory, then fetches from a verified source before calling `remember`. See [tutorial-08-grounded-reasoning.md](./tutorial-08-grounded-reasoning.md).
+For a **grounded** write with provenance, the pattern is the same, but the LLM first queries memory, then fetches from a verified source before calling `remember`. See [tutorial-07-grounded-reasoning.md](./tutorial-07-grounded-reasoning.md).
 
 ### Three-tier memory interaction
 
@@ -282,7 +283,7 @@ The set of callable operations available to the agent at each turn — plain MeT
 
 ### Channels
 
-Abstract communication endpoints. `(send ...)` and `(receive)` delegate to the active channel adapter (IRC or Mattermost by default). See [reference-channels.md](./reference-channels.md).
+Abstract communication endpoints. `(send ...)` and `(receive)` delegate to the active channel adapter (IRC, Telegram, or Mattermost by default). See [reference-channels.md](./reference-channels.md).
 
 ### Orchestration
 
@@ -313,7 +314,7 @@ See [reference-orchestration.md](./reference-orchestration.md) for each layer.
 
 ### External grounding
 
-The pattern of anchoring a premise's confidence on a verified external source rather than the LLM's prior. The primary mitigation for premise-formulation errors. See [tutorial-08-grounded-reasoning.md](./tutorial-08-grounded-reasoning.md).
+The pattern of anchoring a premise's confidence on a verified external source rather than the LLM's prior. The primary mitigation for premise-formulation errors. See [tutorial-07-grounded-reasoning.md](./tutorial-07-grounded-reasoning.md).
 
 ### Revision
 
@@ -325,7 +326,7 @@ The failure mode where a flawed premise is run through the formal engine and eme
 
 ### Agentverse-backed skill
 
-A skill whose implementation is a remote agent reached through the Agentverse bridge rather than a local function. See [tutorial-07-remote-agentverse-skills.md](./tutorial-07-remote-agentverse-skills.md).
+A skill whose implementation is a remote agent reached through the Agentverse bridge rather than a local function. See [tutorial-06-remote-agentverse-skills.md](./tutorial-06-remote-agentverse-skills.md).
 
 ---
 
@@ -343,7 +344,7 @@ A skill whose implementation is a remote agent reached through the Agentverse br
 - a small, auditable agent that can explain **why** it reached a conclusion;
 - reasoning with explicit uncertainty (`stv frequency confidence`) rather than opaque probabilities;
 - a platform for experimenting with NAL and PLN inside an agent loop;
-- a chat-facing agent over IRC, Mattermost, or a channel you add yourself.
+- a chat-facing agent over IRC, Telegram, Mattermost, or a channel you add yourself.
 
 ### Honest limits
 
@@ -355,14 +356,13 @@ The hybrid design moves the failure mode — it does not eliminate it. Known iss
 
 **Garbage In, Garbage Out** applies with a twist: the formal engine does not merely pass through garbage, it **amplifies** it by lending mathematical authority to conclusions derived from flawed premises.
 
-The mitigations (external grounding, revision, action thresholds, the defense stack) are documented and non-optional for production use. See [reference-failure-modes.md](./reference-failure-modes.md) for the full catalogue and [tutorial-09-reliable-reasoning.md](./tutorial-09-reliable-reasoning.md) for strategy.
+The mitigations (external grounding, revision, action thresholds, the defense stack) are documented and non-optional for production use. See [reference-failure-modes.md](./reference-failure-modes.md) for the full catalogue and [tutorial-08-reliable-reasoning.md](./tutorial-08-reliable-reasoning.md) for strategy.
 
 ---
 
 ## Where to go next
 
-- [intro-installation.md](./intro-installation.md) — get a running instance.
-- [tutorial-01-first-run.md](./tutorial-01-first-run.md) — hands-on first session.
+- [tutorial-01-teaching-memories.md](./tutorial-01-teaching-memories.md) — hands-on first session.
 - [reference-orchestration.md](./reference-orchestration.md) — engine selection, stopping criteria, action thresholds, defense stack.
 - [reference-internals-loop.md](./reference-internals-loop.md) — turn structure in detail.
 - [reference-internals-memory-store.md](./reference-internals-memory-store.md) — the three memory tiers.
