@@ -43,6 +43,7 @@ def test_git_pull_public():
         c.step("pre-create parent dir")
         dexec_root("mkdir", "-p", TARGET_DIR)
         dexec_root("chmod", "777", TARGET_DIR)
+        dexec_root("git", "config", "--global", "--add", "safe.directory", TARGET_DIR)
         c.ok("pre-create dir", TARGET_DIR)
 
         c.step("send prompt via IRC")
