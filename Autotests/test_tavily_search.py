@@ -26,7 +26,7 @@ def test_tavily_search():
 
         c.step("verify agent invoked (tavily-search ...) with Fetch.ai query")
         arg = wait_for_skill_call(
-            c.run_id, "tavily-search", timeout=240, arg_substr="fetch",
+            c.run_id, "tavily-search", timeout=60, arg_substr="fetch",
         )
         if arg is None:
             all_calls = find_skill_calls(c.run_id, "tavily-search") or []
@@ -45,7 +45,7 @@ def test_tavily_search():
              f"{len(regular_search)} plain search calls")
 
         c.step("verify agent sent summary back with (send ...)")
-        send_arg = wait_for_skill_call(c.run_id, "send", timeout=120)
+        send_arg = wait_for_skill_call(c.run_id, "send", timeout=60)
         if send_arg is None:
             c.fail("send invoked", "agent did not relay tavily results")
         body = send_arg.lower()

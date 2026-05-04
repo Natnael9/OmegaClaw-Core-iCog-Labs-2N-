@@ -44,7 +44,7 @@ def test_skill_episodes():
         c.ok("irc-seed", f"run-id={seed_id}, time={seed_time:%H:%M:%S}")
 
         c.step("seed: wait for agent to reply (history will record it)")
-        seed_send = wait_for_skill_call(seed_id, "send", timeout=240)
+        seed_send = wait_for_skill_call(seed_id, "send", timeout=60)
         if seed_send is None:
             c.fail("seed reply", "agent did not reply to seed within 240s")
         c.ok("seed reply", f"reply={seed_send[:80]!r}")
@@ -70,7 +70,7 @@ def test_skill_episodes():
         c.ok("irc-recall", f"run-id={recall_id}")
 
         c.step("verify agent invoked (episodes ...)")
-        ep_arg = wait_for_skill_call(recall_id, "episodes", timeout=240)
+        ep_arg = wait_for_skill_call(recall_id, "episodes", timeout=60)
         if ep_arg is None:
             c.fail("episodes invoked", "no (episodes ...) call within 240s")
         c.ok("episodes invoked", f"arg={ep_arg[:80]!r}")

@@ -43,7 +43,7 @@ def test_git_local_commit():
         c.ok("irc", f"run-id={c.run_id}")
 
         c.step(f"wait for {COMMIT_FILE} on disk")
-        mtime = wait_for_file(f"{TARGET_DIR}/{COMMIT_FILE}", start_ts, timeout=180)
+        mtime = wait_for_file(f"{TARGET_DIR}/{COMMIT_FILE}", start_ts, timeout=60)
         if mtime is None:
             c.fail(COMMIT_FILE, f"{COMMIT_FILE} not created within timeout")
         c.ok(COMMIT_FILE, f"after {mtime - start_ts}s")
@@ -63,7 +63,7 @@ def test_git_local_commit():
         )
         grade, head = try_with_clarification(
             c, has_commit, clarification,
-            timeout_first=120, timeout_second=180,
+            timeout_first=60, timeout_second=60,
         )
         c.set_grade(grade)
         if grade == Checker.GRADE_FAIL:

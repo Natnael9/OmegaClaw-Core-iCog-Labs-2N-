@@ -29,7 +29,7 @@ def test_technical_analysis():
 
         c.step(f"verify agent invoked (technical-analysis ...) with {TICKER}")
         arg = wait_for_skill_call(
-            c.run_id, "technical-analysis", timeout=240, arg_substr=TICKER,
+            c.run_id, "technical-analysis", timeout=60, arg_substr=TICKER,
         )
         if arg is None:
             all_calls = find_skill_calls(c.run_id, "technical-analysis") or []
@@ -42,7 +42,7 @@ def test_technical_analysis():
         c.ok("TA invoked", f"arg={arg!r}")
 
         c.step("verify agent sent analysis summary with (send ...)")
-        send_arg = wait_for_skill_call(c.run_id, "send", timeout=180)
+        send_arg = wait_for_skill_call(c.run_id, "send", timeout=60)
         if send_arg is None:
             c.fail("send invoked", "agent did not relay TA result")
         body = send_arg.lower()

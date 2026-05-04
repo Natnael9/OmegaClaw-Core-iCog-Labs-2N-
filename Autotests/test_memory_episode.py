@@ -48,7 +48,7 @@ def test_memory_episode():
             low = s.lower()
             return "tooth" in low or "barney" in low
         remember_arg = wait_for_skill_match(
-            fact_marker, "remember", is_barney_memory, timeout=420,
+            fact_marker, "remember", is_barney_memory, timeout=60,
         )
         if remember_arg is None:
             calls = find_skill_calls(fact_marker, "remember") or []
@@ -76,7 +76,7 @@ def test_memory_episode():
         c.ok("irc-2", f"run-id={recall_marker}")
 
         c.step("verify agent invoked (query ...) or (episodes ...)")
-        q_arg = wait_for_skill_call(recall_marker, "query", timeout=180)
+        q_arg = wait_for_skill_call(recall_marker, "query", timeout=60)
         e_arg = wait_for_skill_call(recall_marker, "episodes", timeout=5)
         if q_arg is None and e_arg is None:
             c.fail("recall invoked", "neither (query ...) nor (episodes ...) called")
@@ -84,7 +84,7 @@ def test_memory_episode():
         c.ok(f"{which} invoked", f"arg={(q_arg or e_arg)!r}")
 
         c.step("verify (send ...) mentions dog/tooth and today's date or time")
-        send_arg = wait_for_skill_call(recall_marker, "send", timeout=120)
+        send_arg = wait_for_skill_call(recall_marker, "send", timeout=60)
         if send_arg is None:
             c.fail("send invoked", "agent did not send a recall reply")
         topic = [k for k in ("dog", "tooth", "lost") if k in send_arg.lower()]

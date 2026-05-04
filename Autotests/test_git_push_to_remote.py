@@ -88,7 +88,7 @@ def test_git_push_to_remote():
         c.ok("irc", f"run-id={c.run_id}")
 
         c.step(f"wait for {unique_file} on disk")
-        mtime = wait_for_file(f"{TARGET_DIR}/{unique_file}", start_ts, timeout=240)
+        mtime = wait_for_file(f"{TARGET_DIR}/{unique_file}", start_ts, timeout=60)
         if mtime is None:
             c.fail(unique_file, f"{unique_file} not created within timeout")
         c.ok(unique_file, f"after {mtime - start_ts}s")
@@ -102,7 +102,7 @@ def test_git_push_to_remote():
             c,
             lambda: True if _gh("GET", f"{api}/branches/{branch}", token)[0] == 200 else None,
             clarification,
-            timeout_first=180, timeout_second=240,
+            timeout_first=60, timeout_second=60,
         )
         c.set_grade(grade)
         if grade == Checker.GRADE_FAIL:

@@ -39,7 +39,7 @@ def test_create_date_script():
         # (shell-quoting of a shebang + executable bit is unreliable for it),
         # which takes 2-3 autonomous-loop iterations. Default WAIT=120s was
         # tight — bumped to 240s to absorb that.
-        mtime = wait_for_file(TARGET_FILE, start_ts, timeout=240)
+        mtime = wait_for_file(TARGET_FILE, start_ts, timeout=60)
         if mtime is None:
             c.fail("file created", f"{TARGET_FILE} not created within timeout")
         c.ok("file created", f"after {mtime - start_ts}s")

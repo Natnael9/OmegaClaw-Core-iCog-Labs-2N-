@@ -44,7 +44,7 @@ def test_skill_query():
         def has_color(arg):
             return secret_color.lower() in arg.lower()
         remember_arg = wait_for_skill_match(
-            seed_id, "remember", has_color, timeout=240,
+            seed_id, "remember", has_color, timeout=60,
         )
         if remember_arg is None:
             calls = find_skill_calls(seed_id, "remember") or []
@@ -74,7 +74,7 @@ def test_skill_query():
         c.ok("irc-recall", f"run-id={recall_id}")
 
         c.step("verify agent invoked (query ...)")
-        q_arg = wait_for_skill_call(recall_id, "query", timeout=240)
+        q_arg = wait_for_skill_call(recall_id, "query", timeout=60)
         if q_arg is None:
             c.fail("query invoked", "no (query ...) call within 240s")
         c.ok("query invoked", f"arg={q_arg[:80]!r}")
@@ -83,7 +83,7 @@ def test_skill_query():
         send_arg = wait_for_skill_match(
             recall_id, "send",
             lambda a: secret_color.lower() in a.lower(),
-            timeout=180,
+            timeout=60,
         )
         if send_arg is None:
             sends = find_skill_calls(recall_id, "send") or []

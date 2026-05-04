@@ -27,7 +27,7 @@ def test_search_basic():
 
         c.step("verify agent invoked a search skill (search or tavily-search)")
         skill, arg = wait_for_any_skill_call(
-            c.run_id, SEARCH_SKILLS, timeout=180, arg_substr="singularity",
+            c.run_id, SEARCH_SKILLS, timeout=60, arg_substr="singularity",
         )
         if arg is None:
             seen = {s: find_skill_calls(c.run_id, s) or [] for s in SEARCH_SKILLS}

@@ -14,7 +14,7 @@ CHANNEL = os.environ.get("OMEGACLAW_IRC_CHANNEL") or "#metaclaw777"
 CONTAINER = os.environ.get("OMEGACLAW_CONTAINER") or "omegaclaw"
 IRC_SERVER = "irc.quakenet.org"
 IRC_PORT = 6667
-WAIT = 120
+WAIT = 30
 POLL = 3
 
 HISTORY_FILE = "/PeTTa/repos/OmegaClaw-Core/memory/history.metta"

@@ -57,7 +57,7 @@ def test_run_create_dirs():
         )
         grade, _ = try_with_clarification(
             c, all_dirs_exist, clarification,
-            timeout_first=180, timeout_second=240,
+            timeout_first=60, timeout_second=60,
         )
         c.set_grade(grade)
 

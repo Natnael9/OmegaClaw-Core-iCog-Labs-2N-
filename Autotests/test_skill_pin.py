@@ -44,7 +44,7 @@ def test_skill_pin():
             low = arg.lower()
             return any(kw in low for kw in STEP_KEYWORDS) or str(c.run_id) in arg
         pin_arg = wait_for_skill_match(
-            c.run_id, "pin", is_task_state_pin, timeout=240,
+            c.run_id, "pin", is_task_state_pin, timeout=60,
         )
         if pin_arg is None:
             calls = find_skill_calls(c.run_id, "pin") or []
@@ -57,7 +57,7 @@ def test_skill_pin():
         c.ok("pin invoked", f"matched={matched}, arg={pin_arg[:80]!r}")
 
         c.step("verify agent acknowledged via (send ...)")
-        send_arg = wait_for_skill_call(c.run_id, "send", timeout=120)
+        send_arg = wait_for_skill_call(c.run_id, "send", timeout=60)
         if send_arg is None:
             c.fail("send invoked", "agent did not acknowledge via send")
         c.ok("send invoked", f"reply={send_arg[:80]!r}")
