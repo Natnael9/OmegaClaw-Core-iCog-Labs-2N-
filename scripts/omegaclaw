@@ -147,8 +147,8 @@ def _choose_provider():
             ("OpenAI", "OpenAI", "OPENAI_API_KEY"),
             ("ASICloud", "Local", "ASI_API_KEY"),
             ("ASIOne", "Local", "ASIONE_API_KEY"),
-            ("Ollama-local", "Local", "OLLAMA_API_KEY")]
-
+            ("Ollama-local", "Local", "OLLAMA_API_KEY")
+        ]
         provider, embeddingprovider, api_token_var = providers[provider_id]
 
         llm_server_local_url = "http://localhost:11434"
@@ -355,10 +355,10 @@ options() {
 
 start() {
     docker rm -f omegaclaw 2>/dev/null || true
+    docker pull "${image}" || true
 
     docker_cmd=(
         docker run -d -it
-            --pull always
             --name omegaclaw
             --user 65534:65534
             --security-opt no-new-privileges:true
