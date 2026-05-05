@@ -4,7 +4,7 @@ class LlmMockAgent:
 
     def __init__(self):
         self.rpc = rpc.Rpc(rpc.IPCServer())
-        self.rpc.on_request('chat', lambda args: self.on_chat(args))
+        self.rpc.on_request('set_answer', lambda args: self.on_set_answer(args))
         self.rpc.start()
         self.answers = {}
 
@@ -19,7 +19,7 @@ class LlmMockAgent:
             print(f"Mock doesn't have answer for: {content}")
             return ""
 
-    def on_chat(self, args):
+    def on_set_answer(self, args):
         self.answers[args['request']] = args['response']
         return True
 
@@ -32,9 +32,9 @@ class LlmMockHarness:
     def stop(self):
         self.rpc.stop()
 
-    def answer(self, request, response):
-        result = self.rpc.request('chat', { 'request': request, 'response': response })
-        if result.get(5) != True:
+    def set_answer(self, request, response):
+        result = self.rpc.request('set_answer', { 'request': request, 'response': response })
+        if result.get(10) != True:
             print(f"Cannot set answer to the mock, error: {result.error()}")
             return False
         return True
@@ -71,14 +71,14 @@ class TestMock:
         harness.stop()
 
     def test_response(self, agent, harness):
-        assert harness.answer("hello", "world")
+        assert harness.set_answer("hello", "world")
         assert agent.chat("hello") == "world"
 
     def test_test_restart(self, agent):
         harness = LlmMockHarness()
-        assert harness.answer("hello", "world")
+        assert harness.set_answer("hello", "world")
         assert agent.chat("hello") == "world"
         harness.stop()
         harness = LlmMockHarness()
-        assert harness.answer("hello", "world")
-        assert agent.chat("hello") == "world"
+        assert harness.set_answer("hello", "earth")
+        assert agent.chat("hello") == "earth"

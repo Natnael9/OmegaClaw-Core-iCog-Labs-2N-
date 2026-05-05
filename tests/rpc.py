@@ -57,40 +57,50 @@ class RingBuffer:
         self._lock = threading.RLock()
         self._read = threading.Condition(self._lock)
 
+    def empty(self):
+        with self._lock:
+            return self._count == 0
+
+    def full(self):
+        with self._lock:
+            return self._count == self._size
+
     def data(self):
         with self._lock:
-            end = (self._start + self._count) % self._size
-            return self._buffer[self._start : end]
+            end = self._start + self._count
+            if end > self._size:
+                end = self._size
+            return memoryview(self._buffer).toreadonly()[self._start : end]
 
     def mark_read(self, count):
         with self._lock:
+            assert self._count >= count
             self._start = (self._start + count) % self._size
             self._count = self._count - count
-            assert self._count >= 0
             self._read.notify_all()
 
     def space(self):
         with self._lock:
             start = (self._start + self._count) % self._size
             end = self._start if start < self._start else self._size
-            return self._buffer[start : end]
+            return memoryview(self._buffer)[start : end]
 
     def mark_write(self, count):
         with self._lock:
+            assert self._count + count <= self._size
             self._count = self._count + count
-            assert self._count <= self._size
 
     def write_blocking(self, data, timeout=None):
         with self._lock:
             size = len(data)
-            logging.debug(f'Writing {size} bytes of data into the buffer, free space: {self._size - self._count} bytes')
+            assert self._size >= size
             if not self._read.wait_for(lambda: (self._size - self._count) >= size, timeout):
                 return False
             end = (self._start + self._count) % self._size
             if end >= self._start:
-                first = min(self._size - end, size)
-                self._buffer[end : end + first] = data[0 : first]
-                self._buffer[0 : size - first] = data[first : size]
+                head_size = min(self._size - end, size)
+                self._buffer[end : end + head_size] = data[0 : head_size]
+                self._buffer[0 : size - head_size] = data[head_size : size]
             else:
                 self._buffer[end : end + size] = data[0 : size]
             self.mark_write(size)
@@ -98,19 +108,18 @@ class RingBuffer:
 
     def read_aot(self, size):
         with self._lock:
+            assert self._size >= size
             if self._count < size:
                 return None
             end = (self._start + self._count) % self._size
             if end >= self._start:
-                return self._buffer[self._start : self._start + size]
+                return bytes(self._buffer[self._start : self._start + size])
             else:
                 result = bytes(size)
-                first = min(self._size - self._start, size)
-                result[0 : first] = self._buffer[self._start : self._start + first]
-                result[first : size] = self._buffer[0 : size - first]
+                head_size = min(self._size - self._start, size)
+                result[0 : head_size] = self._buffer[self._start : self._start + head_size]
+                result[head_size : size] = self._buffer[0 : size - head_size]
                 return result
-
-
 
 class Future:
 
@@ -153,7 +162,7 @@ class Request:
         self.param = param
 
     def __repr__(self):
-        return f'Request[id={self.id}, method={self.method}, param={self.param}'
+        return f'Request[id={self.id}, method={self.method}, param={self.param}]'
 
 class Response:
 
@@ -162,7 +171,7 @@ class Response:
         self.result = result
 
     def __repr__(self):
-        return f'Response[id={self.id}, result={self.result}'
+        return f'Response[id={self.id}, result={self.result}]'
 
 class ConnectionTransport:
 
@@ -208,11 +217,19 @@ class ConnectionTransport:
     def start(self):
         self._thread.start()
 
-    def stop(self):
+    def stop(self, timeout=None):
         self._is_stopped.set(True)
-        self._thread.join(TIMEOUT_DEFAULT)
+        self._thread.join(timeout)
         if self._thread.is_alive():
             logging.error(f'Could not stop working thread')
+
+    def _close_connection(self):
+        logging.info(f'Closing connection')
+        try:
+            self._sock.close()
+        except Exception as e:
+            logging.error(f'Exception on close: {repr(e)}')
+        self._sock = None
 
     def _send(self):
         if not self._sock:
@@ -231,6 +248,7 @@ class ConnectionTransport:
                     break
         except Exception as e:
             logging.error(f'Exception on _send: {repr(e)}')
+            self._close_connection()
 
     def _recv(self):
         if not self._sock:
@@ -241,45 +259,66 @@ class ConnectionTransport:
                 bufsize = len(buffer)
                 if bufsize == 0:
                     break
+                logging.debug(f'Wait for the data')
                 count = self._sock.recv_into(buffer, bufsize, socket.MSG_DONTWAIT)
                 if count > 0:
                     logging.debug(f'Received {count} bytes of data')
-                    self._input.write_blocking(buffer[0:count])
+                    self._input.mark_write(count)
                 if count < bufsize:
                     break
         except Exception as e:
             logging.error(f'Exception on _recv: {repr(e)}')
-            self._sock.close()
-            self._sock = None
+            self._close_connection()
 
     def _run(self):
         while not self._is_stopped.get():
+
             if not self._sock:
                 self._sock = self._connect()
-                self._poll = select.poll()
-                self._poll.register(self._sock.fileno())
+                if self._sock:
+                    self._sock.setblocking(False)
+                    self._poll = select.poll()
+                    self._poll.register(self._sock.fileno())
             else:
+                mask = select.POLLRDHUP
+                if not self._output.empty():
+                    mask = mask | select.POLLOUT
+                if not self._input.full():
+                    mask = mask | select.POLLIN
+
+                self._poll.modify(self._sock.fileno(), mask)
                 events = self._poll.poll(0.1)
 
                 for (_, event) in events:
                     if (event & select.POLLIN) > 0:
                         self._recv()
-                    elif (event & select.POLLOUT) > 0:
+                    if (event & select.POLLOUT) > 0:
                         self._send()
-                    elif (event & select.POLLERR) > 0:
-                        logging.error(f'Socket error event: {event}')
-                        self._sock.close()
-                        self._sock = None
+                    if (event & (select.POLLERR | select.POLLRDHUP |
+                                 select.POLLHUP | select.POLLNVAL)) > 0:
+                        def check(flag):
+                            return f'{flag}' if (event & eval(f'select.{flag}')) > 0 else ''
+                        logging.error(f'Socket error event: ' +
+                                      check("POLLERR") +
+                                      check("POLLRDHUP") +
+                                      check("POLLHUP") +
+                                      check("POLLNVAL"))
+                        self._close_connection()
+
             while True:
                 msg = self._read_msg()
                 if not msg:
                     break
                 self._handler.get()(msg)
 
+        if self._sock:
+            self._close_connection()
+
 class IPCServer:
 
     def __init__(self, address=(HOST_DEFAULT, PORT_DEFAULT)):
         self._server = socket.create_server(address)
+        self._server.setblocking(False)
         self._address = address
         self._transport = ConnectionTransport(lambda: self._connect())
 
@@ -297,8 +336,8 @@ class IPCServer:
         self._transport.start()
 
     def stop(self):
-        self._transport.stop()
         self._server.close()
+        self._transport.stop()
 
     def set_handler(self, handler):
         self._transport.set_handler(handler)
@@ -316,7 +355,8 @@ class IPCClient():
         try:
             logging.info(f'Connecting to: {self._address}')
             c = socket.create_connection(self._address)
-            logging.info(f'Connected')
+            if c:
+                logging.info(f'Connected')
             return c
         except Exception as e:
             logging.error(f'Exception on trying to connect to address {self._address}: {repr(e)}')
