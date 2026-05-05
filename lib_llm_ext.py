@@ -1,5 +1,5 @@
 import os, openai
-import llm_mock
+import tests.mock
 
 def _init_openai_client(var_name, base_url):
     if var_name in os.environ:
