@@ -128,7 +128,7 @@ def _choose_channel():
 def _choose_provider():
     while True:
         print("Please select your LLM provider.")
-        print("1) Anthropic/Claude 2) OpenAI/ChatGPT 3) ASI Cloud Minimax 4) ASI:One")
+        print("1) Anthropic/Claude 2) OpenAI/ChatGPT 3) ASI Cloud Minimax 4) ASI:One 5) Ollama-local (default: qwen3.5:9b)")
         c = input("Enter 1-4 or 'q' to exit (default: 1): ").strip()
 
         if c.lower() == "q":
@@ -147,9 +147,22 @@ def _choose_provider():
             ("OpenAI", "OpenAI", "OPENAI_API_KEY"),
             ("ASICloud", "Local", "ASI_API_KEY"),
             ("ASIOne", "Local", "ASIONE_API_KEY"),
+            ("Ollama-local", "Local", "OLLAMA_API_KEY")
         ]
         provider, embeddingprovider, api_token_var = providers[provider_id]
-        return provider, embeddingprovider, api_token_var
+
+        llm_server_local_url = "http://localhost:11434"
+        if provider == "Ollama-local":
+            c = input(f"Enter Ollama local server address (default: {llm_server_local_url}): ").strip()
+            if c != "":
+              if not c.startswith(("http://")):
+                llm_server_local_url = f"http://{c}"
+              else:
+                llm_server_local_url = c
+
+            print(f"Local Ollama server url is set to {llm_server_local_url}")
+
+        return provider, embeddingprovider, api_token_var, llm_server_local_url
 
 
 def _prompt_llm_token():
@@ -177,7 +190,7 @@ def config_run_omegaclaw(config_output_path):
     require_license_acceptance()
 
     channel_config = _choose_channel()
-    provider, embeddingprovider, api_token_var = _choose_provider()
+    provider, embeddingprovider, api_token_var, llm_server_local_url = _choose_provider()
     token = _prompt_llm_token()
 
     with open(config_output_path, "w", encoding="utf-8") as f:
@@ -186,6 +199,7 @@ def config_run_omegaclaw(config_output_path):
         _write_kv(f, "OMEGACLAW_AUTH_SECRET", secrets.token_urlsafe(24))
         _write_kv(f, "provider", provider)
         _write_kv(f, "embeddingprovider", embeddingprovider)
+        _write_kv(f, "llm_server_local_url", llm_server_local_url)
         for key, value in channel_config.items():
             _write_kv(f, key, value)
 
@@ -281,6 +295,7 @@ help() {
     echo -e "\t-s <auth secret> set secret for the communication channel (default is 0000)"
     echo -e "\t-p <provider> set LLM API provider (default is ASICloud)."
     echo -e "\t              Pass API token via environment variable."
+    echo -e "\t-u <LLM API url> set LLM API URL for the local models (Ollama-local)"
     echo -e "\t-c <IRC channel> set IRC channel"
     echo -e "\t-d <Docker image> set Docker image name (default omegaclaw:latest)"
 }
@@ -288,15 +303,18 @@ help() {
 options() {
     OMEGACLAW_AUTH_SECRET=0000
     provider=ASICloud
+    llm_server_local_url="http://localhost:11434"
     image=singularitynet/omegaclaw:latest
+    commchannel=irc
     command=${1}
     shift 1
 
-    while getopts s:t:p:c:d: flag
+    while getopts s:t:p:u:c:d: flag
     do
         case "${flag}" in
             s) OMEGACLAW_AUTH_SECRET=${OPTARG};;
             p) provider=${OPTARG};;
+            u) llm_server_local_url=${OPTARG};;
             c) IRC_channel=${OPTARG};;
             d) image=${OPTARG};;
             *) help
@@ -317,6 +335,14 @@ options() {
         OpenAI)
             embeddingprovider="OpenAI"
             api_token_var="OPENAI_API_KEY"
+            ;;
+        ASIOne)
+            embeddingprovider="Local"
+            api_token_var="ASIONE_API_KEY"
+            ;;
+        Ollama-local)
+            embeddingprovider="Local"
+            api_token_var="OLLAMA_API_KEY"
             ;;
         *) help
            return 1
@@ -343,6 +369,7 @@ start() {
             --tmpfs /var/tmp:size=64m,mode=1777
             -e "${api_token_var}"="${api_token}"
             -e OMEGACLAW_AUTH_SECRET="$OMEGACLAW_AUTH_SECRET"
+            -e LLM_SERVER_LOCAL_URL="$llm_server_local_url"
             "$image"
             "commchannel=${commchannel}"
             "provider=${provider}"
