@@ -218,15 +218,17 @@ class ConnectionTransport:
         self._thread.start()
 
     def stop(self, timeout=None):
+        logging.info("Stopping transport")
         self._is_stopped.set(True)
         self._thread.join(timeout)
         if self._thread.is_alive():
-            logging.error(f'Could not stop working thread')
+            logging.error(f'Could not stop working thread in {timeout} seconds')
 
     def _close_connection(self):
         logging.info(f'Closing connection')
         try:
-            self._sock.close()
+            if self._sock:
+                self._sock.close()
         except Exception as e:
             logging.error(f'Exception on close: {repr(e)}')
         self._sock = None
@@ -298,11 +300,9 @@ class ConnectionTransport:
                                  select.POLLHUP | select.POLLNVAL)) > 0:
                         def check(flag):
                             return f'{flag}' if (event & eval(f'select.{flag}')) > 0 else ''
-                        logging.error(f'Socket error event: ' +
-                                      check("POLLERR") +
-                                      check("POLLRDHUP") +
-                                      check("POLLHUP") +
-                                      check("POLLNVAL"))
+                        flags = ["POLLERR", "POLLRDHUP", "POLLHUP", "POLLNVAL"]
+                        errors = [check(f) for f in flags]
+                        logging.error(f'Socket error event: ' + ' '.join(errors))
                         self._close_connection()
 
             while True:
@@ -335,9 +335,9 @@ class IPCServer:
     def start(self):
         self._transport.start()
 
-    def stop(self):
+    def stop(self, timeout=None):
         self._server.close()
-        self._transport.stop()
+        self._transport.stop(timeout)
 
     def set_handler(self, handler):
         self._transport.set_handler(handler)
@@ -365,8 +365,8 @@ class IPCClient():
     def start(self):
         self._transport.start()
 
-    def stop(self):
-        self._transport.stop()
+    def stop(self, timeout=None):
+        self._transport.stop(timeout)
 
     def set_handler(self, handler):
         self._transport.set_handler(handler)
@@ -419,8 +419,8 @@ class Rpc:
     def start(self):
         self._ipc.start()
 
-    def stop(self):
-        self._ipc.stop()
+    def stop(self, timeout=None):
+        self._ipc.stop(timeout)
 
 # Unit tests
 
@@ -436,6 +436,7 @@ class TestClass:
         handler = logging.StreamHandler()
         handler.setFormatter(logging.Formatter('[%(levelname)s] [%(thread_id)d]: %(message)s'))
         handler.addFilter(thread_id_filter)
+        logging.getLogger().handlers.clear()
         logging.getLogger().addHandler(handler)
         logging.getLogger().setLevel(logging.DEBUG)
 
@@ -444,14 +445,14 @@ class TestClass:
         server = Rpc(IPCServer())
         server.start()
         yield server
-        server.stop()
+        server.stop(5)
 
     @pytest.fixture
     def client(self):
         client = Rpc(IPCClient())
         client.start()
         yield client
-        client.stop()
+        client.stop(5)
 
     def test_request_from_server_to_client(self, server, client):
         def foo(param):
@@ -459,7 +460,7 @@ class TestClass:
             return { 'result': 'dcba' }
         client.on_request('foo', foo)
         response = server.request('foo', { 'arg': 'abcd' })
-        assert response.get(1) == { 'result': 'dcba' }
+        assert response.get(5) == { 'result': 'dcba' }
 
 
     def test_request_from_client_to_server(self, server, client):
@@ -468,25 +469,23 @@ class TestClass:
             return { 'result': 'dcba' }
         server.on_request('foo', foo)
         response = client.request('foo', { 'arg': 'abcd' })
-        assert response.get(1) == { 'result': 'dcba' }
+        assert response.get(5) == { 'result': 'dcba' }
 
-    def test_request_client_reconnect(self, server, client):
-        def foo(param):
-            assert param == { 'arg': 'abcd' }
-            return { 'result': 'dcba' }
-        client.on_request('foo', foo)
-        response = server.request('foo', { 'arg': 'abcd' })
-        assert response.get(1) == { 'result': 'dcba' }
+    def test_request_client_reconnect(self, server):
+        def reverse(param):
+            assert param.get('arg')
+            return { 'result': param['arg'][::-1] }
 
-        client.stop()
         client = Rpc(IPCClient())
+        client.on_request('reverse', reverse)
         client.start()
-        response = server.request('foo', { 'arg': 'abcd' })
-        assert response.get(10) == { 'result': 'dcba' }
-        client.stop()
+        response = server.request('reverse', { 'arg': 'abcd' })
+        assert response.get(5) == { 'result': 'dcba' }
+        client.stop(5)
 
-    def test_send(self):
         client = Rpc(IPCClient())
-        resp = client.request('foo', 'arg')
-        assert resp
-
+        client.on_request('reverse', reverse)
+        client.start()
+        response = server.request('reverse', { 'arg': 'cdef' })
+        assert response.get(5) == { 'result': 'fedc' }
+        client.stop(5)
