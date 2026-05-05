@@ -1,5 +1,4 @@
 import os, openai
-import tests.mock
 
 def _init_openai_client(var_name, base_url):
     if var_name in os.environ:
@@ -88,8 +87,9 @@ def useAsi1(content):
 _LLM_MOCK = None
 
 def _llm_mock():
+    global _LLM_MOCK
     if not _LLM_MOCK:
-        from tests.mock import LlmMockAgent
+        from Autotests.mock.llm import LlmMockAgent
         _LLM_MOCK = LlmMockAgent()
     return _LLM_MOCK
 

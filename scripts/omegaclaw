@@ -288,6 +288,7 @@ help() {
 options() {
     OMEGACLAW_AUTH_SECRET=0000
     provider=ASICloud
+    commchannel=irc
     image=singularitynet/omegaclaw:latest
     command=${1}
     shift 1
@@ -317,6 +318,10 @@ options() {
         OpenAI)
             embeddingprovider="OpenAI"
             api_token_var="OPENAI_API_KEY"
+            ;;
+        Test)
+            embeddingprovider="Local"
+            api_token_var="TEST_API_KEY"
             ;;
         *) help
            return 1
