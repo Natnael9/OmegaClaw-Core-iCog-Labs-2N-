@@ -146,7 +146,7 @@ def _choose_provider():
             ("Anthropic", "Local", "ANTHROPIC_API_KEY"),
             ("OpenAI", "OpenAI", "OPENAI_API_KEY"),
             ("ASICloud", "Local", "ASI_API_KEY"),
-            ("ASIOne", "Local", "ASIONE_API_KEY")]
+            ("ASIOne", "Local", "ASIONE_API_KEY"),
         ]
         provider, embeddingprovider, api_token_var = providers[provider_id]
         return provider, embeddingprovider, api_token_var
@@ -329,10 +329,10 @@ options() {
 
 start() {
     docker rm -f omegaclaw 2>/dev/null || true
+    docker pull "${image}" || true
 
     docker_cmd=(
         docker run -d -it
-            --pull always
             --name omegaclaw
             --user 65534:65534
             --security-opt no-new-privileges:true
