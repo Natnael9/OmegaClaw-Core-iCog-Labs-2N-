@@ -89,8 +89,9 @@ _LLM_MOCK = None
 def _llm_mock():
     global _LLM_MOCK
     if not _LLM_MOCK:
+        import Autotests.mock.rpc as rpc
         from Autotests.mock.llm import LlmMockAgent
-        _LLM_MOCK = LlmMockAgent()
+        _LLM_MOCK = LlmMockAgent((os.environ.get("TEST_API_KEY"), rpc.PORT_DEFAULT))
     return _LLM_MOCK
 
 def useLlmMock(content):

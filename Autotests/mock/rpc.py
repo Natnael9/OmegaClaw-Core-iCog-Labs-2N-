@@ -3,6 +3,7 @@ import threading
 import select
 import pickle
 import socket
+import json
 
 HOST_DEFAULT = "localhost"
 PORT_DEFAULT = 9765
@@ -153,6 +154,16 @@ class Future:
             self._error = error
             self._recieved.notify_all()
 
+class Message:
+
+    @classmethod
+    def from_data(cls, data):
+        d = json.loads(data.decode(encoding='utf-8', errors='strict'))
+        if d['type'] == 'request':
+            return Request(d['id'], d['method'], json.loads(d['param']))
+        if d['type'] == 'response':
+            return Response(d['id'], json.loads(d['result']))
+
 class Request:
 
     def __init__(self, id, method, param):
@@ -163,6 +174,12 @@ class Request:
     def __repr__(self):
         return f'Request[id={self.id}, method={self.method}, param={self.param}]'
 
+    def to_data(self):
+        return json.dumps({'type': 'request',
+                      'id': self.id,
+                      'method': self.method,
+                      'param': json.dumps(self.param)}).encode(encoding='utf-8', errors='strict')
+
 class Response:
 
     def __init__(self, id, result):
@@ -171,6 +188,11 @@ class Response:
 
     def __repr__(self):
         return f'Response[id={self.id}, result={self.result}]'
+
+    def to_data(self):
+        return json.dumps({'type': 'response',
+                           'id': self.id,
+                           'result': json.dumps(self.result)}).encode(encoding='utf-8', errors='strict')
 
 class ConnectionTransport:
 
@@ -189,12 +211,11 @@ class ConnectionTransport:
         self._handler.set(handler)
         assert not self._thread.is_alive()
 
-    def send(self, msg):
-        self._write_msg(msg)
+    def send(self, data):
+        self._write_msg(data)
 
-    def _write_msg(self, msg):
-        logging.debug(f'Writing message: {msg}')
-        data = pickle.dumps(msg)
+    def _write_msg(self, data):
+        logging.debug(f'Writing message: {data}')
         size = len(data)
         assert self._output.write_blocking(int(size).to_bytes(4) + data)
         logging.debug(f'Message is written')
@@ -208,10 +229,10 @@ class ConnectionTransport:
         data = self._input.read_aot(4 + size)
         if not data:
             return None
-        msg = pickle.loads(data[4:])
         self._input.mark_read(4 + size)
-        logging.debug(f'Message is read: {msg}')
-        return msg
+        data = data[4:]
+        logging.debug(f'Message is read: {data}')
+        return data
 
     def start(self):
         self._thread.start()
@@ -305,10 +326,13 @@ class ConnectionTransport:
                         self._close_connection()
 
             while True:
-                msg = self._read_msg()
-                if not msg:
+                data = self._read_msg()
+                if not data:
                     break
-                self._handler.get()(msg)
+                try:
+                    self._handler.get()(data)
+                except Exception as e:
+                    logging.error(f'Exception on calling handler: {repr(e)}')
 
         if self._sock:
             self._close_connection()
@@ -323,12 +347,12 @@ class IPCServer:
 
     def _connect(self):
         try:
-            logging.info(f'Listening on: {self._address}')
+            #logging.info(f'Listening on: {self._address}')
             c, a = self._server.accept()
             logging.info(f'Connected from {a}')
             return c
         except Exception as e:
-            logging.error(f'Exception on accepting the incoming connection: {repr(e)}')
+            #logging.error(f'Exception on accepting the incoming connection: {repr(e)}')
             return None
 
     def start(self):
@@ -341,8 +365,8 @@ class IPCServer:
     def set_handler(self, handler):
         self._transport.set_handler(handler)
 
-    def send(self, msg):
-        self._transport.send(msg)
+    def send(self, data):
+        self._transport.send(data)
 
 class IPCClient():
 
@@ -352,11 +376,13 @@ class IPCClient():
 
     def _connect(self):
         try:
-            logging.info(f'Connecting to: {self._address}')
+            #logging.info(f'Connecting to: {self._address}')
             c = socket.create_connection(self._address)
             if c:
-                logging.info(f'Connected')
+                logging.info(f'Connected to: {self._address}')
             return c
+        except ConnectionRefusedError:
+            return None
         except Exception as e:
             logging.error(f'Exception on trying to connect to address {self._address}: {repr(e)}')
             return None
@@ -370,15 +396,15 @@ class IPCClient():
     def set_handler(self, handler):
         self._transport.set_handler(handler)
 
-    def send(self, msg):
-        self._transport.send(msg)
+    def send(self, data):
+        self._transport.send(data)
 
 class Rpc:
 
     def __init__(self, ipc):
         self._next_request_id = 0
         self._ipc = ipc
-        ipc.set_handler(lambda msg: self._on_incoming(msg))
+        ipc.set_handler(lambda data: self._on_incoming(data))
         self._futures = Shared({})
         self._handlers = Shared({})
 
@@ -387,7 +413,8 @@ class Rpc:
         self._next_request_id += 1
         return next_request_id
 
-    def _on_incoming(self, msg):
+    def _on_incoming(self, data):
+        msg = Message.from_data(data)
         if isinstance(msg, Response):
             response = msg
             future = self._futures.get(lambda f: f.pop(response.id, None))
@@ -400,8 +427,12 @@ class Rpc:
             request = msg
             handler = self._handlers.get(lambda h: h.get(request.method))
             if handler:
-                result = handler(request.param)
-                self._ipc.send(Response(request.id, result))
+                try:
+                    result = handler(request.param)
+                    self._ipc.send(Response(request.id, result).to_data())
+                except Exception as e:
+                    logging.error(f'Exception on calling handler: {repr(e)}')
+                    # TODO: send error back
             else:
                 logging.error(f'No handler for request: {request}')
 
@@ -410,7 +441,7 @@ class Rpc:
 
     def request(self, method, param):
         id = self._get_next_request_id()
-        self._ipc.send(Request(id, method, param))
+        self._ipc.send(Request(id, method, param).to_data())
         future = Future()
         self._futures.map(lambda f: f | { id: future })
         return future

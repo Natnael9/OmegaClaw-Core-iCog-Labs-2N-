@@ -29,21 +29,25 @@ class TestLlmMock:
         agent.stop(5)
 
     @pytest.fixture
-    def harness(self):
-        harness = LlmMockController(TEST_ADDRESS)
-        yield harness
-        harness.stop(5)
+    def controller(self):
+        controller = LlmMockController(TEST_ADDRESS)
+        yield controller
+        controller.stop(5)
 
-    def test_response(self, agent, harness):
-        assert harness.set_answer("hello", "world")
-        assert agent.chat("hello") == "world"
+    def test_response(self, agent, controller):
+        assert controller.set_answer("hello", "world")
+        assert agent.chat(":-:-:-:['HUMAN-MSG', 'test: hello']") == "world"
 
     def test_test_restart(self, agent):
-        harness = LlmMockController(TEST_ADDRESS)
-        assert harness.set_answer("hello", "world")
-        assert agent.chat("hello") == "world"
-        harness.stop(5)
-        harness = LlmMockController(TEST_ADDRESS)
-        assert harness.set_answer("hello", "earth")
-        assert agent.chat("hello") == "earth"
-        harness.stop(5)
+        controller = LlmMockController(TEST_ADDRESS)
+        assert controller.set_answer("hello", "world")
+        assert agent.chat(":-:-:-:['HUMAN-MSG', 'test: hello']") == "world"
+        controller.stop(5)
+        controller = LlmMockController(TEST_ADDRESS)
+        assert controller.set_answer("hello", "earth")
+        assert agent.chat(":-:-:-:['HUMAN-MSG', 'test: hello']") == "earth"
+        controller.stop(5)
+
+    def test_no_message(self, agent, controller):
+        assert controller.set_answer("hello", "world")
+        assert agent.chat(":-:-:-:DO NOT RE-SEND OR SPAM!") == ""

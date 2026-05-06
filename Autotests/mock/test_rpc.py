@@ -67,3 +67,22 @@ class TestClass:
         response = server.request('reverse', { 'arg': 'cdef' })
         assert response.get(5) == { 'result': 'fedc' }
         client.stop(5)
+
+    def test_request_server_reconnect(self, client):
+        def reverse(param):
+            assert param.get('arg')
+            return { 'result': param['arg'][::-1] }
+
+        server = Rpc(IPCServer(TEST_ADDRESS))
+        server.on_request('reverse', reverse)
+        server.start()
+        response = client.request('reverse', { 'arg': 'abcd' })
+        assert response.get(5) == { 'result': 'dcba' }
+        server.stop(5)
+
+        server = Rpc(IPCServer(TEST_ADDRESS))
+        server.on_request('reverse', reverse)
+        server.start()
+        response = client.request('reverse', { 'arg': 'cdef' })
+        assert response.get(5) == { 'result': 'fedc' }
+        server.stop(5)

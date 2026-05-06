@@ -6,6 +6,7 @@ Run:
 """
 import time
 
+import mock.rpc as rpc
 from mock.llm import llm_mock_controller
 
 from helpers import (
@@ -18,7 +19,7 @@ WAIT = 30
 
 
 def test_hello_file():
-    with Checker("create hello.txt", cleanup_dirs=[TARGET_DIR]) as c, llm_mock_controller as llm:
+    with Checker("create hello.txt", cleanup_dirs=[TARGET_DIR]) as c, llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
         print(f"\n=== OmegaClaw smoke test (run-id {c.run_id}) ===", flush=True)
 
         c.verify_clean()
@@ -31,7 +32,7 @@ def test_hello_file():
             f"Please overwrite {TARGET_FILE} so it contains exactly the single "
             "word Hello (no quotes, no extra newlines, create the directory if needed).",
         )
-        llm.set_answer(prompt, f"write {TARGET_FILE} Hello")
+        llm.set_answer(prompt, f"write-file {TARGET_FILE} Hello")
 
         if not send_prompt(prompt):
             c.fail("irc", "could not deliver prompt within 60s")
