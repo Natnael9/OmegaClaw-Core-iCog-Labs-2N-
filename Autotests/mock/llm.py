@@ -1,4 +1,10 @@
-from rpc import Rpc, IPCClient, IPCServer, HOST_DEFAULT, PORT_DEFAULT
+# Support both layouts: imported as a package (Autotests.mock.llm in
+# the container's loop.metta), and as a plain directory (host-side
+# pytest collecting mock/ without __init__.py).
+try:
+    from .rpc import Rpc, IPCClient, IPCServer, HOST_DEFAULT, PORT_DEFAULT
+except ImportError:
+    from rpc import Rpc, IPCClient, IPCServer, HOST_DEFAULT, PORT_DEFAULT
 from contextlib import contextmanager
 import threading
 
