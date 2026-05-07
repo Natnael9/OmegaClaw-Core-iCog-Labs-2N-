@@ -1,4 +1,4 @@
-from .rpc import Rpc, IPCClient, IPCServer, HOST_DEFAULT, PORT_DEFAULT
+from rpc import Rpc, IPCClient, IPCServer, HOST_DEFAULT, PORT_DEFAULT
 from contextlib import contextmanager
 import threading
 

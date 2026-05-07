@@ -12,8 +12,8 @@ Run:
 """
 import time
 
-import mock.rpc as rpc
-from mock.llm import llm_mock_controller
+import rpc
+from llm import llm_mock_controller
 
 from helpers import (
     Checker, dexec, dexec_root, find_skill_calls, make_prompt,

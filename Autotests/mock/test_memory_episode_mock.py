@@ -19,8 +19,8 @@ Run:
 import datetime
 import time
 
-import mock.rpc as rpc
-from mock.llm import llm_mock_controller
+import rpc
+from llm import llm_mock_controller
 
 from helpers import (
     Checker, find_skill_calls, make_prompt, send_prompt,

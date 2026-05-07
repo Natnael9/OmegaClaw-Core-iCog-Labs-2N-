@@ -11,8 +11,8 @@ Run:
 """
 import time
 
-import mock.rpc as rpc
-from mock.llm import llm_mock_controller
+import rpc
+from llm import llm_mock_controller
 
 from helpers import (
     HISTORY_FILE, Checker, _history_block_for_run_id, find_skill_calls,

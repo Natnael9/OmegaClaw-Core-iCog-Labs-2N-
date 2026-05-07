@@ -11,8 +11,8 @@ variant remains the source of truth for end-to-end behaviour.
 Run:
     pytest test_search_invalid_mock.py -s
 """
-import mock.rpc as rpc
-from mock.llm import llm_mock_controller
+import rpc
+from llm import llm_mock_controller
 
 from helpers import (
     Checker, find_skill_calls, make_prompt, send_prompt,

@@ -12,8 +12,8 @@ Run:
 import subprocess
 import time
 
-import mock.rpc as rpc
-from mock.llm import llm_mock_controller
+import rpc
+from llm import llm_mock_controller
 
 from helpers import (
     CHROMA_SQLITE, CONTAINER, Checker, find_skill_calls,

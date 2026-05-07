@@ -13,8 +13,8 @@ Run:
 import time
 from datetime import datetime, timezone
 
-import mock.rpc as rpc
-from mock.llm import llm_mock_controller
+import rpc
+from llm import llm_mock_controller
 
 from helpers import (
     Checker, dexec, make_prompt, send_prompt, wait_for_file,
