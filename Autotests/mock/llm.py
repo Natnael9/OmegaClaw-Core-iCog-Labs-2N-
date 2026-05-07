@@ -36,16 +36,22 @@ class LlmMockAgent:
         # is not missed when several messages arrive together.
         fragments = body.split(" | ")
         answer = None
-        matched = None
         for fragment in fragments:
             if ": " not in fragment:
                 continue
             prompt = fragment.split(": ", 1)[1]
+            # The agent escapes punctuation that would confuse its s-exp
+            # parser ('->_apostrophe_, "->_quote_, \n->_newline_) before
+            # the text reaches chat(). set_answer stores the literal
+            # prompt key, so reverse the escapes here to match.
+            normalized = (prompt
+                          .replace("_apostrophe_", "'")
+                          .replace("_quote_", '"')
+                          .replace("_newline_", "\n"))
             with self.lock:
-                a = self.answers.get(prompt)
+                a = self.answers.get(normalized) or self.answers.get(prompt)
             if a:
                 answer = a
-                matched = prompt
 
         if answer:
             print(f"[LlmMockAgent] Mock answers: {answer}")
