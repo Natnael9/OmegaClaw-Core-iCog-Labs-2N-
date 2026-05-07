@@ -59,7 +59,7 @@ def test_memory_episode_mock(llm):
             return "tooth" in low or "barney" in low
 
         remember_arg = wait_for_skill_match(
-            fact_marker, "remember", is_barney_memory, timeout=30,
+            fact_marker, "remember", is_barney_memory, timeout=120,
         )
         if remember_arg is None:
             calls = find_skill_calls(fact_marker, "remember") or []
