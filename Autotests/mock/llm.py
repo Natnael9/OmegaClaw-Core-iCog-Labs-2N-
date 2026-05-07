@@ -20,17 +20,32 @@ class LlmMockAgent:
             return ""
 
         try:
-            msg = eval(user[1])[1].split(': ', 1)[1]
+            body = eval(user[1])[1]
         except SyntaxError:
             return ""
 
-        with self.lock:
-            answer = self.answers.get(msg)
+        # IRC may deliver multiple PRIVMSGs in one agent iteration; the
+        # agent concatenates them with " | " between speakers. Split
+        # and look up each fragment individually so a registered answer
+        # is not missed when several messages arrive together.
+        fragments = body.split(" | ")
+        answer = None
+        matched = None
+        for fragment in fragments:
+            if ": " not in fragment:
+                continue
+            prompt = fragment.split(": ", 1)[1]
+            with self.lock:
+                a = self.answers.get(prompt)
+            if a:
+                answer = a
+                matched = prompt
+
         if answer:
             print(f"[LlmMockAgent] Mock answers: {answer}")
             return answer
         else:
-            print(f"[LlmMockAgent] Mock doesn't have answer for: {msg}")
+            print(f"[LlmMockAgent] Mock doesn't have answer for: {body}")
             return ""
 
     def on_set_answer(self, args):
