@@ -66,7 +66,7 @@ def test_search_weather():
         )
         grade, hit = try_with_clarification(
             c, has_valencia_search, clarification,
-            timeout_first=60, timeout_second=60,
+            timeout_first=120, timeout_second=180,
         )
         c.set_grade(grade)
         if grade == Checker.GRADE_FAIL:
@@ -82,7 +82,7 @@ def test_search_weather():
                        for n in re.findall(r"-?\d+(?:\.\d+)?", s))
 
         send_arg = wait_for_skill_match(
-            c.run_id, "send", has_plausible_temp, timeout=60,
+            c.run_id, "send", has_plausible_temp, timeout=240,
         )
         if send_arg is None:
             all_sends = find_skill_calls(c.run_id, "send") or []

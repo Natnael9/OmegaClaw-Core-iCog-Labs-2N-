@@ -88,12 +88,17 @@ def test_git_push_to_remote():
         c.ok("irc", f"run-id={c.run_id}")
 
         c.step(f"wait for {unique_file} on disk")
-        mtime = wait_for_file(f"{TARGET_DIR}/{unique_file}", start_ts, timeout=60)
+        mtime = wait_for_file(f"{TARGET_DIR}/{unique_file}", start_ts, timeout=120)
         if mtime is None:
             c.fail(unique_file, f"{unique_file} not created within timeout")
         c.ok(unique_file, f"after {mtime - start_ts}s")
 
         c.step("wait for branch on remote (graded)")
+        # The full chain (clone + branch + write-file + commit + push +
+        # GitHub API propagation) is heavy; under ASICloud latency 60s/60s
+        # was tight and produced flakes where the local file was already
+        # committed but `git push` had not yet been issued. Bump both
+        # windows so genuinely successful pushes are not lost to the timer.
         clarification = (
             f"Run `git -C {TARGET_DIR} push -u origin {branch}`. "
             f"Credential helper is already configured, no token in URL."
@@ -102,7 +107,7 @@ def test_git_push_to_remote():
             c,
             lambda: True if _gh("GET", f"{api}/branches/{branch}", token)[0] == 200 else None,
             clarification,
-            timeout_first=60, timeout_second=60,
+            timeout_first=180, timeout_second=180,
         )
         c.set_grade(grade)
         if grade == Checker.GRADE_FAIL:

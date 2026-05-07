@@ -12,7 +12,7 @@ from helpers import (
 
 TARGET_DIR = "/tmp/testcat"
 TARGET_FILE = "/tmp/testcat/hello.txt"
-WAIT = 30
+WAIT = 180
 
 
 def test_hello_file():

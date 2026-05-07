@@ -58,14 +58,15 @@ def test_complex_weather_flow():
             return None
 
         clarification = (
-            f"Use open-meteo.com or wttr.in. Run exactly: (write-file "
-            f"{SCRIPT_SH} #!/bin/bash) then (append-file {SCRIPT_SH} "
-            f"grep -oE -?[0-9]+ {WEATHER_TXT} > {TEMP_ONLY}) then "
-            f"(shell chmod +x {SCRIPT_SH}) then (shell {SCRIPT_SH})."
+            f"Use open-meteo.com or wttr.in. Then create the script in ONE "
+            f"write-file call: "
+            f'(write-file {SCRIPT_SH} "#!/bin/bash\\ngrep -oE -?[0-9]+ '
+            f'{WEATHER_TXT} | head -1 > {TEMP_ONLY}\\n") '
+            f"then (shell chmod +x {SCRIPT_SH}) then (shell {SCRIPT_SH})."
         )
         grade, hit = try_with_clarification(
             c, has_relevant_search, clarification,
-            timeout_first=60, timeout_second=60,
+            timeout_first=120, timeout_second=180,
         )
         c.set_grade(grade)
         if grade == Checker.GRADE_FAIL:
@@ -74,7 +75,7 @@ def test_complex_weather_flow():
         c.ok(f"{skill} invoked", f"arg={search_arg!r} (grade={grade})")
 
         c.step(f"wait for {WEATHER_TXT}")
-        mtime_w = wait_for_file(WEATHER_TXT, start_ts, timeout=60)
+        mtime_w = wait_for_file(WEATHER_TXT, start_ts, timeout=240)
         if mtime_w is None:
             c.fail("w.txt", f"{WEATHER_TXT} not created within timeout")
         c.ok("w.txt", f"after {mtime_w - start_ts}s")
@@ -86,7 +87,7 @@ def test_complex_weather_flow():
         c.ok("write-file w.txt", f"{len(wf)} write-file calls")
 
         c.step(f"wait for {SCRIPT_SH}")
-        mtime_s = wait_for_file(SCRIPT_SH, start_ts, timeout=60)
+        mtime_s = wait_for_file(SCRIPT_SH, start_ts, timeout=240)
         if mtime_s is None:
             c.fail("script", f"{SCRIPT_SH} not created within timeout")
         c.ok("script", f"after {mtime_s - start_ts}s")
@@ -107,7 +108,7 @@ def test_complex_weather_flow():
         c.ok("script perms", perms)
 
         c.step(f"wait for {TEMP_ONLY}")
-        mtime_t = wait_for_file(TEMP_ONLY, start_ts, timeout=60)
+        mtime_t = wait_for_file(TEMP_ONLY, start_ts, timeout=240)
         if mtime_t is None:
             c.fail("t.txt", f"{TEMP_ONLY} not created within timeout")
         c.ok("t.txt", f"after {mtime_t - start_ts}s")

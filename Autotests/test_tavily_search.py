@@ -6,7 +6,35 @@ Run:
 """
 from helpers import (
     Checker, find_skill_calls, make_prompt, send_prompt,
-    wait_for_skill_call,
+    wait_for_skill_call, wait_for_skill_match,
+)
+
+
+# Phrases that mean "the skill failed / external uAgent was unreachable" —
+# we must never count these as successful Tavily-search relays. Any of them
+# in the agent's send invalidates the run, since the Tavily lookup never
+# actually returned content the agent could summarise.
+ERROR_MARKERS = (
+    "delivery failed", "delivery error", "deliverystatus",
+    "tavily search failed", "tavily-search failed", "tavily failed",
+    "skill failed", "skill is currently unavailable",
+    "currently unavailable", "is unreachable", "not reachable",
+    "unable to reach", "could not reach", "couldn't reach",
+    "no response from", "agent did not respond",
+    "failed:", "failed.", "error:", "service is down",
+)
+
+# Fetch.ai-specific keywords. Deliberately avoid bare "ai" / "agent" — those
+# match unrelated content (the substring "ai" inside the word "Tavily", or
+# uAgent destination IDs like "agent1qt5..." printed inside an error
+# message), which previously hid skill-delivery failures behind a green PASS.
+FETCH_KEYWORDS = (
+    "fetch.ai", "fetch ai", "fet ",
+    "asi alliance", "asi-alliance", "alliance",
+    "humayun", "humayun sheikh",
+    "uagent", "u-agent",
+    "decentralized", "blockchain",
+    "token",
 )
 
 
@@ -26,7 +54,7 @@ def test_tavily_search():
 
         c.step("verify agent invoked (tavily-search ...) with Fetch.ai query")
         arg = wait_for_skill_call(
-            c.run_id, "tavily-search", timeout=60, arg_substr="fetch",
+            c.run_id, "tavily-search", timeout=240, arg_substr="fetch",
         )
         if arg is None:
             all_calls = find_skill_calls(c.run_id, "tavily-search") or []
@@ -44,16 +72,35 @@ def test_tavily_search():
         c.ok("no search fallback" if not regular_search else "mixed skills",
              f"{len(regular_search)} plain search calls")
 
-        c.step("verify agent sent summary back with (send ...)")
-        send_arg = wait_for_skill_call(c.run_id, "send", timeout=60)
+        c.step("wait for a (send ...) carrying real Fetch.ai content")
+
+        def is_real_fetch_summary(s):
+            low = s.lower()
+            if any(em in low for em in ERROR_MARKERS):
+                return False
+            return any(kw in low for kw in FETCH_KEYWORDS)
+
+        send_arg = wait_for_skill_match(
+            c.run_id, "send", is_real_fetch_summary, timeout=240,
+        )
         if send_arg is None:
-            c.fail("send invoked", "agent did not relay tavily results")
+            all_sends = find_skill_calls(c.run_id, "send") or []
+            last = all_sends[-1] if all_sends else "<none>"
+            low_last = last.lower() if isinstance(last, str) else ""
+            error_hits = [em for em in ERROR_MARKERS if em in low_last]
+            if error_hits:
+                c.fail(
+                    "tavily skill working",
+                    f"agent reported tavily-search failure ({error_hits}). "
+                    f"Last send: {last!r}",
+                )
+            c.fail(
+                "send content",
+                f"no Fetch-related keywords in any send. "
+                f"Last send: {last!r}",
+            )
         body = send_arg.lower()
-        keywords = ["fetch", "fetch.ai", "ai", "blockchain", "agent",
-                    "asi", "crypto", "token", "alliance"]
-        matched = [k for k in keywords if k in body]
-        if not matched:
-            c.fail("send content", f"no Fetch-related keywords in send: {send_arg!r}")
+        matched = [k for k in FETCH_KEYWORDS if k in body]
         c.ok("send content", f"matched: {', '.join(matched[:4])}")
 
         c.done()

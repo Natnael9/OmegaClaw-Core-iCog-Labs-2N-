@@ -84,22 +84,65 @@ def test_memory_episode():
         c.ok(f"{which} invoked", f"arg={(q_arg or e_arg)!r}")
 
         c.step("verify (send ...) mentions dog/tooth and today's date or time")
-        send_arg = wait_for_skill_call(recall_marker, "send", timeout=60)
+        # ASICloud often takes more than 60s after the query call to
+        # actually formulate the recall reply. The original tight 60s
+        # timeout caused false fails even when the agent's eventual answer
+        # was correct.
+        send_arg = wait_for_skill_call(recall_marker, "send", timeout=240)
         if send_arg is None:
             c.fail("send invoked", "agent did not send a recall reply")
         topic = [k for k in ("dog", "tooth", "lost") if k in send_arg.lower()]
         if not topic:
             c.fail("send topic", f"reply has no dog/tooth/lost: {send_arg!r}")
-        date_fmt = record_time.strftime("%Y-%m-%d")
-        md = record_time.strftime("%m-%d")
+        # Accept multiple date/time forms — the agent may relay the date in
+        # English ("May 7, 2026"), short English ("May 7"), ISO-style
+        # ("2026-05-07"), short numeric ("05-07"), or just an HH: time
+        # marker. Anything that pinpoints today is enough.
+        iso_date = record_time.strftime("%Y-%m-%d")
+        short_date = record_time.strftime("%m-%d")
         hour = record_time.strftime("%H")
-        date_matches = [s for s in (date_fmt, md, f"{hour}:") if s in send_arg]
+        full_month = record_time.strftime("%B")        # "May"
+        abbr_month = record_time.strftime("%b")        # "May" / "Jan" / etc.
+        day_no_pad = str(record_time.day)              # "7"
+        day_padded = record_time.strftime("%d")        # "07"
+        year = record_time.strftime("%Y")              # "2026"
+        # English long form, with or without comma: "May 7", "May 7, 2026",
+        # "May 7 2026", "7 May", "7 May 2026"
+        english_long = [
+            f"{full_month} {day_no_pad}",
+            f"{full_month} {day_padded}",
+            f"{day_no_pad} {full_month}",
+            f"{day_padded} {full_month}",
+        ]
+        english_abbr = [
+            f"{abbr_month} {day_no_pad}",
+            f"{abbr_month} {day_padded}",
+        ] if abbr_month != full_month else []
+
+        candidates = (
+            iso_date,
+            short_date,
+            f"{hour}:",
+            *english_long,
+            *english_abbr,
+        )
+        send_low = send_arg.lower()
+        # The English-month checks are case-insensitive; numeric forms are
+        # exact substring matches in the original casing.
+        date_matches = []
+        for cand in candidates:
+            if cand in send_arg or cand.lower() in send_low:
+                date_matches.append(cand)
+        # Require year somewhere if we matched only a numeric short form,
+        # to avoid accidental matches inside unrelated numbers.
+        if date_matches and date_matches == [short_date] and year not in send_arg:
+            date_matches = []
         if not date_matches:
             c.fail(
                 "send date",
                 f"no date/time match in reply. Expected any of "
-                f"{[date_fmt, md, hour + ':']}. Got: {send_arg!r}",
+                f"{list(candidates)}. Got: {send_arg!r}",
             )
-        c.ok("send date", f"matched: {', '.join(date_matches)}")
+        c.ok("send date", f"matched: {', '.join(date_matches[:3])}")
 
         c.done()

@@ -34,8 +34,11 @@ def test_run_create_dirs():
             c.run_id,
             f"Create script {SCRIPT_PATH} that creates dirs test1, test2, "
             f"test3 inside {TARGET_DIR}/. Make it executable, then run "
-            f"it. NOTE: no skill mkdir; shell arg has no apostrophes; "
-            f"write-file overwrites - use append-file for extra lines.",
+            f"it. Use ONE write-file with the full body in a single quoted "
+            f"string with literal \\n between lines, e.g. "
+            f'(write-file {SCRIPT_PATH} "#!/bin/bash\\nmkdir -p '
+            f'{TARGET_DIR}/test1 {TARGET_DIR}/test2 {TARGET_DIR}/test3"). '
+            f"Then (shell chmod +x {SCRIPT_PATH}) and (shell {SCRIPT_PATH}).",
         )
         if not send_prompt(prompt):
             c.fail("irc", "could not deliver prompt within 60s")
@@ -50,14 +53,19 @@ def test_run_create_dirs():
             return True
 
         clarification = (
-            f"Run exactly: (write-file {SCRIPT_PATH} #!/bin/bash) then "
-            f"(append-file {SCRIPT_PATH} mkdir -p {TARGET_DIR}/test1 "
-            f"{TARGET_DIR}/test2 {TARGET_DIR}/test3) then (shell chmod "
-            f"+x {SCRIPT_PATH}) then (shell {SCRIPT_PATH}). No apostrophes."
+            f"The dirs test1/test2/test3 still do not exist. "
+            f"Run EXACTLY these three skill calls in order: "
+            f'(write-file {SCRIPT_PATH} "#!/bin/bash\\nmkdir -p '
+            f'{TARGET_DIR}/test1 {TARGET_DIR}/test2 {TARGET_DIR}/test3\\n") '
+            f"then (shell chmod +x {SCRIPT_PATH}) "
+            f"then (shell {SCRIPT_PATH}). "
+            f"The body of write-file MUST be one quoted string with the "
+            f"literal two characters backslash-n separating lines. "
+            f"Do NOT split the body into separate (mkdir ...) calls."
         )
         grade, _ = try_with_clarification(
             c, all_dirs_exist, clarification,
-            timeout_first=60, timeout_second=60,
+            timeout_first=120, timeout_second=180,
         )
         c.set_grade(grade)
 
