@@ -1,16 +1,18 @@
 """
-Test: a chat prompt is appended to history.metta as an s-expression record
-that quotes our REQ-tag, together with the agent's skill-invocation response.
+Mock variant of test_memory_history.
 
-Notes on format: the new agent writes history as top-level s-exp records
-`("YYYY-MM-DD HH:MM:SS" (...skills...))`. The old `HUMAN_MESSAGE:` line
-format is no longer emitted — we anchor on the REQ-tag the agent echoes
-back in a skill argument.
+The mocked LLM response sends back a (send ...) acknowledgement carrying
+our REQ-tag. The history.metta file is written for real by the agent
+loop after each iteration; the mock only fixes the agent's reply so the
+test can verify the bookkeeping deterministically.
 
 Run:
-    pytest test_memory_history.py -s
+    pytest test_memory_history_mock.py -s
 """
 import time
+
+import mock.rpc as rpc
+from mock.llm import llm_mock_controller
 
 from helpers import (
     HISTORY_FILE, Checker, _history_block_for_run_id, find_skill_calls,
@@ -19,9 +21,11 @@ from helpers import (
 )
 
 
-def test_memory_history():
-    with Checker("history append") as c:
-        print(f"\n=== OmegaClaw: history append (run-id {c.run_id}) ===", flush=True)
+def test_memory_history_mock():
+    with Checker("history append (mock)") as c, \
+            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+        print(f"\n=== OmegaClaw: history append mock (run-id {c.run_id}) ===",
+              flush=True)
 
         c.step("capture initial history state")
         mtime_before = get_mtime(HISTORY_FILE)
@@ -32,17 +36,19 @@ def test_memory_history():
 
         time.sleep(2)
 
-        c.step("send prompt via IRC")
+        c.step("send prompt via IRC with mocked acknowledgement")
         prompt = make_prompt(
             c.run_id,
             f"Acknowledge with one short line that you received marker {c.run_id}.",
         )
+        ack = f"Marker {c.run_id} received. REQ-{c.run_id} acknowledged."
+        llm.set_answer(prompt, f'(send "{ack}")')
         if not send_prompt(prompt):
             c.fail("irc", "could not deliver prompt within 60s")
         c.ok("irc", f"run-id={c.run_id}")
 
         c.step("verify history contains an s-exp record quoting our REQ-tag")
-        deadline = time.time() + 180
+        deadline = time.time() + 60
         block = None
         while time.time() < deadline:
             block = _history_block_for_run_id(read_history(), c.run_id)
@@ -50,21 +56,17 @@ def test_memory_history():
                 break
             time.sleep(2)
         if not block:
-            c.fail("history record", "no s-exp record referencing REQ-{run_id}")
-        c.ok("history record", f"{len(block)} chars since first REQ-{c.run_id}")
+            c.fail("history record",
+                   f"no s-exp record referencing REQ-{c.run_id}")
+        c.ok("history record",
+             f"{len(block)} chars since first REQ-{c.run_id}")
 
-        c.step("verify history contains (send ...) or (pin ...) for our run_id")
-        send_arg = wait_for_skill_call(c.run_id, "send", timeout=60)
-        pin_calls = find_skill_calls(c.run_id, "pin") or []
-        if send_arg is None and not pin_calls:
-            c.fail(
-                "agent s-exp",
-                "no (send ...) or (pin ...) call recorded in history for our run_id",
-            )
-        c.ok(
-            "agent s-exp",
-            f"send={'yes' if send_arg else 'no'}, pin={len(pin_calls)}",
-        )
+        c.step("verify history contains (send ...) for our run_id")
+        send_arg = wait_for_skill_call(c.run_id, "send", timeout=30)
+        if send_arg is None:
+            c.fail("agent s-exp",
+                   "no (send ...) call recorded in history for our run_id")
+        c.ok("agent s-exp", f"send len={len(send_arg)}")
 
         c.step("check history mtime and size grew")
         mtime_after = get_mtime(HISTORY_FILE)
@@ -73,10 +75,8 @@ def test_memory_history():
             c.fail("history mtime", f"before={mtime_before}, after={mtime_after}")
         if size_after is None or size_after <= size_before:
             c.fail("history size", f"before={size_before}, after={size_after}")
-        c.ok(
-            "history grew",
-            f"mtime {mtime_before}->{mtime_after}, "
-            f"size +{size_after - size_before} bytes",
-        )
+        c.ok("history grew",
+             f"mtime {mtime_before}->{mtime_after}, "
+             f"size +{size_after - size_before} bytes")
 
         c.done()

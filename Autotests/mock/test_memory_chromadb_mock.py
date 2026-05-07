@@ -1,17 +1,24 @@
 """
-Test: after an explicit remember prompt, agent invokes (remember ...) and
-ChromaDB vector count grows by at least 1.
+Mock variant of test_memory_chromadb.
+
+The mocked LLM response invokes (remember "...") with the unique
+CI marker. The remember skill itself runs for real: it embeds the
+content via the local sentence-transformers model and writes to
+ChromaDB. The mock only removes the LLM nondeterminism.
 
 Run:
-    pytest test_memory_chromadb.py -s
+    pytest test_memory_chromadb_mock.py -s
 """
+import subprocess
 import time
+
+import mock.rpc as rpc
+from mock.llm import llm_mock_controller
 
 from helpers import (
     CHROMA_SQLITE, CONTAINER, Checker, find_skill_calls,
     make_prompt, send_prompt, wait_for_skill_call,
 )
-import subprocess
 
 
 def chromadb_vector_count():
@@ -33,17 +40,19 @@ def chromadb_vector_count():
         return None
 
 
-def test_memory_chromadb():
-    with Checker("chromadb vector write") as c:
-        print(f"\n=== OmegaClaw: chromadb write (run-id {c.run_id}) ===", flush=True)
+def test_memory_chromadb_mock():
+    with Checker("chromadb vector write (mock)") as c, \
+            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+        print(f"\n=== OmegaClaw: chromadb mock (run-id {c.run_id}) ===",
+              flush=True)
 
         c.step("count chromadb vectors before")
         count_before = chromadb_vector_count()
         if count_before is None:
-            c.fail("chromadb", f"cannot query {CHROMA_SQLITE} (sqlite3 missing?)")
+            c.fail("chromadb", f"cannot query {CHROMA_SQLITE}")
         c.ok("chromadb before", f"{count_before} vectors")
 
-        c.step("send remember prompt via IRC")
+        c.step("send remember prompt via IRC with mocked response")
         marker = f"CI-SMOKE-{c.run_id}"
         c.add_cleanup_marker(marker)
         prompt = make_prompt(
@@ -51,20 +60,24 @@ def test_memory_chromadb():
             f"Please remember this exact fact using the remember skill: "
             f"'Unique smoke marker {marker} was emitted by CI.'",
         )
+        llm.set_answer(
+            prompt,
+            f'(remember "Unique smoke marker {marker} was emitted by CI.")',
+        )
         if not send_prompt(prompt):
             c.fail("irc", "could not deliver prompt within 60s")
         c.ok("irc", f"run-id={c.run_id}")
 
         c.step("verify agent invoked (remember ...) with our marker")
         arg = wait_for_skill_call(
-            c.run_id, "remember", timeout=60, arg_substr=marker,
+            c.run_id, "remember", timeout=30, arg_substr=marker,
         )
         if arg is None:
             all_calls = find_skill_calls(c.run_id, "remember") or []
             c.fail(
                 "remember invoked",
-                f"no (remember ...) with marker {marker}. Got {len(all_calls)} calls, "
-                f"first args: {[a[:80] for a in all_calls[:3]]}",
+                f"no (remember ...) with marker {marker}. Got: "
+                f"{[a[:80] for a in all_calls[:3]]}",
             )
         c.ok("remember invoked", f"arg contains marker (len={len(arg)})")
 
@@ -77,13 +90,8 @@ def test_memory_chromadb():
                 break
             time.sleep(2)
         if count_after is None or count_after <= count_before:
-            c.fail(
-                "chromadb grew",
-                f"count stayed {count_before} (is {count_after})",
-            )
-        c.ok(
-            "chromadb grew",
-            f"{count_before} -> {count_after} (+{count_after - count_before})",
-        )
+            c.fail("chromadb grew", f"count stayed {count_before} (is {count_after})")
+        c.ok("chromadb grew",
+             f"{count_before} -> {count_after} (+{count_after - count_before})")
 
         c.done()
