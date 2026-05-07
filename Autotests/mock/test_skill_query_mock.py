@@ -14,8 +14,6 @@ Run:
 """
 import time
 
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     Checker, find_skill_calls, make_prompt, send_prompt,
@@ -23,9 +21,8 @@ from helpers import (
 )
 
 
-def test_skill_query_mock():
-    with Checker("query skill recall (mock)") as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+def test_skill_query_mock(llm):
+    with Checker("query skill recall (mock)") as c:
         print(f"\n=== OmegaClaw: query mock (run-id {c.run_id}) ===",
               flush=True)
 

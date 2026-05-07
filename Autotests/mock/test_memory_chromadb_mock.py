@@ -12,8 +12,6 @@ Run:
 import subprocess
 import time
 
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     CHROMA_SQLITE, CONTAINER, Checker, find_skill_calls,
@@ -40,9 +38,8 @@ def chromadb_vector_count():
         return None
 
 
-def test_memory_chromadb_mock():
-    with Checker("chromadb vector write (mock)") as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+def test_memory_chromadb_mock(llm):
+    with Checker("chromadb vector write (mock)") as c:
         print(f"\n=== OmegaClaw: chromadb mock (run-id {c.run_id}) ===",
               flush=True)
 

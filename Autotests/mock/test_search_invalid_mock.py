@@ -11,8 +11,6 @@ variant remains the source of truth for end-to-end behaviour.
 Run:
     pytest test_search_invalid_mock.py -s
 """
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     Checker, find_skill_calls, make_prompt, send_prompt,
@@ -32,9 +30,8 @@ NEGATION_PHRASES = [
 ]
 
 
-def test_search_invalid_mock():
-    with Checker("search invalid (mock)") as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+def test_search_invalid_mock(llm):
+    with Checker("search invalid (mock)") as c:
         print(f"\n=== OmegaClaw: invalid search mock (run-id {c.run_id}) ===",
               flush=True)
 

@@ -11,8 +11,6 @@ Run:
 """
 import time
 
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     Checker, dexec, dexec_root, make_prompt, send_prompt, wait_for_file,
@@ -23,9 +21,8 @@ TARGET_FILE = "/tmp/test_edit_ts/note.txt"
 INITIAL_CONTENT = "This is a test note.\n"
 
 
-def test_edit_add_timestamp_mock():
-    with Checker("edit add timestamp (mock)", cleanup_dirs=[TARGET_DIR]) as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+def test_edit_add_timestamp_mock(llm):
+    with Checker("edit add timestamp (mock)", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== OmegaClaw: add timestamp mock (run-id {c.run_id}) ===",
               flush=True)
 

@@ -16,8 +16,6 @@ import urllib.request
 
 import pytest
 
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     Checker, dexec, dexec_root, find_skill_calls, get_git_remote,
@@ -55,7 +53,7 @@ def _api_base(remote_url):
     return f"https://api.github.com/repos/{parts[1]}"
 
 
-def test_git_push_to_remote_mock():
+def test_git_push_to_remote_mock(llm):
     token = get_git_token()
     if not token:
         pytest.skip("OMEGACLAW_GIT_TOKEN not set")
@@ -63,8 +61,7 @@ def test_git_push_to_remote_mock():
     api = _api_base(remote)
     branch = f"qa/run-{int(time.time())}-mock"
 
-    with Checker("git push to remote (mock)", cleanup_dirs=[TARGET_DIR]) as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+    with Checker("git push to remote (mock)", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== git push mock (run-id {c.run_id}, branch {branch}) ===",
               flush=True)
 

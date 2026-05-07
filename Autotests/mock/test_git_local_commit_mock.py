@@ -11,8 +11,6 @@ Run:
 """
 import time
 
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     Checker, dexec, dexec_root, find_skill_calls, make_prompt, send_prompt,
@@ -23,9 +21,8 @@ TARGET_DIR = "/tmp/git_local"
 COMMIT_FILE = "hello.txt"
 
 
-def test_git_local_commit_mock():
-    with Checker("git local commit (mock)", cleanup_dirs=[TARGET_DIR]) as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+def test_git_local_commit_mock(llm):
+    with Checker("git local commit (mock)", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== git local commit mock (run-id {c.run_id}) ===", flush=True)
 
         c.verify_clean()

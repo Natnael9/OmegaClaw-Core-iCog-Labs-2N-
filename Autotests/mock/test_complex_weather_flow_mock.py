@@ -16,8 +16,6 @@ Run:
 import re
 import time
 
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     Checker, dexec, dexec_root, find_skill_calls, make_prompt,
@@ -34,9 +32,8 @@ TEMP_ONLY = f"{TARGET_DIR}/t.txt"
 FORECAST_TEXT = "New York tomorrow: clear, high 22 degrees Celsius."
 
 
-def test_complex_weather_flow_mock():
-    with Checker("complex weather flow (mock)", cleanup_dirs=[TARGET_DIR]) as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+def test_complex_weather_flow_mock(llm):
+    with Checker("complex weather flow (mock)", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== OmegaClaw: complex flow mock (run-id {c.run_id}) ===",
               flush=True)
 

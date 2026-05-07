@@ -13,8 +13,6 @@ truth for end-to-end search behaviour.
 Run:
     pytest test_search_basic_mock.py -s
 """
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     Checker, find_skill_calls, make_prompt, send_prompt,
@@ -29,9 +27,8 @@ SINGULARITYNET_DESCRIPTION = (
 )
 
 
-def test_search_basic_mock():
-    with Checker("search singularitynet (mock)") as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+def test_search_basic_mock(llm):
+    with Checker("search singularitynet (mock)") as c:
         print(f"\n=== OmegaClaw: basic search mock (run-id {c.run_id}) ===",
               flush=True)
 

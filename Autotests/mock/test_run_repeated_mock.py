@@ -10,8 +10,6 @@ Run:
 """
 import time
 
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     Checker, dexec, dexec_root, make_prompt, send_prompt, wait_for_file,
@@ -24,9 +22,8 @@ SCRIPT_CONTENT = '#!/bin/sh\ndate >> /tmp/test_repeat/update.txt\n'
 EXPECTED_RUNS = 10
 
 
-def test_run_repeated_mock():
-    with Checker("run repeated script (mock)", cleanup_dirs=[TARGET_DIR]) as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+def test_run_repeated_mock(llm):
+    with Checker("run repeated script (mock)", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== OmegaClaw: run 10x mock (run-id {c.run_id}) ===",
               flush=True)
 

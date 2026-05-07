@@ -12,8 +12,6 @@ Run:
 """
 import time
 
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     Checker, dexec, dexec_root, find_skill_calls, make_prompt,
@@ -25,9 +23,8 @@ SCRIPT_PATH = f"{TARGET_DIR}/mkdirs.sh"
 EXPECTED_DIRS = ["test1", "test2", "test3"]
 
 
-def test_run_create_dirs_mock():
-    with Checker("create dirs script (mock)", cleanup_dirs=[TARGET_DIR]) as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+def test_run_create_dirs_mock(llm):
+    with Checker("create dirs script (mock)", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== OmegaClaw: create dirs mock (run-id {c.run_id}) ===",
               flush=True)
 

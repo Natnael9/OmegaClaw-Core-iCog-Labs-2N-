@@ -10,8 +10,6 @@ Run:
 """
 import re
 
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     Checker, find_skill_calls, make_prompt, send_prompt,
@@ -19,9 +17,8 @@ from helpers import (
 )
 
 
-def test_skill_metta_mock():
-    with Checker("metta skill invocation (mock)") as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+def test_skill_metta_mock(llm):
+    with Checker("metta skill invocation (mock)") as c:
         print(f"\n=== OmegaClaw: metta mock (run-id {c.run_id}) ===",
               flush=True)
 

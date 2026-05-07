@@ -13,8 +13,6 @@ Run:
 import time
 from datetime import datetime, timezone
 
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     Checker, dexec, make_prompt, send_prompt, wait_for_file,
@@ -32,9 +30,8 @@ def _current_year_strs():
     }
 
 
-def test_create_date_script_mock():
-    with Checker("create date.sh (mock)", cleanup_dirs=[TARGET_DIR]) as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+def test_create_date_script_mock(llm):
+    with Checker("create date.sh (mock)", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== OmegaClaw: create date.sh mock (run-id {c.run_id}) ===",
               flush=True)
 

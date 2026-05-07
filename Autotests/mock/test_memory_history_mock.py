@@ -11,8 +11,6 @@ Run:
 """
 import time
 
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     HISTORY_FILE, Checker, _history_block_for_run_id, find_skill_calls,
@@ -21,9 +19,8 @@ from helpers import (
 )
 
 
-def test_memory_history_mock():
-    with Checker("history append (mock)") as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+def test_memory_history_mock(llm):
+    with Checker("history append (mock)") as c:
         print(f"\n=== OmegaClaw: history append mock (run-id {c.run_id}) ===",
               flush=True)
 

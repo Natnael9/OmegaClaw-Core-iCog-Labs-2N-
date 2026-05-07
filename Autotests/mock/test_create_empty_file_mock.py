@@ -10,8 +10,6 @@ Run:
 """
 import time
 
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     Checker, dexec, make_prompt, send_prompt, wait_for_file,
@@ -22,9 +20,8 @@ TARGET_FILE = "/tmp/test_empty/hello.txt"
 WAIT = 30
 
 
-def test_create_empty_file_mock():
-    with Checker("create empty file (mock)", cleanup_dirs=[TARGET_DIR]) as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+def test_create_empty_file_mock(llm):
+    with Checker("create empty file (mock)", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== OmegaClaw: create empty file mock (run-id {c.run_id}) ===",
               flush=True)
 

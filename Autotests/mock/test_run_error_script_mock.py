@@ -10,8 +10,6 @@ Run:
 """
 import time
 
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     Checker, dexec, dexec_root, make_prompt, send_prompt, wait_for_file,
@@ -28,9 +26,8 @@ echo "unreachable"
 """
 
 
-def test_run_error_script_mock():
-    with Checker("run error script (mock)", cleanup_dirs=[TARGET_DIR]) as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+def test_run_error_script_mock(llm):
+    with Checker("run error script (mock)", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== OmegaClaw: error script mock (run-id {c.run_id}) ===",
               flush=True)
 

@@ -11,8 +11,6 @@ the live variant remains the source of truth for skill invocation.
 Run:
     pytest test_technical_analysis_mock.py -s
 """
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     Checker, find_skill_calls, make_prompt, send_prompt,
@@ -49,9 +47,8 @@ TA_SUMMARY = (
 )
 
 
-def test_technical_analysis_mock():
-    with Checker(f"technical-analysis {TICKER} (mock)") as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+def test_technical_analysis_mock(llm):
+    with Checker(f"technical-analysis {TICKER} (mock)") as c:
         print(f"\n=== OmegaClaw: TA {TICKER} mock (run-id {c.run_id}) ===",
               flush=True)
 

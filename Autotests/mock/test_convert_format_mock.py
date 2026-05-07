@@ -10,8 +10,6 @@ Run:
 """
 import time
 
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     Checker, dexec, dexec_root, make_prompt, send_prompt, wait_for_file,
@@ -24,9 +22,8 @@ FILE_CONTENT = "# My Title\n\nSome paragraph text.\n\n- item one\n- item two\n"
 KEY_PHRASES = ["My Title", "Some paragraph text", "item one", "item two"]
 
 
-def test_convert_md_to_txt_mock():
-    with Checker("convert .md to .txt (mock)", cleanup_dirs=[TARGET_DIR]) as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+def test_convert_md_to_txt_mock(llm):
+    with Checker("convert .md to .txt (mock)", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== OmegaClaw: convert format mock (run-id {c.run_id}) ===",
               flush=True)
 

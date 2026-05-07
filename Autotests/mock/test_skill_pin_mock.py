@@ -7,8 +7,6 @@ checklist progress, and sends a short acknowledgement.
 Run:
     pytest test_skill_pin_mock.py -s
 """
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     Checker, find_skill_calls, make_prompt, send_prompt,
@@ -18,9 +16,8 @@ from helpers import (
 STEP_KEYWORDS = ("step", "alpha", "beta", "gamma", "restart", "server", "done")
 
 
-def test_skill_pin_mock():
-    with Checker("pin skill invocation (mock)") as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+def test_skill_pin_mock(llm):
+    with Checker("pin skill invocation (mock)") as c:
         print(f"\n=== OmegaClaw: pin mock (run-id {c.run_id}) ===", flush=True)
 
         c.step("send prompt with mocked pin + send response")

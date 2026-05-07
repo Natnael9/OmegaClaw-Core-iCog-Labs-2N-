@@ -10,8 +10,6 @@ Run:
 """
 import time
 
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     Checker, dexec, dexec_root, find_skill_calls, get_git_remote,
@@ -30,11 +28,10 @@ def _normalize_git_url(url: str) -> str:
     return url
 
 
-def test_git_pull_public_mock():
+def test_git_pull_public_mock(llm):
     remote = get_git_remote()
 
-    with Checker("git pull public (mock)", cleanup_dirs=[TARGET_DIR]) as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+    with Checker("git pull public (mock)", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== git pull public mock (run-id {c.run_id}) ===", flush=True)
 
         c.verify_clean()

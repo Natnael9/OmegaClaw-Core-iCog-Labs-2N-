@@ -11,8 +11,6 @@ source of truth for skill invocation.
 Run:
     pytest test_tavily_search_mock.py -s
 """
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     Checker, find_skill_calls, make_prompt, send_prompt,
@@ -48,9 +46,8 @@ FETCH_SUMMARY = (
 )
 
 
-def test_tavily_search_mock():
-    with Checker("tavily-search invocation (mock)") as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+def test_tavily_search_mock(llm):
+    with Checker("tavily-search invocation (mock)") as c:
         print(f"\n=== OmegaClaw: tavily mock (run-id {c.run_id}) ===",
               flush=True)
 

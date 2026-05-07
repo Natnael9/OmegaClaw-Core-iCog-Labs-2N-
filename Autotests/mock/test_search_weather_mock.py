@@ -15,8 +15,6 @@ import json
 import re
 import urllib.request
 
-import rpc
-from llm import llm_mock_controller
 
 from helpers import (
     Checker, find_skill_calls, make_prompt, send_prompt,
@@ -38,9 +36,8 @@ def fetch_reference_weather():
     return data.get("current_weather", {})
 
 
-def test_search_weather_mock():
-    with Checker("search weather valencia (mock)") as c, \
-            llm_mock_controller(("0.0.0.0", rpc.PORT_DEFAULT)) as llm:
+def test_search_weather_mock(llm):
+    with Checker("search weather valencia (mock)") as c:
         print(f"\n=== OmegaClaw: Valencia weather mock (run-id {c.run_id}) ===",
               flush=True)
 
