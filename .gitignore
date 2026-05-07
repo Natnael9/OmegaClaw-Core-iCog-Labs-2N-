@@ -9,3 +9,6 @@ repos/
 
 # editor backup files
 *~
+
+# Python bytecode
+__pycache__
