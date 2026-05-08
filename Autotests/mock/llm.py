@@ -5,14 +5,14 @@ import threading
 class LlmMockAgent:
 
     def __init__(self, address=(HOST_DEFAULT, PORT_DEFAULT)):
-        self.lock = threading.Lock()
-        self.answers = {}
-        self.rpc = Rpc(IPCClient(address))
-        self.rpc.on_request('set_answer', lambda args: self.on_set_answer(args))
-        self.rpc.start()
+        self._lock = threading.Lock()
+        self._answers = {}
+        self._rpc = Rpc(IPCClient(address))
+        self._rpc.on_request('set_answer', lambda args: self.on_set_answer(args))
+        self._rpc.start()
 
     def stop(self, timeout=None):
-        self.rpc.stop(timeout)
+        self._rpc.stop(timeout)
 
     def chat(self, content):
         user = content.rsplit(":-:-:-:", 1)
@@ -24,8 +24,8 @@ class LlmMockAgent:
         except SyntaxError:
             return ""
 
-        with self.lock:
-            answer = self.answers.get(msg)
+        with self._lock:
+            answer = self._answers.get(msg)
         if answer:
             print(f"[LlmMockAgent] Mock answers: {answer}")
             return answer
@@ -34,23 +34,23 @@ class LlmMockAgent:
             return ""
 
     def on_set_answer(self, args):
-        with self.lock:
+        with self._lock:
             request = args['request']
             response = args['response']
             print(f'[LlmMockAgent] Mock request: "{request}" with response "{response}"')
-            self.answers[request] = response
+            self._answers[request] = response
 
 class LlmMockController:
 
     def __init__(self, address=(HOST_DEFAULT, PORT_DEFAULT)):
-        self.rpc = Rpc(IPCServer(address))
-        self.rpc.start()
+        self._rpc = Rpc(IPCServer(address))
+        self._rpc.start()
 
     def stop(self, timeout=None):
-        self.rpc.stop(timeout)
+        self._rpc.stop(timeout)
 
     def set_answer(self, request, response, timeout=10):
-        result = self.rpc.request('set_answer', { 'request': request, 'response': response })
+        result = self._rpc.request('set_answer', { 'request': request, 'response': response })
         if result.get(timeout) != True:
             print(f"[LlmMockController] Cannot set answer to the mock, error: {result.error()}")
             return False
