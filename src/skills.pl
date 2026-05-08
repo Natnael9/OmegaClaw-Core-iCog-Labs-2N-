@@ -38,3 +38,8 @@ shell(Cmd, Out) :-
 
 
 first_char(Str, C) :- sub_string(Str, 0, 1, _, C).
+
+gc(true) :- garbage_collect,
+            garbage_collect_atoms,
+            trim_stacks,
+            memlog.
