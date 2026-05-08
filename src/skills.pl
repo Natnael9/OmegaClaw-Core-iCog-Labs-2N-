@@ -38,3 +38,19 @@ shell(Cmd, Out) :-
 
 
 first_char(Str, C) :- sub_string(Str, 0, 1, _, C).
+
+gc(true) :- garbage_collect,
+            garbage_collect_atoms,
+            trim_stacks.
+
+read_file_tail(Path, MaxChars, Text) :-
+    setup_call_cleanup(
+        open(Path, read, In, [type(text), encoding(utf8)]),
+        (
+            seek(In, 0, eof, End),
+            Start is max(0, End - MaxChars),
+            seek(In, Start, bof, _),
+            read_string(In, _, Text)
+        ),
+        close(In)
+    ).
