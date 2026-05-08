@@ -54,7 +54,7 @@ def test_memory_history():
         c.ok("history record", f"{len(block)} chars since first REQ-{c.run_id}")
 
         c.step("verify history contains (send ...) or (pin ...) for our run_id")
-        send_arg = wait_for_skill_call(c.run_id, "send", timeout=120)
+        send_arg = wait_for_skill_call(c.run_id, "send", timeout=60)
         pin_calls = find_skill_calls(c.run_id, "pin") or []
         if send_arg is None and not pin_calls:
             c.fail(

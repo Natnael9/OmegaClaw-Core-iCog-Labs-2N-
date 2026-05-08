@@ -9,6 +9,8 @@ repos/
 
 # editor backup files
 *~
-
-# Python bytecode
-__pycache__
+Autotests/venv/
+Autotests/__pycache__/
+__pycache__/
+*.pyc
+Autotests/logs/
