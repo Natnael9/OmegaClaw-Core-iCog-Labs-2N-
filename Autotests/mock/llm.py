@@ -39,6 +39,7 @@ class LlmMockAgent:
             response = args['response']
             print(f'[LlmMockAgent] Mock request: "{request}" with response "{response}"')
             self._answers[request] = response
+            return True
 
 class LlmMockController:
 
