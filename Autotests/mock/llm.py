@@ -9,6 +9,7 @@ class LlmMockAgent:
         self._answers = {}
         self._rpc = Rpc(IPCClient(address))
         self._rpc.on_request('set_answer', lambda args: self.on_set_answer(args))
+        self._rpc.on_request('ping', lambda args: self.on_ping(args))
         self._rpc.start()
 
     def stop(self, timeout=None):
@@ -41,6 +42,10 @@ class LlmMockAgent:
             self._answers[request] = response
             return True
 
+    def on_ping(self, args):
+        print(f'[LlmMockAgent] Mock ping request processed')
+        return True
+
 class LlmMockController:
 
     def __init__(self, address=(HOST_DEFAULT, PORT_DEFAULT)):
@@ -53,13 +58,25 @@ class LlmMockController:
     def set_answer(self, request, response, timeout=10):
         result = self._rpc.request('set_answer', { 'request': request, 'response': response })
         if result.get(timeout) != True:
-            print(f"[LlmMockController] Cannot set answer to the mock, error: {result.error()}")
+            print(f'[LlmMockController] Cannot set answer to the mock, error: {result.error()}')
             return False
         return True
 
+    def ping(self, timeout=None):
+        print(f'[LlmMockController] Ping agent')
+        result = self._rpc.request('ping', {})
+        if result.get(timeout) != True:
+            print(f'[LlmMockController] Did not get answer on ping in {timeout} seconds')
+            return False
+        else:
+            return True
+
 @contextmanager
 def llm_mock_controller(*args, **kwargs) -> LlmMockController:
+    timeout = kwargs.pop("timeout", 30)
     controller = LlmMockController(*args, **kwargs)
+    if not controller.ping(timeout):
+        raise RuntimeError(f"Agent didn't answered in {timeout} seconds")
     try:
         yield controller
     finally:
