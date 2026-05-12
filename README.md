@@ -85,7 +85,7 @@ To run with Slack instead:
 ```
 OMEGACLAW_AUTH_SECRET=<channel-secret> sh run.sh run.metta commchannel=slack SL_BOT_TOKEN="<xoxb-token>" SL_CHANNEL_ID="<channel-id>"
 ```
-Invite the bot user to that Slack channel, then send `auth <channel-secret>` in-channel once.
+`SL_CHANNEL_ID` is optional. If omitted, invite the bot to any channel and send `auth <channel-secret>` once there to auto-bind.
 
 The full list of the `run.metta` optinos
 | Option | Value | Description |
@@ -98,7 +98,7 @@ The full list of the `run.metta` optinos
 | `TG_CHAT_ID` |  | Optional Telegram chat ID. If empty, OmegaClaw auto-binds after first valid inbound auth/message. |
 | `TG_POLL_TIMEOUT` | 20 | Telegram polling timeout in seconds. |
 | `SL_BOT_TOKEN` |  | Slack bot token (`xoxb-...`). |
-| `SL_CHANNEL_ID` |  | Slack channel ID (for example `C0123456789`). |
+| `SL_CHANNEL_ID` |  | Optional Slack channel ID (for example `C0123456789`). If empty, OmegaClaw auto-binds on first successful auth message. |
 | `SL_POLL_INTERVAL` | 20 | Slack polling interval in seconds. |
 | `MM_URL` | `https://chat.singularitynet.io` | Mattermost base URL. |
 | `MM_CHANNEL_ID` | `8fjrmabjx7gupy7e5kjznpt5qh` | Mattermost channel ID. |

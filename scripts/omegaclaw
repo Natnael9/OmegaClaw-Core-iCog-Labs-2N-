@@ -153,31 +153,33 @@ def _choose_channel():
                     print("Slack bot token is required.", file=sys.stderr)
                     continue
 
-                channel_id = input("Please enter your Slack channel ID (example: C0123456789) or 'q' to exit: ").strip()
+                channel_id = input("Optional Slack channel ID (example: C0123456789). Leave empty for auto-bind, or 'q' to exit: ").strip()
                 if channel_id.lower() == "q":
                     sys.exit(1)
-                if not channel_id:
-                    print("Slack channel ID is required.", file=sys.stderr)
-                    continue
 
                 try:
                     auth = _slack_api_call(token, "auth.test", timeout=15)
-                    conv = _slack_api_call(token, "conversations.info", {"channel": channel_id}, timeout=15)
-                    channel = conv.get("channel") or {}
-                    channel_name = str(channel.get("name", "")).strip()
                     team_name = str(auth.get("team", "")).strip()
+                    channel_name = ""
+                    if channel_id:
+                        conv = _slack_api_call(token, "conversations.info", {"channel": channel_id}, timeout=15)
+                        channel = conv.get("channel") or {}
+                        channel_name = str(channel.get("name", "")).strip()
                 except (RuntimeError, urllib.error.URLError, TimeoutError) as exc:
                     print(f"Slack validation failed: {exc}", file=sys.stderr)
                     continue
 
-                print("Slack token and channel validated.")
+                print("Slack token validated.")
                 if team_name:
                     print(f"Slack workspace: {team_name}")
                 if channel_name:
                     print(f"Slack channel: #{channel_name} ({channel_id})")
-                else:
+                    print("Invite the bot user to that channel before sending messages.")
+                elif channel_id:
                     print(f"Slack channel ID: {channel_id}")
-                print("Invite the bot user to that channel before sending messages.")
+                    print("Invite the bot user to that channel before sending messages.")
+                else:
+                    print("No channel ID set. OmegaClaw will auto-bind to the first channel where auth succeeds.")
 
                 return {
                     "commchannel": "slack",
@@ -347,6 +349,10 @@ cat <<EOF
  HOW TO INTERACT WITH OMEGACLAW SLACK
 ============================================
 
+EOF
+
+if [ -n "${SL_CHANNEL_ID:-}" ]; then
+cat <<EOF
 Invite your Slack bot user to channel:
   ${SL_CHANNEL_NAME:-$SL_CHANNEL_ID}
 
@@ -354,6 +360,15 @@ Then send this auth message in that channel:
   auth $OMEGACLAW_AUTH_SECRET
 
 EOF
+else
+cat <<EOF
+Invite your Slack bot user to at least one channel, then send:
+  auth $OMEGACLAW_AUTH_SECRET
+
+The first channel where auth succeeds will be bound automatically.
+
+EOF
+fi
 
 if [ -n "${SL_TEAM_NAME:-}" ]; then
 cat <<EOF

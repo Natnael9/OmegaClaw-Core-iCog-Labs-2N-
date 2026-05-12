@@ -13,10 +13,11 @@ _state_lock = threading.Lock()
 _bot_token = ""
 _channel_id = ""
 _poll_interval = 20
-_last_ts = None
 _bot_user_id = ""
 _connected = False
 _user_cache = {}
+_channel_offsets = {}
+_channel_name_cache = {}
 
 _auth_secret = ""
 _authenticated_user_id = None
@@ -58,20 +59,40 @@ def _parse_auth_candidate(msg):
     return text
 
 
-def _is_allowed_message(user_id, msg):
+def _channel_label(channel_id):
+    with _state_lock:
+        label = _channel_name_cache.get(channel_id)
+    return label or channel_id
+
+
+def _is_allowed_message(channel_id, user_id, msg):
     global _authenticated_user_id
     candidate = _parse_auth_candidate(msg)
     with _state_lock:
+        if _channel_id and channel_id != _channel_id:
+            return "ignore"
+
         if not _auth_secret:
+            if not _channel_id:
+                _bind_label = _channel_name_cache.get(channel_id, channel_id)
+                print(f"[SLACK] Auto-bound to channel {_bind_label}")
+                _set_bound_channel(channel_id)
             return "allow"
+
         if candidate == _auth_secret:
             if _authenticated_user_id is None:
                 _authenticated_user_id = user_id
+                _set_bound_channel(channel_id)
                 return "auth_bound"
             return "ignore"
         if _authenticated_user_id is None:
             return "ignore"
         return "allow" if user_id == _authenticated_user_id else "ignore"
+
+
+def _set_bound_channel(channel_id):
+    global _channel_id
+    _channel_id = channel_id
 
 
 def _api_call(method, params=None, timeout=30):
@@ -129,6 +150,16 @@ def _get_display_name(user_id):
     return name
 
 
+def _cache_channel(channel):
+    channel_id = str(channel.get("id", "")).strip()
+    if not channel_id:
+        return
+    channel_name = str(channel.get("name", "")).strip()
+    label = f"#{channel_name}" if channel_name else channel_id
+    with _state_lock:
+        _channel_name_cache[channel_id] = label
+
+
 def _initialize_identity():
     global _bot_user_id
     payload = _api_call("auth.test", timeout=15)
@@ -140,6 +171,7 @@ def _initialize_identity():
 def _validate_channel():
     payload = _api_call("conversations.info", {"channel": _channel_id}, timeout=15)
     channel = payload.get("channel") or {}
+    _cache_channel(channel)
     channel_name = str(channel.get("name", "")).strip()
     if channel_name:
         print(f"[SLACK] Channel ready: #{channel_name}")
@@ -147,72 +179,138 @@ def _validate_channel():
         print(f"[SLACK] Channel ready: {_channel_id}")
 
 
-def _initialize_cursor():
-    global _last_ts
+def _list_joined_channels():
+    channels = []
+    cursor = ""
+    while True:
+        params = {
+            "types": "public_channel,private_channel",
+            "exclude_archived": "true",
+            "limit": 200,
+        }
+        if cursor:
+            params["cursor"] = cursor
+
+        payload = _api_call("conversations.list", params=params, timeout=20)
+        for channel in payload.get("channels") or []:
+            if not channel.get("is_member"):
+                continue
+            channel_id = str(channel.get("id", "")).strip()
+            if not channel_id:
+                continue
+            _cache_channel(channel)
+            channels.append(channel_id)
+
+        metadata = payload.get("response_metadata") or {}
+        cursor = str(metadata.get("next_cursor", "")).strip()
+        if not cursor:
+            break
+    return channels
+
+
+def _initialize_cursor_for_channel(channel_id):
     try:
         payload = _api_call(
             "conversations.history",
-            {"channel": _channel_id, "limit": 1},
+            {"channel": channel_id, "limit": 1},
             timeout=15,
         )
         messages = payload.get("messages") or []
+        ts = ""
         if messages:
             ts = str(messages[0].get("ts", "")).strip()
-            if ts:
-                with _state_lock:
-                    _last_ts = ts
+        with _state_lock:
+            _channel_offsets[channel_id] = ts
     except Exception as exc:
-        print(f"[SLACK] Could not initialize cursor: {exc}")
+        print(f"[SLACK] Could not initialize cursor for {_channel_label(channel_id)}: {exc}")
+
+
+def _initialize_auto_bind_cursors():
+    channels = _list_joined_channels()
+    if not channels:
+        print("[SLACK] Auto-bind waiting: no joined channels visible yet.")
+        return
+    for channel_id in channels:
+        with _state_lock:
+            known = channel_id in _channel_offsets
+        if not known:
+            _initialize_cursor_for_channel(channel_id)
+
+
+def _poll_channel(channel_id):
+    params = {"channel": channel_id, "limit": 15}
+    with _state_lock:
+        oldest = _channel_offsets.get(channel_id, "")
+    if oldest:
+        params["oldest"] = oldest
+        params["inclusive"] = "false"
+
+    payload = _api_call("conversations.history", params=params, timeout=30)
+    messages = payload.get("messages") or []
+    if not messages:
+        return
+
+    ordered = sorted(messages, key=lambda m: float(m.get("ts", 0.0)))
+    max_ts = oldest
+    for message in ordered:
+        ts = str(message.get("ts", "")).strip()
+        if ts:
+            max_ts = ts
+
+        # Ignore bot/system messages and process regular user text.
+        if message.get("subtype"):
+            continue
+
+        text = str(message.get("text", "")).strip()
+        user_id = str(message.get("user", "")).strip()
+        if not text or not user_id:
+            continue
+
+        with _state_lock:
+            bot_user_id = _bot_user_id
+        if bot_user_id and user_id == bot_user_id:
+            continue
+
+        state = _is_allowed_message(channel_id, user_id, text)
+        display_name = _get_display_name(user_id)
+        if state == "allow":
+            _set_last(f"{display_name}: {text}")
+        elif state == "auth_bound":
+            send_message(f"Authentication successful for {display_name}.")
+
+    if max_ts != oldest:
+        with _state_lock:
+            _channel_offsets[channel_id] = max_ts
 
 
 def _poll_loop():
-    global _connected, _last_ts
+    global _connected
     print("[SLACK] Polling started")
 
     while _running:
         try:
-            params = {"channel": _channel_id, "limit": 15}
             with _state_lock:
-                if _last_ts:
-                    params["oldest"] = _last_ts
-                    params["inclusive"] = "false"
+                bound_channel = _channel_id
 
-            payload = _api_call("conversations.history", params=params, timeout=30)
+            if bound_channel:
+                with _state_lock:
+                    known = bound_channel in _channel_offsets
+                if not known:
+                    _initialize_cursor_for_channel(bound_channel)
+                _poll_channel(bound_channel)
+            else:
+                channels = _list_joined_channels()
+                for channel_id in channels:
+                    with _state_lock:
+                        known = channel_id in _channel_offsets
+                    if not known:
+                        _initialize_cursor_for_channel(channel_id)
+                    _poll_channel(channel_id)
+                    with _state_lock:
+                        if _channel_id:
+                            break
+
             _connected = True
-
-            messages = payload.get("messages") or []
-            if messages:
-                ordered = sorted(messages, key=lambda m: float(m.get("ts", 0.0)))
-                max_ts = None
-                for message in ordered:
-                    ts = str(message.get("ts", "")).strip()
-                    if ts:
-                        max_ts = ts
-
-                    # Ignore bot/system messages and process regular user text.
-                    if message.get("subtype"):
-                        continue
-
-                    text = str(message.get("text", "")).strip()
-                    user_id = str(message.get("user", "")).strip()
-                    if not text or not user_id:
-                        continue
-
-                    with _state_lock:
-                        bot_user_id = _bot_user_id
-                    if bot_user_id and user_id == bot_user_id:
-                        continue
-
-                    state = _is_allowed_message(user_id, text)
-                    display_name = _get_display_name(user_id)
-                    if state == "allow":
-                        _set_last(f"{display_name}: {text}")
-                    elif state == "auth_bound":
-                        send_message(f"Authentication successful for {display_name}.")
-
-                if max_ts:
-                    with _state_lock:
-                        _last_ts = max_ts
         except Exception as exc:
             _connected = False
             print(f"[SLACK] Poll error: {exc}")
@@ -224,15 +322,13 @@ def _poll_loop():
 
 
 def start_slack(bot_token, channel_id, poll_interval=20, auth_secret=None):
-    global _running, _bot_token, _channel_id, _poll_interval, _last_ts, _connected
+    global _running, _bot_token, _channel_id, _poll_interval, _connected
 
     _bot_token = str(bot_token).strip()
     if not _bot_token:
         raise ValueError("SL_BOT_TOKEN is required")
 
     _channel_id = str(channel_id).strip()
-    if not _channel_id:
-        raise ValueError("SL_CHANNEL_ID is required")
 
     try:
         _poll_interval = max(1, int(poll_interval))
@@ -241,15 +337,20 @@ def start_slack(bot_token, channel_id, poll_interval=20, auth_secret=None):
 
     with _state_lock:
         _user_cache.clear()
-    _last_ts = None
+        _channel_offsets.clear()
+        _channel_name_cache.clear()
     _connected = False
     _set_auth_secret(auth_secret)
     _initialize_identity()
-    _validate_channel()
-    _initialize_cursor()
+    if _channel_id:
+        _validate_channel()
+        _initialize_cursor_for_channel(_channel_id)
+    else:
+        print("[SLACK] Starting adapter in auto-bind mode (channel not configured).")
+        _initialize_auto_bind_cursors()
 
     _running = True
-    print(f"[SLACK] Starting adapter for channel: {_channel_id}")
+    print(f"[SLACK] Starting adapter with channel target: {_channel_id or 'auto-bind'}")
     t = threading.Thread(target=_poll_loop, daemon=True)
     t.start()
     return t
@@ -264,7 +365,7 @@ def send_message(text):
     text = str(text).replace("\\n", "\n").replace("\r", "")
     if not text:
         return
-    if not _connected or not _channel_id:
+    if not _channel_id:
         return
 
     max_len = 3900
