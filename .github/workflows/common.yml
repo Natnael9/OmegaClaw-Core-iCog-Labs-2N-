@@ -79,14 +79,19 @@ jobs:
         if: inputs.run_tests
         run: |
           chmod +x ./scripts/omegaclaw
-          ./scripts/omegaclaw start -c $IRC_CHANNEL -d singularitynet/omegaclaw:${{ inputs.tag_name }}
+          ./scripts/omegaclaw start -p Test -c $IRC_CHANNEL -d singularitynet/omegaclaw:${{ inputs.tag_name }}
         env:
-          ASI_API_KEY: ${{ secrets.ASI_API_KEY }}
-          IRC_CHANNEL: ${{ secrets.IRC_CHANNEL }}
+          TEST_API_KEY: '172.17.0.1'
+          IRC_CHANNEL: '#omegaclaw_ci_${{ github.run_id }}'
 
       - name: Autotests - Blocking Checks
         if: inputs.run_tests
-        run: echo "No autotests yet"
+        run: |
+          pip install pytest
+          pytest -s -v Autotests/mock/test_*_mock.py
+        env:
+          OMEGACLAW_CONTAINER: omegaclaw
+          OMEGACLAW_IRC_CHANNEL: '#omegaclaw_ci_${{ github.run_id }}'
 
       - name: Autotests - Non-Blocking Checks
         if: inputs.run_tests
