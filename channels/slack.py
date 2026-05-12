@@ -2,6 +2,7 @@ import json
 import os
 import threading
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -18,9 +19,20 @@ _connected = False
 _user_cache = {}
 _channel_offsets = {}
 _channel_name_cache = {}
+_auto_bind_channels = []
+_auto_bind_index = 0
+_auto_bind_last_refresh = 0.0
 
 _auth_secret = ""
 _authenticated_user_id = None
+_rate_limit_until = 0.0
+_AUTO_BIND_REFRESH_INTERVAL = 300
+
+
+class _SlackRateLimitError(Exception):
+    def __init__(self, retry_after):
+        super().__init__(f"Slack rate limited (retry after {retry_after}s)")
+        self.retry_after = retry_after
 
 
 def _set_last(msg):
@@ -95,6 +107,29 @@ def _set_bound_channel(channel_id):
     _channel_id = channel_id
 
 
+def _parse_retry_after(value):
+    try:
+        seconds = int(str(value).strip())
+        return max(1, seconds)
+    except Exception:
+        return 60
+
+
+def _set_rate_limit_backoff(seconds):
+    global _rate_limit_until
+    until = time.time() + max(1, int(seconds))
+    with _state_lock:
+        if until > _rate_limit_until:
+            _rate_limit_until = until
+
+
+def _wait_for_rate_limit_window():
+    with _state_lock:
+        wait = _rate_limit_until - time.time()
+    if wait > 0:
+        time.sleep(wait)
+
+
 def _api_call(method, params=None, timeout=30):
     if not _bot_token:
         raise RuntimeError("Slack adapter not initialized")
@@ -111,11 +146,25 @@ def _api_call(method, params=None, timeout=30):
         method="POST",
     )
 
-    with urllib.request.urlopen(req, timeout=timeout) as response:
-        payload = json.loads(response.read().decode("utf-8", errors="ignore"))
+    _wait_for_rate_limit_window()
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            payload = json.loads(response.read().decode("utf-8", errors="ignore"))
+            response_headers = response.headers
+    except urllib.error.HTTPError as exc:
+        if exc.code == 429:
+            retry_after = _parse_retry_after(exc.headers.get("Retry-After"))
+            _set_rate_limit_backoff(retry_after)
+            raise _SlackRateLimitError(retry_after) from exc
+        raise
 
     if not payload.get("ok"):
-        raise RuntimeError(payload.get("error", f"{method} failed"))
+        err = payload.get("error", f"{method} failed")
+        if err == "ratelimited":
+            retry_after = _parse_retry_after(response_headers.get("Retry-After"))
+            _set_rate_limit_backoff(retry_after)
+            raise _SlackRateLimitError(retry_after)
+        raise RuntimeError(err)
 
     return payload
 
@@ -226,15 +275,40 @@ def _initialize_cursor_for_channel(channel_id):
 
 
 def _initialize_auto_bind_cursors():
-    channels = _list_joined_channels()
+    channels = _refresh_auto_bind_channels(force=True)
     if not channels:
         print("[SLACK] Auto-bind waiting: no joined channels visible yet.")
-        return
-    for channel_id in channels:
-        with _state_lock:
-            known = channel_id in _channel_offsets
-        if not known:
-            _initialize_cursor_for_channel(channel_id)
+    else:
+        print(f"[SLACK] Auto-bind watching {len(channels)} joined channel(s).")
+
+
+def _refresh_auto_bind_channels(force=False):
+    global _auto_bind_channels, _auto_bind_last_refresh, _auto_bind_index
+    now = time.time()
+    with _state_lock:
+        cached = list(_auto_bind_channels)
+        last_refresh = _auto_bind_last_refresh
+
+    if (not force) and cached and (now - last_refresh) < _AUTO_BIND_REFRESH_INTERVAL:
+        return cached
+
+    channels = _list_joined_channels()
+    with _state_lock:
+        _auto_bind_channels = channels
+        _auto_bind_last_refresh = now
+        if _auto_bind_index >= len(channels):
+            _auto_bind_index = 0
+    return channels
+
+
+def _next_auto_bind_channel():
+    global _auto_bind_index
+    with _state_lock:
+        if not _auto_bind_channels:
+            return ""
+        channel_id = _auto_bind_channels[_auto_bind_index]
+        _auto_bind_index = (_auto_bind_index + 1) % len(_auto_bind_channels)
+    return channel_id
 
 
 def _poll_channel(channel_id):
@@ -297,20 +371,27 @@ def _poll_loop():
                     known = bound_channel in _channel_offsets
                 if not known:
                     _initialize_cursor_for_channel(bound_channel)
-                _poll_channel(bound_channel)
+                    _connected = True
+                else:
+                    _poll_channel(bound_channel)
             else:
-                channels = _list_joined_channels()
-                for channel_id in channels:
+                channels = _refresh_auto_bind_channels()
+                if not channels:
+                    channels = _refresh_auto_bind_channels(force=True)
+                channel_id = _next_auto_bind_channel()
+                if channel_id:
                     with _state_lock:
                         known = channel_id in _channel_offsets
                     if not known:
                         _initialize_cursor_for_channel(channel_id)
-                    _poll_channel(channel_id)
-                    with _state_lock:
-                        if _channel_id:
-                            break
+                        _connected = True
+                    else:
+                        _poll_channel(channel_id)
 
             _connected = True
+        except _SlackRateLimitError as exc:
+            _connected = False
+            print(f"[SLACK] Rate limited. Backing off for {exc.retry_after}s.")
         except Exception as exc:
             _connected = False
             print(f"[SLACK] Poll error: {exc}")
@@ -321,8 +402,9 @@ def _poll_loop():
     print("[SLACK] Polling stopped")
 
 
-def start_slack(bot_token, channel_id, poll_interval=20, auth_secret=None):
+def start_slack(bot_token, channel_id, poll_interval=60, auth_secret=None):
     global _running, _bot_token, _channel_id, _poll_interval, _connected
+    global _rate_limit_until, _auto_bind_channels, _auto_bind_index, _auto_bind_last_refresh
 
     _bot_token = str(bot_token).strip()
     if not _bot_token:
@@ -331,14 +413,18 @@ def start_slack(bot_token, channel_id, poll_interval=20, auth_secret=None):
     _channel_id = str(channel_id).strip()
 
     try:
-        _poll_interval = max(1, int(poll_interval))
+        _poll_interval = max(60, int(poll_interval))
     except Exception:
-        _poll_interval = 20
+        _poll_interval = 60
 
     with _state_lock:
         _user_cache.clear()
         _channel_offsets.clear()
         _channel_name_cache.clear()
+    _auto_bind_channels = []
+    _auto_bind_index = 0
+    _auto_bind_last_refresh = 0.0
+    _rate_limit_until = 0.0
     _connected = False
     _set_auth_secret(auth_secret)
     _initialize_identity()

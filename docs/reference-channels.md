@@ -56,6 +56,7 @@ Slack adapter using Slack Web API polling.
 - Requires `SL_BOT_TOKEN`; `SL_CHANNEL_ID` is optional.
 - The bot user must already be invited to the target channel.
 - If `SL_CHANNEL_ID` is empty, the adapter auto-binds to the first channel where auth succeeds.
+- Adapter respects Slack `Retry-After` backoff on HTTP 429 and enforces a minimum 60s poll interval.
 - Uses the same one-time `auth <secret>` ownership gate as the other adapters.
 
 ## `channels/websearch.py`

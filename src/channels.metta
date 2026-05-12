@@ -32,7 +32,7 @@
                   (if (== (commchannel) slack)
                       (progn (configure SL_BOT_TOKEN "")
                              (configure SL_CHANNEL_ID "")
-                             (configure SL_POLL_INTERVAL 20)
+                             (configure SL_POLL_INTERVAL 60)
                              (py-call (slack.start_slack (SL_BOT_TOKEN) (SL_CHANNEL_ID) (SL_POLL_INTERVAL))))
                       (progn (configure MM_URL "https://chat.singularitynet.io")
                              (configure MM_CHANNEL_ID "8fjrmabjx7gupy7e5kjznpt5qh")

@@ -185,7 +185,7 @@ def _choose_channel():
                     "commchannel": "slack",
                     "SL_BOT_TOKEN": token,
                     "SL_CHANNEL_ID": channel_id,
-                    "SL_POLL_INTERVAL": "20",
+                    "SL_POLL_INTERVAL": "60",
                     "SL_TEAM_NAME": team_name,
                     "SL_CHANNEL_NAME": channel_name,
                 }
@@ -415,7 +415,7 @@ options() {
     TG_POLL_TIMEOUT="${TG_POLL_TIMEOUT:-20}"
     SL_BOT_TOKEN="${SL_BOT_TOKEN:-}"
     SL_CHANNEL_ID="${SL_CHANNEL_ID:-}"
-    SL_POLL_INTERVAL="${SL_POLL_INTERVAL:-20}"
+    SL_POLL_INTERVAL="${SL_POLL_INTERVAL:-60}"
     command=${1}
     shift 1
 

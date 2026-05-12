@@ -99,7 +99,7 @@ The full list of the `run.metta` optinos
 | `TG_POLL_TIMEOUT` | 20 | Telegram polling timeout in seconds. |
 | `SL_BOT_TOKEN` |  | Slack bot token (`xoxb-...`). |
 | `SL_CHANNEL_ID` |  | Optional Slack channel ID (for example `C0123456789`). If empty, OmegaClaw auto-binds on first successful auth message. |
-| `SL_POLL_INTERVAL` | 20 | Slack polling interval in seconds. |
+| `SL_POLL_INTERVAL` | 60 | Slack polling interval in seconds (minimum effective value is 60). |
 | `MM_URL` | `https://chat.singularitynet.io` | Mattermost base URL. |
 | `MM_CHANNEL_ID` | `8fjrmabjx7gupy7e5kjznpt5qh` | Mattermost channel ID. |
 | `MM_BOT_TOKEN` |  | Mattermost bot token. |

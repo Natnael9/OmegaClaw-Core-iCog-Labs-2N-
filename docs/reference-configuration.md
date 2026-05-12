@@ -47,7 +47,7 @@ This reads a command-line override via `argk` (`name=value` on the MeTTa command
 | `TG_POLL_TIMEOUT` | 20 | Telegram long-poll timeout in seconds. |
 | `SL_BOT_TOKEN` | *(empty — set at runtime)* | Slack bot token (`xoxb-...`). |
 | `SL_CHANNEL_ID` | *(empty — auto-bind supported)* | Optional Slack channel ID where OmegaClaw reads/writes messages. Leave empty to auto-bind on first valid inbound auth/message. |
-| `SL_POLL_INTERVAL` | 20 | Slack poll interval in seconds. |
+| `SL_POLL_INTERVAL` | 60 | Slack poll interval in seconds (minimum effective value is 60). |
 | `MM_URL` | `https://chat.singularitynet.io` | Mattermost base URL. |
 | `MM_CHANNEL_ID` | `8fjrmabjx7gupy7e5kjznpt5qh` | Target channel ID. |
 | `MM_BOT_TOKEN` | *(empty — set at runtime)* | Bot auth token. |
