@@ -57,7 +57,7 @@ def test_memory_chromadb():
 
         c.step("verify agent invoked (remember ...) with our marker")
         arg = wait_for_skill_call(
-            c.run_id, "remember", timeout=180, arg_substr=marker,
+            c.run_id, "remember", timeout=60, arg_substr=marker,
         )
         if arg is None:
             all_calls = find_skill_calls(c.run_id, "remember") or []

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # embedded vector store
 memory/chroma_db/
 
@@ -9,6 +10,11 @@ repos/
 
 # editor backup files
 *~
+Autotests/venv/
+Autotests/__pycache__/
+__pycache__/
+*.pyc
+Autotests/logs/
 
 # IDE
 .idea/

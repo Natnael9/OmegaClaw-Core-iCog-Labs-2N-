@@ -29,7 +29,7 @@ def test_search_invalid():
 
         c.step(f"verify agent invoked search/tavily-search with '{GIBBERISH}'")
         skill, arg = wait_for_any_skill_call(
-            c.run_id, SEARCH_SKILLS, timeout=180, arg_substr=GIBBERISH,
+            c.run_id, SEARCH_SKILLS, timeout=60, arg_substr=GIBBERISH,
         )
         if arg is None:
             seen = {s: find_skill_calls(c.run_id, s) or [] for s in SEARCH_SKILLS}
@@ -55,7 +55,7 @@ def test_search_invalid():
             return any(p in low for p in no_result_phrases)
 
         send_arg = wait_for_skill_match(
-            c.run_id, "send", has_negation, timeout=240,
+            c.run_id, "send", has_negation, timeout=60,
         )
         if send_arg is None:
             all_sends = find_skill_calls(c.run_id, "send") or []
