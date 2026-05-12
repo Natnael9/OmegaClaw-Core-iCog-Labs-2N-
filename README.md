@@ -81,15 +81,28 @@ OMEGACLAW_AUTH_SECRET=<channel-secret> sh run.sh run.metta IRC_channel="<irc-cha
 ```
 After start go to https://webchat.quakenet.org/ to communicate with the agent. Join `<irc-channel>` and after agent is joined send `auth <channel-secret>` message to authenticate yourself as an agent owner. Please replace `<irc-channel>` and `<channel-secret>` by your own values.
 
+To run with Slack instead:
+```
+OMEGACLAW_AUTH_SECRET=<channel-secret> sh run.sh run.metta commchannel=slack SL_BOT_TOKEN="<xoxb-token>" SL_CHANNEL_ID="<channel-id>"
+```
+Invite the bot user to that Slack channel, then send `auth <channel-secret>` in-channel once.
+
 The full list of the `run.metta` optinos
 | Option | Value | Description |
 |---|---|---|
 | `provider` | `Anthropic`, `OpenAI` or `ASICloud` | The name of the LLM API provider. The corresponding API token should be exported as an environment variable (see the table above). Default value is `Anthropic` |
 | `embeddingprovider` | `Local` or `OpenAI` | The embedding provider to use for the memory. `Local` uses [sentence-transformers](https://pypi.org/project/sentence-transformers/) library locally. `OpenAI` requires `OPENAI_API_KEY` and uses OpenAI embedding API. |
-| `commchannel` | `irc` | Type of the communication channel for agent to use - `irc` or `telegram` |
+| `commchannel` | `irc` | Type of the communication channel for agent to use - `irc`, `telegram`, `slack`, or `mattermost` |
 | `IRC_channel` | `"#some_channel_name"` | Name of the channel on [QuakeNet IRC server](https://webchat.quakenet.org/) which agent will connect to. In order to make agent talk only to the owner the `OMEGACLAW_AUTH_SECRET` environment variable is used. After agent is joined to the channel send `auth <secret>` message for the authentication. For example if `OMEGACLAW_AUTH_SECRET=12345` then one need sending `auth 12345`. |
 | `TG_BOT_TOKEN` |  | Telegram bot token. |
+| `TG_CHAT_ID` |  | Optional Telegram chat ID. If empty, OmegaClaw auto-binds after first valid inbound auth/message. |
 | `TG_POLL_TIMEOUT` | 20 | Telegram polling timeout in seconds. |
+| `SL_BOT_TOKEN` |  | Slack bot token (`xoxb-...`). |
+| `SL_CHANNEL_ID` |  | Slack channel ID (for example `C0123456789`). |
+| `SL_POLL_INTERVAL` | 20 | Slack polling interval in seconds. |
+| `MM_URL` | `https://chat.singularitynet.io` | Mattermost base URL. |
+| `MM_CHANNEL_ID` | `8fjrmabjx7gupy7e5kjznpt5qh` | Mattermost channel ID. |
+| `MM_BOT_TOKEN` |  | Mattermost bot token. |
 
 ---
 

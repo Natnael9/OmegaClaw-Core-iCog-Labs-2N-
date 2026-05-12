@@ -20,7 +20,9 @@ The MeTTa side reads `commchannel` and branches:
        (py-call (irc.getLastMessage))
        (if (== (commchannel) telegram)
            (py-call (telegram.getLastMessage))
-           (py-call (mattermost.getLastMessage)))))
+           (if (== (commchannel) slack)
+               (py-call (slack.getLastMessage))
+               (py-call (mattermost.getLastMessage))))))
 ```
 
 ## `channels/irc.py`
@@ -45,6 +47,15 @@ Telegram adapter using Bot API long polling.
 - `start_telegram(bot_token, chat_id, poll_timeout)` — starts a poll loop.
 - `TG_CHAT_ID` is optional; if empty, the adapter can auto-bind to the first valid inbound chat.
 - Outbound messages are chunked to Telegram-safe lengths.
+
+## `channels/slack.py`
+
+Slack adapter using Slack Web API polling.
+
+- `start_slack(bot_token, channel_id, poll_interval)` — starts a poll loop.
+- Requires `SL_BOT_TOKEN` and `SL_CHANNEL_ID`.
+- The bot user must already be invited to the target channel.
+- Uses the same one-time `auth <secret>` ownership gate as the other adapters.
 
 ## `channels/websearch.py`
 
