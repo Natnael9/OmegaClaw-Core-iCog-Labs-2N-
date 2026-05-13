@@ -75,20 +75,20 @@ jobs:
         if: inputs.run_tests
         uses: actions/checkout@v4
 
-      - name: Autotests - Run test container
+      - name: Autotests - Set up
         if: inputs.run_tests
         run: |
           chmod +x ./scripts/omegaclaw
           ./scripts/omegaclaw start -p Test -c $IRC_CHANNEL -d singularitynet/omegaclaw:${{ inputs.tag_name }}
+          pip install pytest
         env:
           TEST_API_KEY: '172.17.0.1'
           IRC_CHANNEL: '#omegaclaw_ci_${{ github.run_id }}'
 
       - name: Autotests - Blocking Checks
         if: inputs.run_tests
-        run: |
-          pip install pytest
-          pytest -s -v Autotests/mock/test_*_mock.py
+        working-directory: Autotests
+        run: pytest -s -v @run_mandatory
         env:
           OMEGACLAW_CONTAINER: omegaclaw
           OMEGACLAW_IRC_CHANNEL: '#omegaclaw_ci_${{ github.run_id }}'
@@ -96,7 +96,11 @@ jobs:
       - name: Autotests - Non-Blocking Checks
         if: inputs.run_tests
         continue-on-error: true
-        run: echo "No autotests yet"
+        working-directory: Autotests
+        run: pytest -s -v @run_optional
+        env:
+          OMEGACLAW_CONTAINER: omegaclaw
+          OMEGACLAW_IRC_CHANNEL: '#omegaclaw_ci_${{ github.run_id }}'
 
       - name: Build and push (release)
         if: success() && inputs.publish_docker
