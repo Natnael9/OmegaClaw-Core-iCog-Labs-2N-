@@ -367,10 +367,25 @@ start() {
             --user 65534:65534
             --security-opt no-new-privileges:true
             --init
-            --volume omegaclaw-memory:/PeTTa/repos/OmegaClaw-Core/memory
+    )
+
+    if [ "${provider}" == "Test" ]; then
+      docker_cmd+=(
+            --network bridge
+            --add-host=host.docker.internal:host-gateway
+            --tmpfs /tmp:size=64m,mode=1777,exec
+            --tmpfs /var/tmp:size=64m,mode=1777,exec
+      )
+    else
+      docker_cmd+=(
             --tmpfs /tmp:size=64m,mode=1777
-            --tmpfs /run:size=16m,mode=755
             --tmpfs /var/tmp:size=64m,mode=1777
+      )
+    fi
+
+    docker_cmd+=(
+            --tmpfs /run:size=16m,mode=755
+            --volume omegaclaw-memory:/PeTTa/repos/OmegaClaw-Core/memory
             -e "${api_token_var}"="${api_token}"
             -e OMEGACLAW_AUTH_SECRET="$OMEGACLAW_AUTH_SECRET"
             -e LLM_SERVER_LOCAL_URL="$llm_server_local_url"
@@ -379,6 +394,7 @@ start() {
             "provider=${provider}"
             "embeddingprovider=${embeddingprovider}"
     )
+
     if [ "${commchannel}" = "irc" ]; then
       docker_cmd+=("IRC_channel=${IRC_channel}")
     else

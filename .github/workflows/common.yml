@@ -82,7 +82,7 @@ jobs:
           ./scripts/omegaclaw start -p Test -c $IRC_CHANNEL -d singularitynet/omegaclaw:${{ inputs.tag_name }}
           pip install pytest
         env:
-          TEST_API_KEY: '172.17.0.1'
+          TEST_API_KEY: 'host.docker.internal'
           IRC_CHANNEL: '#omegaclaw_ci_${{ github.run_id }}'
 
       - name: Autotests - Blocking Checks
