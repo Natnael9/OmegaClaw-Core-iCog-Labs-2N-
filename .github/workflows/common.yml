@@ -101,7 +101,7 @@ jobs:
         env:
           OMEGACLAW_CONTAINER: omegaclaw
           OMEGACLAW_IRC_CHANNEL: '#omegaclaw_ci_${{ github.run_id }}'
-          OMEGACLAW_GIT_TOKEN: {{ secrets.CICD_GITHUB_PAT }}
+          OMEGACLAW_GIT_TOKEN: ${{ secrets.CICD_GITHUB_PAT }}
 
       - name: Build and push (release)
         if: success() && inputs.publish_docker
