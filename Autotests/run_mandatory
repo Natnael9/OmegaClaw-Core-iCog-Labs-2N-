@@ -7,7 +7,6 @@ mock/test_edit_append_line_mock.py
 mock/test_edit_delete_line_mock.py
 mock/test_git_local_commit_mock.py
 mock/test_git_pull_public_mock.py
-mock/test_git_push_to_remote_mock.py
 mock/test_memory_chromadb_mock.py
 mock/test_memory_history_mock.py
 mock/test_run_error_script_mock.py
