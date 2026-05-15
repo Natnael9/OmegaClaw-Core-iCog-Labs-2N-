@@ -82,13 +82,40 @@ OMEGACLAW_AUTH_SECRET=<channel-secret> sh run.sh run.metta IRC_channel="<irc-cha
 ```
 After start go to https://webchat.quakenet.org/ to communicate with the agent. Join `<irc-channel>` and after agent is joined send `auth <channel-secret>` message to authenticate yourself as an agent owner. Please replace `<irc-channel>` and `<channel-secret>` by your own values.
 
-The full list of the `run.metta` optinos
-| Option | Value | Description |
+## Reference — Configuration Options
+
+### General
+
+| Parameter | Default | Meaning |
 |---|---|---|
-| `provider` | `Anthropic`, `OpenAI` or `ASICloud` | The name of the LLM API provider. The corresponding API token should be exported as an environment variable (see the table above). Default value is `Anthropic` |
-| `embeddingprovider` | `Local` or `OpenAI` | The embedding provider to use for the memory. `Local` uses [sentence-transformers](https://pypi.org/project/sentence-transformers/) library locally. `OpenAI` requires `OPENAI_API_KEY` and uses OpenAI embedding API. |
+| `maxNewInputLoops` | 50 | Turns the agent keeps running after a new human message before idling (seconds) |
+| `maxWakeLoops` | 1 | Extra turns granted on each scheduled wake-up |
+| `sleepInterval` | 1 | Delay between loop iterations (seconds) |
+| `wakeupInterval` | 600 | How long idle before the next scheduled wake-up (seconds) |
+| `LLM` | `gpt-5.4` | Model identifier passed to the provider (OpenAI only) |
+| `provider` | `ASIOne` | LLM provider — `ASIOne`, `ASICloud`, `Anthropic`, `OpenAI` |
+| `maxOutputToken` | 6000 | Output cap passed to the provider |
+| `reasoningMode` | `medium` | Reasoning-effort hint passed to the provider (OpenAI only) |
+
+### Memory (`src/memory.metta`)
+
+| Parameter | Default | Meaning |
+|---|---|---|
+| `maxFeedback` | 50000 | Ceiling on `LAST_SKILL_USE_RESULTS` text fed back into the prompt (chars) |
+| `maxRecallItems` | 20 | Items returned by `query` |
+| `maxEpisodeRecallLines` | 20 | Lines returned by `episodes` |
+| `maxHistory` | 30000 | Tail of `memory/history.metta` included in the prompt (chars) |
+| `embeddingprovider` | `Local` | `Local` (Python-side model) or `OpenAI` |
+
+### Channels (`src/channels.metta`)
+
+| Parameter | Default | Meaning |
+|---|---|---|
 | `commchannel` | `irc` | Type of the communication channel for agent to use - `irc` or `telegram` |
-| `IRC_channel` | `"#some_channel_name"` | Name of the channel on [QuakeNet IRC server](https://webchat.quakenet.org/) which agent will connect to. In order to make agent talk only to the owner the `OMEGACLAW_AUTH_SECRET` environment variable is used. After agent is joined to the channel send `auth <secret>` message for the authentication. For example if `OMEGACLAW_AUTH_SECRET=12345` then one need sending `auth 12345`. |
+| `IRC_channel` | `##omegaclaw` | IRC channel to join |
+| `IRC_server` | `irc.quakenet.org` | IRC server hostname |
+| `IRC_port` | 6667 | IRC port |
+| `IRC_user` | `omegaclaw` | IRC nickname |
 | `TG_BOT_TOKEN` |  | Telegram bot token. |
 | `TG_POLL_TIMEOUT` | 20 | Telegram polling timeout in seconds. |
 

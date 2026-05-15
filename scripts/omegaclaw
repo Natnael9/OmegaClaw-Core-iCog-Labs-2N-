@@ -350,6 +350,10 @@ options() {
             embeddingprovider="Local"
             api_token_var="OPENROUTER_API_KEY"
             ;;
+        Test)
+            embeddingprovider="Local"
+            api_token_var="TEST_API_KEY"
+            ;;
         *) help
            return 1
            ;;

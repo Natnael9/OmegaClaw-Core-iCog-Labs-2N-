@@ -27,7 +27,7 @@ def test_search_basic():
 
         c.step("verify agent invoked a search skill (search or tavily-search)")
         skill, arg = wait_for_any_skill_call(
-            c.run_id, SEARCH_SKILLS, timeout=180, arg_substr="singularity",
+            c.run_id, SEARCH_SKILLS, timeout=60, arg_substr="singularity",
         )
         if arg is None:
             seen = {s: find_skill_calls(c.run_id, s) or [] for s in SEARCH_SKILLS}
@@ -35,14 +35,23 @@ def test_search_basic():
         c.ok(f"{skill} invoked", f"arg={arg!r}")
 
         c.step("verify (send ...) skill contains SingularityNet keywords")
+        # Drop the bare "agi" — three letters is short enough to match
+        # unrelated text (e.g. "magic", "agile") and slip a generic reply
+        # past as a successful relay. Require terms that are specific to
+        # the SingularityNet ecosystem.
         send_matched = wait_for_history_keyword(
             c.run_id,
-            ["singularitynet", "singularity", "agi", "blockchain",
-             "decentralized", "marketplace", "goertzel"],
+            ["singularitynet", "singularity net", "singularitynet.io",
+             "agix", "snet", "goertzel", "ben goertzel",
+             "ai marketplace", "decentralized ai"],
             timeout=60,
         )
         if send_matched is None:
-            c.fail("send content", "agent did not relay SingularityNet info to user")
+            c.fail(
+                "send content",
+                "agent did not relay SingularityNet info to user "
+                "(no project-specific keyword in send)",
+            )
         c.ok("send content", f"matched: {', '.join(send_matched[:4])}")
 
         c.done()

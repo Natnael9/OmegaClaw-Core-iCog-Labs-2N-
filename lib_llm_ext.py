@@ -1,11 +1,26 @@
 import os, openai
 from typing import Optional
 
-class AIProvider:
+class AbstractAIProvider:
+    def __init__(self, name: str):
+        self._name = name
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    def chat(self, model: str, content: str, max_tokens: int = 6000, **kwargs) -> str:
+        raise NotImplementedError
+
+    @property
+    def is_available(self) -> bool:
+        raise NotImplementedError
+
+class AIProvider(AbstractAIProvider):
     """Lazy AI provider with on-demand initialization."""
 
     def __init__(self, name: str, var_name: str, model_name: str, base_url: str):
-        self._name = name
+        super().__init__(name)
         self._var_name = var_name
         self._model_name = model_name
         self._base_url = base_url
@@ -35,17 +50,17 @@ class AIProvider:
         """Check if provider is configured (without initializing)."""
         return bool(os.environ.get(self._var_name))
 
-    def chat(self, model: str, content: str, max_tokens: int = 6000, **kwargs) -> str:
+    def chat(self, content: str, max_tokens: int = 6000, **kwargs) -> str:
         """Send chat request, initializing client if needed."""
         self._ensure_client()
 
         if self._client is None:
-            raise RuntimeError(f"{self._name} not configured (set {self._var_name})")
+            raise RuntimeError(f"{self.name} not configured (set {self._var_name})")
 
         content = content.replace(":-:-:-:", " ")
         try:
             response = self._client.chat.completions.create(
-                model=model,
+                model=self._model_name,
                 messages=[{"role": "user", "content": content}],
                 max_tokens=max_tokens,
                 **kwargs
@@ -67,17 +82,17 @@ class AsiOneProvider(AIProvider):
     def __init__(self, name: str, var_name: str, model_name: str, base_url: str):
         super().__init__(name, var_name, model_name, base_url)
 
-    def chat(self, model: str, content: str, max_tokens: int = 6000, **kwargs) -> str:
+    def chat(self, content: str, max_tokens: int = 6000, **kwargs) -> str:
         """Send chat request, initializing client if needed."""
         self._ensure_client()
 
         if self._client is None:
-            raise RuntimeError(f"{self._name} not configured (set {self._var_name})")
+            raise RuntimeError(f"{self.name} not configured (set {self._var_name})")
 
         sysmsg, usermsg = content.split(":-:-:-:")
         try:
             response = self._client.chat.completions.create(
-                model=model,
+                model=self._model_name,
                 messages=[{"role": "system", "content": sysmsg},
                           {"role": "user", "content": usermsg}],
                 max_tokens=max_tokens,
@@ -93,6 +108,28 @@ class AsiOneProvider(AIProvider):
             print(f"[lib_llm_ext.ASIOneProvider.chat] Exception while communicating with LLM: {e}")
             return ""
 
+class TestProvider(AbstractAIProvider):
+    """Test provider for mocking LLM output"""
+
+    def __init__(self):
+        super().__init__("Test")
+        self._mock = None
+        self._controller_ip = os.environ.get("TEST_API_KEY")
+
+    def _llm_mock(self):
+        if not self._mock:
+            import Autotests.mock.rpc as rpc
+            from Autotests.mock.llm import LlmMockAgent
+            self._mock = LlmMockAgent((self._controller_ip, rpc.PORT_DEFAULT))
+        return self._mock
+
+    @property
+    def is_available(self) -> bool:
+        return self._controller_ip is not None
+
+    def chat(self, content: str, max_tokens: int = 6000, **kwargs) -> str:
+        return self._llm_mock().chat(content)
+
 # Provider registry - lazy, no initialization yet
 _provider_registry = {}
 
@@ -101,9 +138,9 @@ def _register_provider(name: str, var_name: str, model_name: str, base_url: str)
     """Register a provider configuration (no instantiation yet)."""
     _register_provider_instance(AIProvider(name, var_name, model_name, base_url))
 
-def _register_provider_instance(provider: AIProvider):
+def _register_provider_instance(provider: AbstractAIProvider):
     """Register a pre-initialized provider configuration (no instantiation yet)."""
-    _provider_registry[provider._name] = provider
+    _provider_registry[provider.name] = provider
 
 def _get_provider(name: str) -> Optional[AIProvider]:
     """Get or create provider instance on demand."""
@@ -116,6 +153,7 @@ _register_provider(name="Anthropic", var_name="ANTHROPIC_API_KEY", model_name="c
 _register_provider(name="Ollama-local", var_name="OLLAMA_API_KEY", model_name="qwen3.5:9b", base_url="http://localhost:11434/v1")
 _register_provider_instance(AsiOneProvider(name="ASIOne", var_name="ASIONE_API_KEY", model_name="asi1-ultra", base_url="https://api.asi1.ai/v1"))
 _register_provider(name="OpenRouter", var_name="OPENROUTER_API_KEY", model_name="z-ai/glm-5.1", base_url="https://openrouter.ai/api/v1")
+_register_provider_instance(TestProvider())
 # At the moment the OpenAI model call is in PeTTa, just init a default config here
 _register_provider(name="OpenAI", var_name="OPENAI_API_KEY", model_name="gpt-5.4", base_url="https://api.openai.com/v1")
 
@@ -125,7 +163,7 @@ def callProvider(provider_name: str, content: str, max_tokens: int = 6000) -> st
     provider = _get_provider(provider_name)
     if not provider or not provider.is_available:
         raise RuntimeError(f"Provider '{provider_name}' not available")
-    return provider.chat(model=provider._model_name, content=content, max_tokens=max_tokens)
+    return provider.chat(content=content, max_tokens=max_tokens)
 
 
 
