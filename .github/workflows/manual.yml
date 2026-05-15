@@ -18,6 +18,11 @@ on:
         required: false
         default: 'linux/amd64,linux/arm64'
         type: string
+      run_tests:
+        description: 'Run tests'
+        required: false
+        default: true
+        type: boolean
 
 jobs:
   manual:
@@ -28,4 +33,5 @@ jobs:
       move_latest: false
       no_build_cache: ${{ inputs.no_build_cache }}
       platforms: ${{ inputs.platforms }}
+      run_tests: ${{ inputs.run_tests }}
     secrets: inherit
