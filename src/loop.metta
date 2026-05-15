@@ -14,7 +14,7 @@
           (configure spamShield True)
           (configure sleepInterval 1) ;10
           (configure LLM gpt-5.4)
-          (configure provider Anthropic) ;Anthropic or OpenAI or ASICloud or ASIOne
+          (configure provider Anthropic) ;Anthropic or OpenAI or ASICloud or ASIOne or Test
           (configure maxOutputToken 6000)
           (configure reasoningMode medium)
           (configure wakeupInterval 600) ;600=10 minutes
@@ -60,11 +60,7 @@
                                        ($_ (println! (CHARS_SENT: (string_length $send) $send)))
                                        ($respi (if (== (provider) OpenAI)
                                                    (useGPT (LLM) (maxOutputToken) (reasoningMode) $send)
-                                                   (if (== (provider) Anthropic)
-                                                       (py-call (lib_llm_ext.useClaude $send))
-                                                       (if (== (provider) ASICloud)
-                                                           (py-call (lib_llm_ext.useMiniMax $send))
-                                                           (py-call (lib_llm_ext.useAsi1 $send))))))
+                                                   (py-call (lib_llm_ext.callProvider (provider) $send (maxOutputToken)))))
                                        ($resp (py-call (helper.balance_parentheses $respi)))
                                        ($response (if (== "(" (first_char $resp)) $resp (progn (println! $resp) (repr (REMEMBER:OUTPUT_NOTHING_ELSE_THAN: ((skill arg) ...))))))
                                        ($sexpr (catch (sread $response)))
@@ -78,4 +74,6 @@
                                 (if (> (get_time) (get-state &nextWakeAt))
                                     (change-state! &loops (+ 1 (maxWakeLoops))) _)))
                       (sleep (sleepInterval))
+                      (cut)
+                      (gc)
                       (omegaclaw (+ 1 $k))))))

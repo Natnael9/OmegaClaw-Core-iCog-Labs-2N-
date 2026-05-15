@@ -44,4 +44,22 @@ def test_create_empty_file():
             c.fail("cat", f"cat failed: {res.stderr.strip()}")
         c.ok("cat", repr(res.stdout))
 
+        c.step("verify file is empty (or only contains a trailing newline)")
+        # The prompt says "the file can be empty" — without checking, the
+        # test would pass if the agent wrote arbitrary content (any non-zero
+        # size) too. Tolerate up to a single \n which most editors append.
+        size_res = dexec("stat", "-c", "%s", TARGET_FILE)
+        if size_res.returncode != 0:
+            c.fail("size check", f"stat failed: {size_res.stderr.strip()}")
+        try:
+            size = int(size_res.stdout.strip())
+        except ValueError:
+            c.fail("size check", f"unparseable size: {size_res.stdout!r}")
+        if size > 1:
+            c.fail(
+                "empty content",
+                f"file is not empty: {size} bytes, content={res.stdout!r}",
+            )
+        c.ok("empty content", f"{size} bytes")
+
         c.done()
