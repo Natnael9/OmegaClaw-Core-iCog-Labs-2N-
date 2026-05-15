@@ -13,7 +13,7 @@ _state_lock = threading.Lock()
 
 _bot_token = ""
 _channel_id = ""
-_poll_interval = 20
+_poll_interval = 10
 _bot_user_id = ""
 _connected = False
 _user_cache = {}
@@ -413,7 +413,7 @@ def start_slack(bot_token, channel_id, poll_interval=60, auth_secret=None):
     _channel_id = str(channel_id).strip()
 
     try:
-        _poll_interval = max(60, int(poll_interval))
+        _poll_interval = min(60, int(poll_interval))
     except Exception:
         _poll_interval = 60
 
