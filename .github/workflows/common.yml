@@ -78,6 +78,7 @@ jobs:
       - name: Autotests - Set up
         if: inputs.run_tests
         run: |
+          echo "IRC Channel: $IRC_CHANNEL"
           chmod +x ./scripts/omegaclaw
           ./scripts/omegaclaw start -p Test -c $IRC_CHANNEL -d singularitynet/omegaclaw:${{ inputs.tag_name }}
           pip install pytest
@@ -85,7 +86,7 @@ jobs:
           TEST_API_KEY: 'host.docker.internal'
           IRC_CHANNEL: '#omegaclaw_ci_${{ github.run_id }}'
 
-      - name: Autotests - Blocking Checks
+      - name: Autotests - Phase 1 (Blocking Checks)
         if: inputs.run_tests
         working-directory: Autotests
         run: pytest -s -v @run_mandatory
@@ -93,11 +94,14 @@ jobs:
           OMEGACLAW_CONTAINER: omegaclaw
           OMEGACLAW_IRC_CHANNEL: '#omegaclaw_ci_${{ github.run_id }}'
 
-      - name: Autotests - Non-Blocking Checks
+      - name: Autotests - Phase 2 (Non-Blocking Checks)
         if: inputs.run_tests
         continue-on-error: true
         working-directory: Autotests
-        run: pytest -s -v @run_optional
+        run: |
+          echo "Restarting container and wait..."
+          docker restart omegaclaw && sleep 5
+          pytest -s -v @run_optional
         env:
           OMEGACLAW_CONTAINER: omegaclaw
           OMEGACLAW_IRC_CHANNEL: '#omegaclaw_ci_${{ github.run_id }}'
