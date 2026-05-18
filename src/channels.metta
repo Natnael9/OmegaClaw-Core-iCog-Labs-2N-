@@ -10,6 +10,9 @@
 (= (TG_BOT_TOKEN) (empty))
 (= (TG_CHAT_ID) (empty))
 (= (TG_POLL_TIMEOUT) (empty))
+(= (SL_BOT_TOKEN) (empty))
+(= (SL_CHANNEL_ID) (empty))
+(= (SL_POLL_INTERVAL) (empty))
 
 ;Connect all the channels:
 (= (initChannels)
@@ -26,10 +29,15 @@
                          (configure TG_CHAT_ID "")
                          (configure TG_POLL_TIMEOUT 20)
                          (py-call (telegram.start_telegram (TG_BOT_TOKEN) (TG_CHAT_ID) (TG_POLL_TIMEOUT))))
-                  (progn (configure MM_URL "https://chat.singularitynet.io")
-                         (configure MM_CHANNEL_ID "8fjrmabjx7gupy7e5kjznpt5qh")
-                         (configure MM_BOT_TOKEN "")
-                         (py-call (mattermost.start_mattermost (MM_URL) (MM_CHANNEL_ID) (MM_BOT_TOKEN))))))))
+                  (if (== (commchannel) slack)
+                      (progn (configure SL_BOT_TOKEN "")
+                             (configure SL_CHANNEL_ID "")
+                             (configure SL_POLL_INTERVAL 60)
+                             (py-call (slack.start_slack (SL_BOT_TOKEN) (SL_CHANNEL_ID) (SL_POLL_INTERVAL))))
+                      (progn (configure MM_URL "https://chat.singularitynet.io")
+                             (configure MM_CHANNEL_ID "8fjrmabjx7gupy7e5kjznpt5qh")
+                             (configure MM_BOT_TOKEN "")
+                             (py-call (mattermost.start_mattermost (MM_URL) (MM_CHANNEL_ID) (MM_BOT_TOKEN)))))))))
 
 ;Receive the latest user message considering all communication channels:
 (= (receive)
@@ -37,7 +45,9 @@
        (py-call (irc.getLastMessage))
        (if (== (commchannel) telegram)
            (py-call (telegram.getLastMessage))
-           (py-call (mattermost.getLastMessage)))))
+           (if (== (commchannel) slack)
+               (py-call (slack.getLastMessage))
+               (py-call (mattermost.getLastMessage))))))
 
 ;Send a message to all communication channels:
 !(change-state! &lastsend "")
@@ -49,7 +59,9 @@
                        (let $temp (cut) (py-call (irc.send_message $safemsg)))
                        (if (== (commchannel) telegram)
                            (let $temp (cut) (py-call (telegram.send_message $safemsg)))
-                           (let $temp (cut) (py-call (mattermost.send_message $safemsg))))))) _))
+                           (if (== (commchannel) slack)
+                               (let $temp (cut) (py-call (slack.send_message $safemsg)))
+                               (let $temp (cut) (py-call (mattermost.send_message $safemsg)))))))) _))
 
 ;Search the internet for some information:
 (= (search $msg)

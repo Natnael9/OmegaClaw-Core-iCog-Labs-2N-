@@ -1,4 +1,10 @@
-from .rpc import Rpc, IPCClient, IPCServer, HOST_DEFAULT, PORT_DEFAULT
+# Support both layouts: imported as a package (Autotests.mock.llm in
+# the container's loop.metta), and as a plain directory (host-side
+# pytest collecting mock/ without __init__.py).
+try:
+    from .rpc import Rpc, IPCClient, IPCServer, HOST_DEFAULT, PORT_DEFAULT
+except ImportError:
+    from rpc import Rpc, IPCClient, IPCServer, HOST_DEFAULT, PORT_DEFAULT
 from contextlib import contextmanager
 import threading
 
@@ -21,17 +27,38 @@ class LlmMockAgent:
             return ""
 
         try:
-            msg = eval(user[1])[1].split(': ', 1)[1]
+            body = eval(user[1])[1]
         except SyntaxError:
             return ""
 
-        with self._lock:
-            answer = self._answers.get(msg)
+        # IRC may deliver multiple PRIVMSGs in one agent iteration; the
+        # agent concatenates them with " | " between speakers. Split
+        # and look up each fragment individually so a registered answer
+        # is not missed when several messages arrive together.
+        fragments = body.split(" | ")
+        answer = None
+        for fragment in fragments:
+            if ": " not in fragment:
+                continue
+            prompt = fragment.split(": ", 1)[1]
+            # The agent escapes punctuation that would confuse its s-exp
+            # parser ('->_apostrophe_, "->_quote_, \n->_newline_) before
+            # the text reaches chat(). set_answer stores the literal
+            # prompt key, so reverse the escapes here to match.
+            normalized = (prompt
+                          .replace("_apostrophe_", "'")
+                          .replace("_quote_", '"')
+                          .replace("_newline_", "\n"))
+            with self._lock:
+                a = self._answers.get(normalized) or self._answers.get(prompt)
+            if a:
+                answer = a
+
         if answer:
             print(f"[LlmMockAgent] Mock answers: {answer}")
             return answer
         else:
-            print(f"[LlmMockAgent] Mock doesn't have answer for: {msg}")
+            print(f"[LlmMockAgent] Mock doesn't have answer for: {body}")
             return ""
 
     def on_set_answer(self, args):

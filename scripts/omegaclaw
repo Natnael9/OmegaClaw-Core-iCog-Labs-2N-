@@ -68,11 +68,33 @@ def _telegram_api_call(bot_token, method, params=None, timeout=20):
     return payload.get("result")
 
 
+def _slack_api_call(bot_token, method, params=None, timeout=20):
+    params = params or {}
+    body = urllib.parse.urlencode(params).encode("utf-8")
+    req = urllib.request.Request(
+        f"https://slack.com/api/{method}",
+        data=body,
+        headers={
+            "Authorization": f"Bearer {bot_token}",
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        method="POST",
+    )
+
+    with urllib.request.urlopen(req, timeout=timeout) as response:
+        payload = json.loads(response.read().decode("utf-8", errors="ignore"))
+
+    if not payload.get("ok"):
+        raise RuntimeError(payload.get("error", f"{method} failed"))
+
+    return payload
+
+
 def _choose_channel():
     while True:
         print("Please select your communication channel.")
-        print("1) IRC (QuakeNet) 2) Telegram Bot")
-        c = input("Enter 1-2 or 'q' to exit (default: 1): ").strip()
+        print("1) IRC (QuakeNet) 2) Telegram Bot 3) Slack Bot")
+        c = input("Enter 1-3 or 'q' to exit (default: 1): ").strip()
 
         if c.lower() == "q":
             sys.exit(1)
@@ -122,7 +144,53 @@ def _choose_channel():
                     "TG_BOT_USERNAME": username,
                 }
 
-        print("Please enter 1, 2, or 'q'.", file=sys.stderr)
+        if c == "3":
+            while True:
+                token = getpass.getpass("Please paste your Slack bot token (xoxb-...) and press ENTER or 'q' to exit: ").strip()
+                if token.lower() == "q":
+                    sys.exit(1)
+                if not token:
+                    print("Slack bot token is required.", file=sys.stderr)
+                    continue
+
+                channel_id = input("Optional Slack channel ID (example: C0123456789). Leave empty for auto-bind, or 'q' to exit: ").strip()
+                if channel_id.lower() == "q":
+                    sys.exit(1)
+
+                try:
+                    auth = _slack_api_call(token, "auth.test", timeout=15)
+                    team_name = str(auth.get("team", "")).strip()
+                    channel_name = ""
+                    if channel_id:
+                        conv = _slack_api_call(token, "conversations.info", {"channel": channel_id}, timeout=15)
+                        channel = conv.get("channel") or {}
+                        channel_name = str(channel.get("name", "")).strip()
+                except (RuntimeError, urllib.error.URLError, TimeoutError) as exc:
+                    print(f"Slack validation failed: {exc}", file=sys.stderr)
+                    continue
+
+                print("Slack token validated.")
+                if team_name:
+                    print(f"Slack workspace: {team_name}")
+                if channel_name:
+                    print(f"Slack channel: #{channel_name} ({channel_id})")
+                    print("Invite the bot user to that channel before sending messages.")
+                elif channel_id:
+                    print(f"Slack channel ID: {channel_id}")
+                    print("Invite the bot user to that channel before sending messages.")
+                else:
+                    print("No channel ID set. OmegaClaw will auto-bind to the first channel where auth succeeds.")
+
+                return {
+                    "commchannel": "slack",
+                    "SL_BOT_TOKEN": token,
+                    "SL_CHANNEL_ID": channel_id,
+                    "SL_POLL_INTERVAL": "10",
+                    "SL_TEAM_NAME": team_name,
+                    "SL_CHANNEL_NAME": channel_name,
+                }
+
+        print("Please enter 1, 2, 3, or 'q'.", file=sys.stderr)
 
 
 def _choose_provider():
@@ -252,7 +320,7 @@ Authentication step (required):
   Messages from all other users will be silently ignored.
 
 EOF
-else
+elif [ "${commchannel}" = "telegram" ]; then
 cat <<EOF
 
 ============================================
@@ -276,6 +344,41 @@ cat <<EOF
 No chat ID is required. OmegaClaw binds to your chat automatically after successful auth.
 
 EOF
+elif [ "${commchannel}" = "slack" ]; then
+cat <<EOF
+
+============================================
+ HOW TO INTERACT WITH OMEGACLAW SLACK
+============================================
+
+EOF
+
+if [ -n "${SL_CHANNEL_ID:-}" ]; then
+cat <<EOF
+Invite your Slack bot user to channel:
+  ${SL_CHANNEL_NAME:-$SL_CHANNEL_ID}
+
+Then send this auth message in that channel:
+  auth $OMEGACLAW_AUTH_SECRET
+
+EOF
+else
+cat <<EOF
+Invite your Slack bot user to at least one channel, then send:
+  auth $OMEGACLAW_AUTH_SECRET
+
+The first channel where auth succeeds will be bound automatically.
+
+EOF
+fi
+
+if [ -n "${SL_TEAM_NAME:-}" ]; then
+cat <<EOF
+Slack workspace:
+  $SL_TEAM_NAME
+
+EOF
+fi
 fi
 
 start
@@ -299,6 +402,7 @@ help() {
     echo -e "\t              Pass API token via environment variable."
     echo -e "\t-u <LLM API url> set LLM API URL for the local models (Ollama-local)"
     echo -e "\t-c <IRC channel> set IRC channel"
+    echo -e "\t-t <channel type> set communication channel type: irc|telegram|slack"
     echo -e "\t-d <Docker image> set Docker image name (default omegaclaw:latest)"
 }
 
@@ -308,6 +412,12 @@ options() {
     llm_server_local_url="http://localhost:11434"
     image=singularitynet/omegaclaw:latest
     commchannel=irc
+    IRC_channel="${IRC_channel:-##omegaclaw}"
+    TG_BOT_TOKEN="${TG_BOT_TOKEN:-}"
+    TG_POLL_TIMEOUT="${TG_POLL_TIMEOUT:-20}"
+    SL_BOT_TOKEN="${SL_BOT_TOKEN:-}"
+    SL_CHANNEL_ID="${SL_CHANNEL_ID:-}"
+    SL_POLL_INTERVAL="${SL_POLL_INTERVAL:-10}"
     command=${1}
     shift 1
 
@@ -315,6 +425,7 @@ options() {
     do
         case "${flag}" in
             s) OMEGACLAW_AUTH_SECRET=${OPTARG};;
+            t) commchannel=${OPTARG};;
             p) provider=${OPTARG};;
             u) llm_server_local_url=${OPTARG};;
             c) IRC_channel=${OPTARG};;
@@ -387,9 +498,16 @@ start() {
     )
     if [ "${commchannel}" = "irc" ]; then
       docker_cmd+=("IRC_channel=${IRC_channel}")
-    else
+    elif [ "${commchannel}" = "telegram" ]; then
       docker_cmd+=("TG_BOT_TOKEN=${TG_BOT_TOKEN}")
-      docker_cmd+=("TG_POLL_TIMEOUT=${TG_POLL_TIMEOUT:-20}")
+      docker_cmd+=("TG_POLL_TIMEOUT=${TG_POLL_TIMEOUT}")
+    elif [ "${commchannel}" = "slack" ]; then
+      docker_cmd+=("SL_BOT_TOKEN=${SL_BOT_TOKEN}")
+      docker_cmd+=("SL_CHANNEL_ID=${SL_CHANNEL_ID}")
+      docker_cmd+=("SL_POLL_INTERVAL=${SL_POLL_INTERVAL}")
+    else
+      echo "Unsupported commchannel: ${commchannel}" >&2
+      return 1
     fi
 
     "${docker_cmd[@]}"
@@ -415,4 +533,3 @@ case "${command}" in
        bootstrap
        ;;
 esac
-

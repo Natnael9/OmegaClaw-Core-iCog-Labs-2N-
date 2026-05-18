@@ -5,7 +5,7 @@
 ## Prerequisites
 
 - A local clone.
-- Familiarity with the existing adapters in `channels/irc.py` and `channels/mattermost.py`.
+- Familiarity with the existing adapters in `channels/irc.py`, `channels/telegram.py`, and `channels/slack.py`.
 
 ## The channel contract
 
@@ -21,7 +21,11 @@ The MeTTa side in `src/channels.metta` dispatches on the `commchannel` configura
 (= (receive)
    (if (== (commchannel) irc)
        (py-call (irc.getLastMessage))
-       (py-call (mattermost.getLastMessage))))
+       (if (== (commchannel) telegram)
+           (py-call (telegram.getLastMessage))
+           (if (== (commchannel) slack)
+               (py-call (slack.getLastMessage))
+               (py-call (mattermost.getLastMessage))))))
 ```
 
 Your adapter adds another branch to that dispatch.

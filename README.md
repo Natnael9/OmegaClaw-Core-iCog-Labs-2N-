@@ -92,8 +92,8 @@ After start go to https://webchat.quakenet.org/ to communicate with the agent. J
 | `maxWakeLoops` | 1 | Extra turns granted on each scheduled wake-up |
 | `sleepInterval` | 1 | Delay between loop iterations (seconds) |
 | `wakeupInterval` | 600 | How long idle before the next scheduled wake-up (seconds) |
-| `LLM` | `gpt-5.4` | Model identifier passed to the provider (OpenAI only) |
-| `provider` | `ASIOne` | LLM provider — `ASIOne`, `ASICloud`, `Anthropic`, `OpenAI` |
+| `LLM` | `gpt-5.4` | Model identifier passed to the provider (used with OpenAI provider only) |
+| `provider` | `Anthropic` | LLM provider, see the table of the providers above |
 | `maxOutputToken` | 6000 | Output cap passed to the provider |
 | `reasoningMode` | `medium` | Reasoning-effort hint passed to the provider (OpenAI only) |
 
@@ -105,19 +105,26 @@ After start go to https://webchat.quakenet.org/ to communicate with the agent. J
 | `maxRecallItems` | 20 | Items returned by `query` |
 | `maxEpisodeRecallLines` | 20 | Lines returned by `episodes` |
 | `maxHistory` | 30000 | Tail of `memory/history.metta` included in the prompt (chars) |
-| `embeddingprovider` | `Local` | `Local` (Python-side model) or `OpenAI` |
+| `embeddingprovider` | `Local` | `Local` (Python-side model) or `OpenAI` (requires `OPENAI_API_KEY`) |
 
 ### Channels (`src/channels.metta`)
 
 | Parameter | Default | Meaning |
 |---|---|---|
-| `commchannel` | `irc` | Type of the communication channel for agent to use - `irc` or `telegram` |
+| `commchannel` | `irc` | Type of the communication channel for agent to use - `irc`, `telegram`, `mattermost` or `slack` |
 | `IRC_channel` | `##omegaclaw` | IRC channel to join |
 | `IRC_server` | `irc.quakenet.org` | IRC server hostname |
 | `IRC_port` | 6667 | IRC port |
 | `IRC_user` | `omegaclaw` | IRC nickname |
 | `TG_BOT_TOKEN` |  | Telegram bot token. |
+| `TG_CHAT_ID` |  | Optional Telegram chat ID. If empty, OmegaClaw auto-binds after first valid inbound auth/message. |
 | `TG_POLL_TIMEOUT` | 20 | Telegram polling timeout in seconds. |
+| `SL_BOT_TOKEN` |  | Slack bot token (`xoxb-...`). |
+| `SL_CHANNEL_ID` |  | Optional Slack channel ID (for example `C0123456789`). If empty, OmegaClaw auto-binds on first successful auth message. |
+| `SL_POLL_INTERVAL` | 60 | Slack polling interval in seconds (minimum effective value is 60). |
+| `MM_URL` | `https://chat.singularitynet.io` | Mattermost base URL. |
+| `MM_CHANNEL_ID` | `8fjrmabjx7gupy7e5kjznpt5qh` | Mattermost channel ID. |
+| `MM_BOT_TOKEN` |  | Mattermost bot token. |
 
 ---
 
