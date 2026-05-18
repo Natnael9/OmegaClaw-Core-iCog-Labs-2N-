@@ -74,6 +74,7 @@ Before running the system you need to choose your LLM API provider and export th
 | `ASICloud` | `ASI_API_KEY` |  MiniMax models via ASI Alliance inference endpoint (`inference.asicloud.cudos.org`). |
 | `ASIOne` | `ASIONE_API_KEY` |  ASI1 Ultra model via ASI:One inference endpoint (`https://api.asi1.ai/v1`). |
 | `Ollama-local` | `OLLAMA_API_KEY` |  Ollama model via local inference endpoint. API endpoint is set via `LLM_SERVER_LOCAL_URL` environment variables. |
+| `OpenRouter` | `OPENROUTER_API_KEY` |  GLM model via OpenRouter inference endpoint. |
 
 Run the system via the following command which ensures the system is started from the root folder of PeTTa:
 ```
@@ -81,15 +82,49 @@ OMEGACLAW_AUTH_SECRET=<channel-secret> sh run.sh run.metta IRC_channel="<irc-cha
 ```
 After start go to https://webchat.quakenet.org/ to communicate with the agent. Join `<irc-channel>` and after agent is joined send `auth <channel-secret>` message to authenticate yourself as an agent owner. Please replace `<irc-channel>` and `<channel-secret>` by your own values.
 
-The full list of the `run.metta` optinos
-| Option | Value | Description |
+## Reference — Configuration Options
+
+### General
+
+| Parameter | Default | Meaning |
 |---|---|---|
-| `provider` | `Anthropic`, `OpenAI` or `ASICloud` | The name of the LLM API provider. The corresponding API token should be exported as an environment variable (see the table above). Default value is `Anthropic` |
-| `embeddingprovider` | `Local` or `OpenAI` | The embedding provider to use for the memory. `Local` uses [sentence-transformers](https://pypi.org/project/sentence-transformers/) library locally. `OpenAI` requires `OPENAI_API_KEY` and uses OpenAI embedding API. |
-| `commchannel` | `irc` | Type of the communication channel for agent to use - `irc` or `telegram` |
-| `IRC_channel` | `"#some_channel_name"` | Name of the channel on [QuakeNet IRC server](https://webchat.quakenet.org/) which agent will connect to. In order to make agent talk only to the owner the `OMEGACLAW_AUTH_SECRET` environment variable is used. After agent is joined to the channel send `auth <secret>` message for the authentication. For example if `OMEGACLAW_AUTH_SECRET=12345` then one need sending `auth 12345`. |
+| `maxNewInputLoops` | 50 | Turns the agent keeps running after a new human message before idling (seconds) |
+| `maxWakeLoops` | 1 | Extra turns granted on each scheduled wake-up |
+| `sleepInterval` | 1 | Delay between loop iterations (seconds) |
+| `wakeupInterval` | 600 | How long idle before the next scheduled wake-up (seconds) |
+| `LLM` | `gpt-5.4` | Model identifier passed to the provider (used with OpenAI provider only) |
+| `provider` | `Anthropic` | LLM provider, see the table of the providers above |
+| `maxOutputToken` | 6000 | Output cap passed to the provider |
+| `reasoningMode` | `medium` | Reasoning-effort hint passed to the provider (OpenAI only) |
+
+### Memory (`src/memory.metta`)
+
+| Parameter | Default | Meaning |
+|---|---|---|
+| `maxFeedback` | 50000 | Ceiling on `LAST_SKILL_USE_RESULTS` text fed back into the prompt (chars) |
+| `maxRecallItems` | 20 | Items returned by `query` |
+| `maxEpisodeRecallLines` | 20 | Lines returned by `episodes` |
+| `maxHistory` | 30000 | Tail of `memory/history.metta` included in the prompt (chars) |
+| `embeddingprovider` | `Local` | `Local` (Python-side model) or `OpenAI` (requires `OPENAI_API_KEY`) |
+
+### Channels (`src/channels.metta`)
+
+| Parameter | Default | Meaning |
+|---|---|---|
+| `commchannel` | `irc` | Type of the communication channel for agent to use - `irc`, `telegram`, `mattermost` or `slack` |
+| `IRC_channel` | `##omegaclaw` | IRC channel to join |
+| `IRC_server` | `irc.quakenet.org` | IRC server hostname |
+| `IRC_port` | 6667 | IRC port |
+| `IRC_user` | `omegaclaw` | IRC nickname |
 | `TG_BOT_TOKEN` |  | Telegram bot token. |
+| `TG_CHAT_ID` |  | Optional Telegram chat ID. If empty, OmegaClaw auto-binds after first valid inbound auth/message. |
 | `TG_POLL_TIMEOUT` | 20 | Telegram polling timeout in seconds. |
+| `SL_BOT_TOKEN` |  | Slack bot token (`xoxb-...`). |
+| `SL_CHANNEL_ID` |  | Optional Slack channel ID (for example `C0123456789`). If empty, OmegaClaw auto-binds on first successful auth message. |
+| `SL_POLL_INTERVAL` | 60 | Slack polling interval in seconds (minimum effective value is 60). |
+| `MM_URL` | `https://chat.singularitynet.io` | Mattermost base URL. |
+| `MM_CHANNEL_ID` | `8fjrmabjx7gupy7e5kjznpt5qh` | Mattermost channel ID. |
+| `MM_BOT_TOKEN` |  | Mattermost bot token. |
 
 ---
 
