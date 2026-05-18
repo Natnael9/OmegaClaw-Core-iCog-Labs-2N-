@@ -37,7 +37,7 @@ This reads a command-line override via `argk` (`name=value` on the MeTTa command
 
 | Parameter | Default | Meaning |
 |---|---|---|
-| `commchannel` | `irc` | Active channel — `irc`, `telegram`, or `mattermost`. |
+| `commchannel` | `irc` | Active channel — `irc`, `telegram`, `slack`, or `mattermost`. |
 | `IRC_channel` | `##omegaclaw` | IRC channel to join. |
 | `IRC_server` | `irc.quakenet.org` | IRC server hostname. |
 | `IRC_port` | 6667 | IRC port. |
@@ -45,6 +45,9 @@ This reads a command-line override via `argk` (`name=value` on the MeTTa command
 | `TG_BOT_TOKEN` | *(empty — set at runtime)* | Telegram bot token (from BotFather). |
 | `TG_CHAT_ID` | *(empty — auto-bind supported)* | Optional fixed Telegram chat ID. Leave empty to auto-bind on first valid inbound auth/message. |
 | `TG_POLL_TIMEOUT` | 20 | Telegram long-poll timeout in seconds. |
+| `SL_BOT_TOKEN` | *(empty — set at runtime)* | Slack bot token (`xoxb-...`). |
+| `SL_CHANNEL_ID` | *(empty — auto-bind supported)* | Optional Slack channel ID where OmegaClaw reads/writes messages. Leave empty to auto-bind on first valid inbound auth/message. |
+| `SL_POLL_INTERVAL` | 60 | Slack poll interval in seconds (minimum effective value is 60). |
 | `MM_URL` | `https://chat.singularitynet.io` | Mattermost base URL. |
 | `MM_CHANNEL_ID` | `8fjrmabjx7gupy7e5kjznpt5qh` | Target channel ID. |
 | `MM_BOT_TOKEN` | *(empty — set at runtime)* | Bot auth token. |
@@ -55,6 +58,12 @@ Any `configure`d parameter can be overridden at startup:
 
 ```bash
 metta run.metta provider=Anthropic LLM=claude-opus-4-6 commchannel=mattermost
+```
+
+Slack example:
+
+```bash
+metta run.metta commchannel=slack SL_BOT_TOKEN=xoxb-... SL_CHANNEL_ID=C0123456789
 ```
 
 The `argk` helper parses `key=value` pairs from `argv`.
