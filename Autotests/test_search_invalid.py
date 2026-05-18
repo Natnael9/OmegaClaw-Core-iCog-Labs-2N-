@@ -44,7 +44,9 @@ def test_search_invalid():
         no_result_phrases = [
             "no results", "not found", "couldn't find", "could not find",
             "no information", "no matches", "no relevant", "unable to find",
-            "nothing found", "no meaning", "nonsense", "random",
+            "nothing found", "nothing meaningful", "no meaning",
+            "not a real", "no real", "not real",
+            "nonsense", "random",
             "gibberish", "meaningless", "does not appear", "doesn't appear",
             "no data", "no specific", "unknown", "no coherent",
             "no hits", "returned nothing", "returned no",

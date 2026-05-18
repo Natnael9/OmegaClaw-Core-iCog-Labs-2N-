@@ -217,14 +217,14 @@ class ConnectionTransport:
     def _write_msg(self, data):
         logging.debug(f'Writing message: {data}')
         size = len(data)
-        assert self._output.write_blocking(int(size).to_bytes(4) + data)
+        assert self._output.write_blocking(int(size).to_bytes(4, "big") + data)
         logging.debug(f'Message is written')
 
     def _read_msg(self):
         data = self._input.read_aot(4)
         if not data:
             return None
-        size = int.from_bytes(data)
+        size = int.from_bytes(data, "big")
         logging.debug(f'Reading {size} bytes message')
         data = self._input.read_aot(4 + size)
         if not data:
