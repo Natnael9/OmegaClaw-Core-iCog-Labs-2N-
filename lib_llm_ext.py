@@ -103,7 +103,9 @@ class AsiOneProvider(AIProvider):
                 **kwargs
             )
 
-            return self._clean_text(response.choices[0].message.content)
+            resp = self._clean_text(response.choices[0].message.content)
+            resp = resp.replace("</arg_value>", " ").replace("</tool_call>", " ").replace("<arg_value>", " ").replace("<tool_call>", " ")
+            return resp
         except Exception as e:
             print(f"[lib_llm_ext.ASIOneProvider.chat] Exception while communicating with LLM: {e}")
             return ""
