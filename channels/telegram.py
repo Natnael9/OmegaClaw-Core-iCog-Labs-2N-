@@ -204,7 +204,8 @@ def start_telegram(bot_token, chat_id="", poll_timeout=20, auth_secret=None):
     if not _bot_token:
         raise ValueError("TG_BOT_TOKEN is required")
 
-    _api_base = f"https://api.telegram.org/bot{_bot_token}"
+    _api_base_root = (os.environ.get("TG_API_BASE") or "https://api.telegram.org").rstrip("/")
+    _api_base = f"{_api_base_root}/bot{_bot_token}"
     _chat_id = str(chat_id).strip()
 
     try:
