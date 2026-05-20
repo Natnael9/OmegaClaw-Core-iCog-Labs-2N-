@@ -1,9 +1,9 @@
 import pytest
 
 from comm import *
-from rpc import HOST_DEFAULT
+from rpc import LOCALHOST
 
-TEST_ADDRESS = (HOST_DEFAULT, 9767)
+TEST_ADDRESS = (LOCALHOST, 9767)
 
 class TestCommMock:
 

@@ -2,17 +2,17 @@
 # the container's loop.metta), and as a plain directory (host-side
 # pytest collecting mock/ without __init__.py).
 try:
-    from .rpc import Rpc, IPCClient, IPCServer, HOST_DEFAULT
+    from .rpc import Rpc, IPCClient, IPCServer
 except ImportError:
-    from rpc import Rpc, IPCClient, IPCServer, HOST_DEFAULT
+    from rpc import Rpc, IPCClient, IPCServer
 from contextlib import contextmanager
 import threading
 
-LLM_MOCK_ADDRESS = (HOST_DEFAULT, 9765)
+LLM_MOCK_PORT = 9765
 
 class LlmMockAgent:
 
-    def __init__(self, address=LLM_MOCK_ADDRESS):
+    def __init__(self, address):
         self._lock = threading.Lock()
         self._answers = {}
         self._rpc = Rpc(IPCClient(address))
@@ -77,7 +77,7 @@ class LlmMockAgent:
 
 class LlmMockController:
 
-    def __init__(self, address=LLM_MOCK_ADDRESS):
+    def __init__(self, address):
         self._rpc = Rpc(IPCServer(address))
         self._rpc.start()
 

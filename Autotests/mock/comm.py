@@ -2,17 +2,17 @@
 # the container's loop.metta), and as a plain directory (host-side
 # pytest collecting mock/ without __init__.py).
 try:
-    from .rpc import Rpc, IPCClient, IPCServer, HOST_DEFAULT
+    from .rpc import Rpc, IPCClient, IPCServer
 except ImportError:
-    from rpc import Rpc, IPCClient, IPCServer, HOST_DEFAULT
+    from rpc import Rpc, IPCClient, IPCServer
 from contextlib import contextmanager
 import queue
 
-COMM_MOCK_ADDRESS = (HOST_DEFAULT, 9766)
+COMM_MOCK_PORT = 9766
 
 class CommMockClient:
 
-    def __init__(self, address=COMM_MOCK_ADDRESS):
+    def __init__(self, address):
         self._queue = queue.Queue()
         self._rpc = Rpc(IPCClient(address))
         self._rpc.on_request('message', lambda args: self.on_message(args))
@@ -51,7 +51,7 @@ class CommMockClient:
 
 class CommMockServer:
 
-    def __init__(self, address=COMM_MOCK_ADDRESS):
+    def __init__(self, address):
         self._queue = queue.Queue()
         self._received = []
         self._rpc = Rpc(IPCServer(address))

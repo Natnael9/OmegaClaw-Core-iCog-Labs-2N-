@@ -120,9 +120,8 @@ class TestProvider(AbstractAIProvider):
 
     def _llm_mock(self):
         if not self._mock:
-            import Autotests.mock.rpc as rpc
-            from Autotests.mock.llm import LlmMockAgent
-            self._mock = LlmMockAgent((self._controller_ip, rpc.PORT_DEFAULT))
+            from Autotests.mock.llm import LlmMockAgent, LLM_MOCK_PORT
+            self._mock = LlmMockAgent((self._controller_ip, LLM_MOCK_PORT))
         return self._mock
 
     @property

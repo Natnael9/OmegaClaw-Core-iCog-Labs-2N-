@@ -4,8 +4,7 @@ import select
 import socket
 import json
 
-HOST_DEFAULT = "localhost"
-PORT_DEFAULT = 9765
+LOCALHOST = "localhost"
 
 class Shared:
 
@@ -318,7 +317,7 @@ class ConnectionTransport:
 
 class IPCServer:
 
-    def __init__(self, address=(HOST_DEFAULT, PORT_DEFAULT)):
+    def __init__(self, address):
         self._server = socket.create_server(address)
         self._server.setblocking(False)
         self._address = address
@@ -349,7 +348,7 @@ class IPCServer:
 
 class IPCClient():
 
-    def __init__(self, address=(HOST_DEFAULT, PORT_DEFAULT)):
+    def __init__(self, address):
         self._address = address
         self._transport = ConnectionTransport(lambda: self._connect())
 

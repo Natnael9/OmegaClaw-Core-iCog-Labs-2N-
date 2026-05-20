@@ -2,7 +2,7 @@ import pytest
 
 from rpc import *
 
-TEST_ADDRESS = (HOST_DEFAULT, 9767)
+TEST_ADDRESS = (LOCALHOST, 9767)
 
 class TestClass:
 
