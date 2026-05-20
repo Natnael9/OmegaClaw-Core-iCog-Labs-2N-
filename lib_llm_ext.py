@@ -116,7 +116,7 @@ class TestProvider(AbstractAIProvider):
     def __init__(self):
         super().__init__("Test")
         self._mock = None
-        self._controller_ip = os.environ.get("TEST_API_KEY")
+        self._controller_ip = os.environ.get("TEST_SERVER_IP")
 
     def _llm_mock(self):
         if not self._mock:
