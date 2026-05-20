@@ -137,7 +137,7 @@ class RealTgDriver:
                 print(f"[RealTgDriver] poll error: {exc}", flush=True)
                 time.sleep(2)
 
-    def _mirror(self, text):
+    def mirror(self, text):
         if not self._mirror_chat_id:
             return
         try:
@@ -146,3 +146,5 @@ class RealTgDriver:
                            use_post=True, timeout=10)
         except Exception as exc:
             print(f"[RealTgDriver] mirror failed: {exc}", flush=True)
+
+    _mirror = mirror

@@ -91,6 +91,19 @@ def tg(request):
             server.stop(5)
 
 
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    report = outcome.get_result()
+    if report.when != "call":
+        return
+    tg = item.funcargs.get("tg")
+    if tg is None or not hasattr(tg, "mirror"):
+        return
+    status = "PASS" if report.passed else ("FAIL" if report.failed else "SKIP")
+    tg.mirror(f"{status} {item.name}")
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _tg_authenticate(tg, request):
     """Bind the test user as the authenticated owner of the agent's TG channel.
