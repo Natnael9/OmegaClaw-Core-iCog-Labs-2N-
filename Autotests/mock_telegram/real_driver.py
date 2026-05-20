@@ -22,7 +22,7 @@ import urllib.request
 
 
 class RealTgDriver:
-    def __init__(self, driver_token, agent_username, poll_timeout=20):
+    def __init__(self, driver_token, agent_username, poll_timeout=20, mirror_chat_id=None):
         self._token = driver_token
         if not self._token:
             raise ValueError("driver_token is required")
@@ -31,13 +31,14 @@ class RealTgDriver:
             raise ValueError("agent_username is required")
         self._api = f"https://api.telegram.org/bot{self._token}"
         self._poll_timeout = max(1, int(poll_timeout))
+        self._mirror_chat_id = str(mirror_chat_id).strip() if mirror_chat_id else ""
         self._inbox = queue.Queue()
         self._stop = threading.Event()
         self._offset = self._drain_initial_offset()
         self._thread = threading.Thread(target=self._poll, daemon=True)
         self._thread.start()
-        print(f"[RealTgDriver] driver -> @{self._agent} (initial offset={self._offset})",
-              flush=True)
+        print(f"[RealTgDriver] driver -> @{self._agent} (initial offset={self._offset}, "
+              f"mirror={self._mirror_chat_id or 'off'})", flush=True)
 
     # ---- test-side API (matches MockTelegramServer) ---------------------
     def inject_user_message(self, text, user_id=None, chat_id=None, username=None):
@@ -47,6 +48,7 @@ class RealTgDriver:
         self._api_call("sendMessage", {"chat_id": f"@{self._agent}", "text": str(text)},
                        use_post=True, timeout=15)
         print(f"[RealTgDriver] driver -> @{self._agent}: {text!r}", flush=True)
+        self._mirror(f"-> {text}")
 
     def pop_agent_reply(self, timeout=30):
         try:
@@ -128,8 +130,19 @@ class RealTgDriver:
                     self._inbox.put((str(chat.get("id", "")), text, int(time.time())))
                     sender = (msg.get("from") or {}).get("username") or "?"
                     print(f"[RealTgDriver] @{sender} -> driver: {text!r}", flush=True)
+                    self._mirror(f"<- {text}")
             except Exception as exc:
                 if self._stop.is_set():
                     return
                 print(f"[RealTgDriver] poll error: {exc}", flush=True)
                 time.sleep(2)
+
+    def _mirror(self, text):
+        if not self._mirror_chat_id:
+            return
+        try:
+            self._api_call("sendMessage",
+                           {"chat_id": self._mirror_chat_id, "text": text},
+                           use_post=True, timeout=10)
+        except Exception as exc:
+            print(f"[RealTgDriver] mirror failed: {exc}", flush=True)

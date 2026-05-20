@@ -73,7 +73,9 @@ def tg(request):
                 "env vars (see Autotests/mock_telegram/README_live.md)"
             )
         from real_driver import RealTgDriver  # noqa: E402
-        driver = RealTgDriver(driver_token, agent_username)
+        mirror_chat_id = os.environ.get("TG_MIRROR_CHAT_ID") or None
+        driver = RealTgDriver(driver_token, agent_username,
+                              mirror_chat_id=mirror_chat_id)
         try:
             yield driver
         finally:
