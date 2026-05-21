@@ -103,7 +103,9 @@ class AsiOneProvider(AIProvider):
                 **kwargs
             )
 
-            return self._clean_text(response.choices[0].message.content)
+            resp = self._clean_text(response.choices[0].message.content)
+            resp = resp.replace("</arg_value>", " ").replace("</tool_call>", " ").replace("<arg_value>", " ").replace("<tool_call>", " ")
+            return resp
         except Exception as e:
             print(f"[lib_llm_ext.ASIOneProvider.chat] Exception while communicating with LLM: {e}")
             return ""
@@ -166,34 +168,6 @@ def callProvider(provider_name: str, content: str, max_tokens: int = 6000) -> st
     return provider.chat(content=content, max_tokens=max_tokens)
 
 
-
-def _chatAsiOne(client, model, content, max_tokens=6000, **kwargs):
-    spl = content.split(":-:-:-:")
-    try:
-        resp = client.chat.completions.create(
-            model=model,
-            messages=[{"role": "system", "content": spl[0]},
-                      {"role": "user", "content": spl[1]}],
-            max_tokens=max_tokens,
-            extra_body={
-                "enable_thinking": True,
-                "thinking_budget": 6000 
-            },
-            **kwargs
-        )
-        return _clean(resp.choices[0].message.content)
-    except Exception as e:
-        print(f"[lib_llm_ext._chat] Exception while communicating with LLM: {e}")
-        return ""
-
-def useAsi1(content):
-    resp = _chatAsiOne(
-        client=ASIONE_CLIENT,
-        model="asi1-ultra", # "asi1-ultra"
-        content=content
-    )
-    resp = resp.replace("</arg_value>", " ").replace("</tool_call>", " ").replace("<arg_value>", " ").replace("<tool_call>", " ")
-    return resp
 
 _embedding_model = None
 
