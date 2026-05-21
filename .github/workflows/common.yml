@@ -45,6 +45,9 @@ on:
 jobs:
   common:
     runs-on: ubuntu-latest
+    env:
+      AUTOTESTS_OMEGACLAW_CONTAINER: omegaclaw
+      AUTOTESTS_OMEGACLAW_IRC_CHANNEL: '#omegaclaw_ci_${{ github.run_id }}'
     steps:
       - name: Login to Docker Hub
         if: ${{ inputs.publish_docker }}
@@ -84,15 +87,15 @@ jobs:
           pip install pytest
         env:
           TEST_API_KEY: 'host.docker.internal'
-          IRC_CHANNEL: '#omegaclaw_ci_${{ github.run_id }}'
+          IRC_CHANNEL: ${{ env.AUTOTESTS_OMEGACLAW_IRC_CHANNEL }}
 
       - name: Autotests - Phase 1 (Blocking Checks)
         if: inputs.run_tests
         working-directory: Autotests
         run: pytest -s -v @run_mandatory
         env:
-          OMEGACLAW_CONTAINER: omegaclaw
-          OMEGACLAW_IRC_CHANNEL: '#omegaclaw_ci_${{ github.run_id }}'
+          OMEGACLAW_CONTAINER: ${{ env.AUTOTESTS_OMEGACLAW_CONTAINER }}
+          OMEGACLAW_IRC_CHANNEL: ${{ env.AUTOTESTS_OMEGACLAW_IRC_CHANNEL }}
 
       - name: Autotests - Phase 2 (Non-Blocking Checks)
         if: inputs.run_tests
@@ -103,8 +106,8 @@ jobs:
           docker restart omegaclaw && sleep 5
           pytest -s -v @run_optional
         env:
-          OMEGACLAW_CONTAINER: omegaclaw
-          OMEGACLAW_IRC_CHANNEL: '#omegaclaw_ci_${{ github.run_id }}'
+          OMEGACLAW_CONTAINER: ${{ env.AUTOTESTS_OMEGACLAW_CONTAINER }}
+          OMEGACLAW_IRC_CHANNEL: ${{ env.AUTOTESTS_OMEGACLAW_IRC_CHANNEL }}
           OMEGACLAW_GIT_TOKEN: ${{ secrets.CICD_GITHUB_PAT }}
 
       - name: Build and push (release)
