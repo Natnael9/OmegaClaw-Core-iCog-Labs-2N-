@@ -208,7 +208,7 @@ def _choose_provider():
         elif c in ["1", "2", "3", "4", "5", "6"]:
             provider_id = int(c) - 1
         else:
-            print("Please enter 1-4 or 'q'", file=sys.stderr)
+            print("Please enter 1-6 or 'q'", file=sys.stderr)
             continue
 
         providers = [
