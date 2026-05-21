@@ -1,3 +1,4 @@
+import os
 import Autotests.mock.comm as comm
 
 _client = None
@@ -13,4 +14,4 @@ def start_mock():
 
 def send_message(text):
     global _client
-    _client.send_message(text)
+    return _client.send_message(text)

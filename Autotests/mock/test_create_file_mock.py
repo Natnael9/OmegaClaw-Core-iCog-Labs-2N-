@@ -16,7 +16,7 @@ TARGET_FILE = "/tmp/testcat/hello.txt"
 WAIT = 30
 
 
-def test_hello_file(llm):
+def test_hello_file(llm, comm):
     with Checker("create hello.txt", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== OmegaClaw smoke test (run-id {c.run_id}) ===", flush=True)
 
@@ -32,7 +32,7 @@ def test_hello_file(llm):
         )
         llm.set_answer(prompt, f'(shell "mkdir -p /tmp/testcat") (write-file "/tmp/testcat/hello.txt" "Hello")')
 
-        if not send_prompt(prompt):
+        if not comm.send_message(prompt):
             c.fail("irc", "could not deliver prompt within 60s")
         c.ok("irc", f"prompt delivered, run-id={c.run_id}")
 
