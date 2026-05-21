@@ -33,12 +33,15 @@ class LlmMockAgent:
         except SyntaxError:
             return ""
 
+        answer = self._answers.get(body)
+        if answer:
+            return answer
+
         # IRC may deliver multiple PRIVMSGs in one agent iteration; the
         # agent concatenates them with " | " between speakers. Split
         # and look up each fragment individually so a registered answer
         # is not missed when several messages arrive together.
         fragments = body.split(" | ")
-        answer = None
         for fragment in fragments:
             if ": " not in fragment:
                 continue
