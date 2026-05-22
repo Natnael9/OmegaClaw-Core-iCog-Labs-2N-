@@ -37,7 +37,7 @@ def chromadb_vector_count():
         return None
 
 
-def test_transition_pin_to_remember_mock(llm):
+def test_transition_pin_to_remember_mock(llm, comm):
     with Checker("pin -> remember transition (mock)") as c:
         print(f"\n=== OmegaClaw: pin->remember transition (run-id {c.run_id}) ===",
               flush=True)
@@ -59,9 +59,9 @@ def test_transition_pin_to_remember_mock(llm):
             f'(pin "{marker}: candidates A, B, C") '
             f'(send "Pinned {marker}: A, B, C.")',
         )
-        if not send_prompt(prompt1):
-            c.fail("irc-1", "could not deliver turn 1 prompt within 60s")
-        c.ok("irc-1", f"run-id={c.run_id}")
+        if not comm.send_message(prompt1):
+            c.fail("comm-1", "could not deliver turn 1 prompt within 60s")
+        c.ok("comm-1", f"run-id={c.run_id}")
 
         pin_arg = wait_for_skill_call(
             c.run_id, "pin", timeout=60, arg_substr=marker,
@@ -93,9 +93,9 @@ def test_transition_pin_to_remember_mock(llm):
             f'(remember "{marker}: candidates A, B, C") '
             f'(send "Committed {marker} to long-term memory.")',
         )
-        if not send_prompt(prompt2):
-            c.fail("irc-2", "could not deliver turn 2 prompt within 60s")
-        c.ok("irc-2", f"run-id={recall_id}")
+        if not comm.send_message(prompt2):
+            c.fail("comm-2", "could not deliver turn 2 prompt within 60s")
+        c.ok("comm-2", f"run-id={recall_id}")
 
         c.step("verify remember was invoked with the same marker")
         rem_arg = wait_for_skill_call(

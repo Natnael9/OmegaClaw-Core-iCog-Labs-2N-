@@ -30,7 +30,7 @@ def _current_year_strs():
     }
 
 
-def test_create_date_script_mock(llm):
+def test_create_date_script_mock(llm, comm):
     with Checker("create date.sh (mock)", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== OmegaClaw: create date.sh mock (run-id {c.run_id}) ===",
               flush=True)
@@ -39,7 +39,7 @@ def test_create_date_script_mock(llm):
 
         start_ts = int(time.time()) - 1
 
-        c.step("send prompt via IRC with mocked response")
+        c.step("send prompt via comm channel with mocked response")
         prompt = make_prompt(
             c.run_id,
             f"Create a file {TARGET_FILE} with a shell script inside that "
@@ -52,9 +52,9 @@ def test_create_date_script_mock(llm):
             f'(write-file "{TARGET_FILE}" "#!/bin/bash\\ndate\\n") '
             f'(shell "chmod +x {TARGET_FILE}")',
         )
-        if not send_prompt(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"run-id={c.run_id}")
+        if not comm.send_message(prompt):
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"run-id={c.run_id}")
 
         c.step(f"wait for {TARGET_FILE}")
         mtime = wait_for_file(TARGET_FILE, start_ts, timeout=WAIT)

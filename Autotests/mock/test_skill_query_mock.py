@@ -21,7 +21,7 @@ from helpers import (
 )
 
 
-def test_skill_query_mock(llm):
+def test_skill_query_mock(llm, comm):
     with Checker("query skill recall (mock)") as c:
         print(f"\n=== OmegaClaw: query mock (run-id {c.run_id}) ===",
               flush=True)
@@ -44,9 +44,9 @@ def test_skill_query_mock(llm):
             f'(remember "My favorite color is {secret_color}.") '
             f'(send "Stored: favorite colour is {secret_color}.")',
         )
-        if not send_prompt(seed_prompt):
-            c.fail("irc-seed", "could not deliver seed prompt within 60s")
-        c.ok("irc-seed", f"run-id={seed_id}")
+        if not comm.send_message(seed_prompt):
+            c.fail("comm-seed", "could not deliver seed prompt within 60s")
+        c.ok("comm-seed", f"run-id={seed_id}")
 
         c.step("seed: verify (remember ...) carries the secret color")
 
@@ -80,9 +80,9 @@ def test_skill_query_mock(llm):
             f'(query "favorite color") '
             f'(send "Your favorite color is {secret_color}.")',
         )
-        if not send_prompt(recall_prompt):
-            c.fail("irc-recall", "could not deliver recall prompt within 60s")
-        c.ok("irc-recall", f"run-id={recall_id}")
+        if not comm.send_message(recall_prompt):
+            c.fail("comm-recall", "could not deliver recall prompt within 60s")
+        c.ok("comm-recall", f"run-id={recall_id}")
 
         c.step("verify agent invoked (query ...)")
         q_arg = wait_for_skill_call(recall_id, "query", timeout=30)

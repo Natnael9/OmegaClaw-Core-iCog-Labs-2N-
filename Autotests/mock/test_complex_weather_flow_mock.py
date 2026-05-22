@@ -32,7 +32,7 @@ TEMP_ONLY = f"{TARGET_DIR}/t.txt"
 FORECAST_TEXT = "New York tomorrow: clear, high 22 degrees Celsius."
 
 
-def test_complex_weather_flow_mock(llm):
+def test_complex_weather_flow_mock(llm, comm):
     with Checker("complex weather flow (mock)", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== OmegaClaw: complex flow mock (run-id {c.run_id}) ===",
               flush=True)
@@ -46,7 +46,7 @@ def test_complex_weather_flow_mock(llm):
 
         start_ts = int(time.time()) - 1
 
-        c.step("send prompt via IRC with mocked chain response")
+        c.step("send prompt via comm channel with mocked chain response")
         prompt = make_prompt(
             c.run_id,
             f"Save tomorrow's NY weather forecast to {WEATHER_TXT}. Then "
@@ -63,9 +63,9 @@ def test_complex_weather_flow_mock(llm):
             f'(shell "chmod +x {SCRIPT_SH}") '
             f'(shell "sh {SCRIPT_SH}")',
         )
-        if not send_prompt(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"run-id={c.run_id}")
+        if not comm.send_message(prompt):
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"run-id={c.run_id}")
 
         c.step(f"wait for {WEATHER_TXT}")
         mtime_w = wait_for_file(WEATHER_TXT, start_ts, timeout=30)

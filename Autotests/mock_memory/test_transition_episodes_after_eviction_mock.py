@@ -32,7 +32,7 @@ def history_tail(n):
     return res.stdout if res.returncode == 0 else ""
 
 
-def test_transition_episodes_after_eviction_mock(llm):
+def test_transition_episodes_after_eviction_mock(llm, comm):
     with Checker("episodes retrieves evicted block (mock)") as c:
         print(f"\n=== OmegaClaw: episodes after eviction (run-id {c.run_id}) ===",
               flush=True)
@@ -48,9 +48,9 @@ def test_transition_episodes_after_eviction_mock(llm):
             f"Send back exactly this token in a single send: {beacon_marker}",
         )
         llm.set_answer(prompt1, f'(send "{beacon_marker}")')
-        if not send_prompt(prompt1):
-            c.fail("irc-1", "could not deliver seed prompt within 60s")
-        c.ok("irc-1",
+        if not comm.send_message(prompt1):
+            c.fail("comm-1", "could not deliver seed prompt within 60s")
+        c.ok("comm-1",
              f"run-id={c.run_id}, seed_time={seed_time:%Y-%m-%d %H:%M:%S}")
 
         send_arg = wait_for_skill_call(
@@ -76,9 +76,9 @@ def test_transition_episodes_after_eviction_mock(llm):
             prompt2,
             f'(remember "{padding_body}") (send "padded")',
         )
-        if not send_prompt(prompt2):
-            c.fail("irc-2", "could not deliver padding prompt within 60s")
-        c.ok("irc-2", f"run-id={pad_id}")
+        if not comm.send_message(prompt2):
+            c.fail("comm-2", "could not deliver padding prompt within 60s")
+        c.ok("comm-2", f"run-id={pad_id}")
 
         rem_arg = wait_for_skill_call(
             pad_id, "remember", timeout=120, arg_substr=padding_marker,
@@ -111,9 +111,9 @@ def test_transition_episodes_after_eviction_mock(llm):
             prompt3,
             f'(episodes "{seed_ts_str}") (send "Recalled {beacon_marker}.")',
         )
-        if not send_prompt(prompt3):
-            c.fail("irc-3", "could not deliver recall prompt within 60s")
-        c.ok("irc-3", f"run-id={recall_id}")
+        if not comm.send_message(prompt3):
+            c.fail("comm-3", "could not deliver recall prompt within 60s")
+        c.ok("comm-3", f"run-id={recall_id}")
 
         c.step("verify (episodes ...) was invoked with seed timestamp")
         ep_arg = wait_for_skill_call(

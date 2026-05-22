@@ -83,7 +83,7 @@ jobs:
         run: |
           echo "IRC Channel: $IRC_CHANNEL"
           chmod +x ./scripts/omegaclaw
-          ./scripts/omegaclaw start -p Test -c $IRC_CHANNEL -d singularitynet/omegaclaw:${{ inputs.tag_name }}
+          ./scripts/omegaclaw start -p Test -t test -c $IRC_CHANNEL -d singularitynet/omegaclaw:${{ inputs.tag_name }}
           pip install pytest
         env:
           TEST_SERVER_IP: 'host.docker.internal'
