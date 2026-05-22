@@ -31,7 +31,7 @@ class CommMockClient:
 
     def on_message(self, args):
         text = args['text']
-        print(f'[CommMockClient] Message recieved: "{text}""')
+        print(f'[CommMockClient] Message received: "{text}"')
         try:
             self._queue.put(text, block=False)
         except Exception as e:
@@ -70,7 +70,7 @@ class CommMockServer:
 
     def on_message(self, args):
         text = args['text']
-        print(f'[CommMockServer] Message recieved: "{text}""')
+        print(f'[CommMockServer] Message received: "{text}"')
         try:
             self._queue.put(text, block=False)
         except Exception as e:
