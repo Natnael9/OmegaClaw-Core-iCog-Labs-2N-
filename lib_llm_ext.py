@@ -116,13 +116,12 @@ class TestProvider(AbstractAIProvider):
     def __init__(self):
         super().__init__("Test")
         self._mock = None
-        self._controller_ip = os.environ.get("TEST_API_KEY")
+        self._controller_ip = os.environ.get("TEST_SERVER_IP")
 
     def _llm_mock(self):
         if not self._mock:
-            import Autotests.mock.rpc as rpc
-            from Autotests.mock.llm import LlmMockAgent
-            self._mock = LlmMockAgent((self._controller_ip, rpc.PORT_DEFAULT))
+            from Autotests.mock.llm import LlmMockAgent, LLM_MOCK_PORT
+            self._mock = LlmMockAgent((self._controller_ip, LLM_MOCK_PORT))
         return self._mock
 
     @property

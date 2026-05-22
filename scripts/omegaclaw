@@ -402,7 +402,7 @@ help() {
     echo -e "\t              Pass API token via environment variable."
     echo -e "\t-u <LLM API url> set LLM API URL for the local models (Ollama-local)"
     echo -e "\t-c <IRC channel> set IRC channel"
-    echo -e "\t-t <channel type> set communication channel type: irc|telegram|slack"
+    echo -e "\t-t <channel type> set communication channel type: irc|telegram|slack|mattermost|test"
     echo -e "\t-d <Docker image> set Docker image name (default omegaclaw:latest)"
 }
 
@@ -463,7 +463,7 @@ options() {
             ;;
         Test)
             embeddingprovider="Local"
-            api_token_var="TEST_API_KEY"
+            api_token_var="TEST_SERVER_IP"
             ;;
         *) help
            return 1
@@ -505,6 +505,8 @@ start() {
       docker_cmd+=("SL_BOT_TOKEN=${SL_BOT_TOKEN}")
       docker_cmd+=("SL_CHANNEL_ID=${SL_CHANNEL_ID}")
       docker_cmd+=("SL_POLL_INTERVAL=${SL_POLL_INTERVAL}")
+    elif [ "${commchannel}" = "test" ]; then
+      docker_cmd+=("TEST_SERVER_IP=${TEST_SERVER_IP}")
     else
       echo "Unsupported commchannel: ${commchannel}" >&2
       return 1

@@ -12,14 +12,22 @@ same controller.
 """
 import pytest
 
-from llm import LlmMockController
-from rpc import PORT_DEFAULT
+from llm import LlmMockController, LLM_MOCK_PORT
+from comm import CommMockServer, COMM_MOCK_PORT
 
 
 @pytest.fixture(scope="session")
 def llm():
-    controller = LlmMockController(("0.0.0.0", PORT_DEFAULT))
+    controller = LlmMockController(("0.0.0.0", LLM_MOCK_PORT))
     try:
         yield controller
     finally:
         controller.stop(5)
+
+@pytest.fixture(scope="session")
+def comm():
+    server = CommMockServer(("0.0.0.0", COMM_MOCK_PORT))
+    try:
+        yield server
+    finally:
+        server.stop(5)
