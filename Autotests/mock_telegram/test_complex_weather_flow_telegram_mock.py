@@ -62,7 +62,7 @@ def test_complex_weather_flow_telegram_mock(llm, tg):
             f'(write-file "{SCRIPT_SH}" '
             f'"#!/bin/bash\\ngrep -oE \'[0-9]+\' {WEATHER_TXT} | head -1 > {TEMP_ONLY}\\n") '
             f'(shell "chmod +x {SCRIPT_SH}") '
-            f'(shell "{SCRIPT_SH}")',
+            f'(shell "sh {SCRIPT_SH}")',
         )
         tg_send_prompt(tg, prompt)
         c.ok("telegram", f"run-id={c.run_id}")

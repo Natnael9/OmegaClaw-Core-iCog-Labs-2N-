@@ -49,7 +49,7 @@ def test_run_create_dirs_telegram_mock(llm, tg):
             prompt,
             f'(write-file "{SCRIPT_PATH}" "#!/bin/bash\\nmkdir -p {mkdir_args}\\n") '
             f'(shell "chmod +x {SCRIPT_PATH}") '
-            f'(shell "{SCRIPT_PATH}")',
+            f'(shell "sh {SCRIPT_PATH}")',
         )
         tg_send_prompt(tg, prompt)
         c.ok("telegram", f"run-id={c.run_id}")
