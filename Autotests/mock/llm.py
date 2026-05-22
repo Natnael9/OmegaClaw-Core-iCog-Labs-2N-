@@ -2,15 +2,17 @@
 # the container's loop.metta), and as a plain directory (host-side
 # pytest collecting mock/ without __init__.py).
 try:
-    from .rpc import Rpc, IPCClient, IPCServer, HOST_DEFAULT, PORT_DEFAULT
+    from .rpc import Rpc, IPCClient, IPCServer
 except ImportError:
-    from rpc import Rpc, IPCClient, IPCServer, HOST_DEFAULT, PORT_DEFAULT
+    from rpc import Rpc, IPCClient, IPCServer
 from contextlib import contextmanager
 import threading
 
+LLM_MOCK_PORT = 9765
+
 class LlmMockAgent:
 
-    def __init__(self, address=(HOST_DEFAULT, PORT_DEFAULT)):
+    def __init__(self, address):
         self._lock = threading.Lock()
         self._answers = {}
         self._rpc = Rpc(IPCClient(address))
@@ -31,12 +33,15 @@ class LlmMockAgent:
         except SyntaxError:
             return ""
 
+        answer = self._answers.get(body)
+        if answer:
+            return answer
+
         # IRC may deliver multiple PRIVMSGs in one agent iteration; the
         # agent concatenates them with " | " between speakers. Split
         # and look up each fragment individually so a registered answer
         # is not missed when several messages arrive together.
         fragments = body.split(" | ")
-        answer = None
         for fragment in fragments:
             if ": " not in fragment:
                 continue
@@ -75,7 +80,7 @@ class LlmMockAgent:
 
 class LlmMockController:
 
-    def __init__(self, address=(HOST_DEFAULT, PORT_DEFAULT)):
+    def __init__(self, address):
         self._rpc = Rpc(IPCServer(address))
         self._rpc.start()
 
