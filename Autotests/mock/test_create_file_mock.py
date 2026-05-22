@@ -24,7 +24,7 @@ def test_hello_file(llm, comm):
 
         start_ts = int(time.time()) - 1
 
-        c.step("connect to IRC and send prompt")
+        c.step("send prompt via comm channel")
         prompt = make_prompt(
             c.run_id,
             f"Please overwrite {TARGET_FILE} so it contains exactly the single "
@@ -33,8 +33,8 @@ def test_hello_file(llm, comm):
         llm.set_answer(prompt, f'(shell "mkdir -p /tmp/testcat") (write-file "/tmp/testcat/hello.txt" "Hello")')
 
         if not comm.send_message(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"prompt delivered, run-id={c.run_id}")
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"prompt delivered, run-id={c.run_id}")
 
         c.step(f"wait for {TARGET_FILE} (timeout {WAIT}s)")
         file_mtime = wait_for_file(TARGET_FILE, start_ts, timeout=WAIT)
