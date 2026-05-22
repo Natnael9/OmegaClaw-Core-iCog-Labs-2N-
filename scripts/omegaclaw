@@ -469,7 +469,7 @@ options() {
            return 1
            ;;
     esac
-    if [[ -v ${api_token_var} ]]; then
+    if [[ -n "${!api_token_var:-}" ]]; then
         api_token="${!api_token_var}"
     fi
 }
