@@ -2,7 +2,8 @@
 
 The shared `Autotests/helpers.py` is built around an IRC `send_prompt`. For
 the Telegram suite we substitute that with `tg_send_prompt(tg, prompt)`,
-which injects a fake user message into the running `MockTelegramServer`.
+which has the driver bot send `sendMessage(@agent, prompt)` to the agent
+bot via api.telegram.org (Bot API 10.0 bot-to-bot mode).
 
 Everything else — `Checker`, `dexec`, `wait_for_file`, history/skill waiters,
 prompt envelope — is reused unchanged.
@@ -39,15 +40,16 @@ TG_CHAT_ID = 999
 TG_USERNAME = "qatestuser"
 
 
-def tg_send_prompt(tg_server, prompt,
+def tg_send_prompt(tg_driver, prompt,
                    user_id=TG_USER_ID, chat_id=TG_CHAT_ID, username=TG_USERNAME):
-    """Drop a Telegram inbound update into the mock server's queue.
+    """Have the driver bot send `prompt` to the agent bot.
 
     Mirrors the role of `helpers.send_prompt` in the IRC suite — the agent
-    sees this on its next `getUpdates` poll, identically to a real user
-    typing in a private chat.
+    sees the message on its next `getUpdates` poll. `user_id` / `chat_id` /
+    `username` are accepted for API parity but ignored: the only real
+    sender Telegram knows about is the driver bot.
     """
-    tg_server.inject_user_message(
+    tg_driver.inject_user_message(
         prompt, user_id=user_id, chat_id=chat_id, username=username,
     )
     return True

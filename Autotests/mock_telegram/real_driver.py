@@ -1,17 +1,18 @@
-"""Real-Telegram drop-in for MockTelegramServer.
+"""Driver bot for the Telegram autotest suite.
 
 Uses a second bot ("driver bot") to talk to the agent bot via Telegram's
-bot-to-bot communication mode (Bot API 10.0, May 2026). The test-side surface
-matches `MockTelegramServer`:
+bot-to-bot communication mode (Bot API 10.0, May 2026). Test-side surface:
 
 - `inject_user_message(text, ...)` -> driver sends `sendMessage(@agent, text)`
 - `pop_agent_reply(timeout=N)`     -> blocks on driver's getUpdates inbox
 - `drain_agent_replies(...)`       -> drains everything pending
 - `clear()`                        -> empties driver's inbox queue
+- `mirror(text)` / `_mirror`       -> echo bot-to-bot traffic and per-test
+                                      PASS/FAIL/SKIP to TG_MIRROR_CHAT_ID
 
 Requires `channels/telegram.py` to run against the real api.telegram.org
-(no `TG_API_BASE` override) and both bots opted into bot-to-bot mode via
-BotFather. See Autotests/mock_telegram/README_live.md for setup.
+and both bots opted into bot-to-bot mode via BotFather. See
+`Autotests/mock_telegram/README.pdf` for setup.
 """
 import json
 import queue
@@ -40,11 +41,11 @@ class RealTgDriver:
         print(f"[RealTgDriver] driver -> @{self._agent} (initial offset={self._offset}, "
               f"mirror={self._mirror_chat_id or 'off'})", flush=True)
 
-    # ---- test-side API (matches MockTelegramServer) ---------------------
+    # ---- test-side API --------------------------------------------------
     def inject_user_message(self, text, user_id=None, chat_id=None, username=None):
         # user_id/chat_id/username are ignored: the driver bot is the only
-        # sender real Telegram knows about. They exist in the signature for
-        # API parity with MockTelegramServer.
+        # sender real Telegram knows about. They exist in the signature so
+        # the call site can be transport-agnostic with the IRC harness.
         self._api_call("sendMessage", {"chat_id": f"@{self._agent}", "text": str(text)},
                        use_post=True, timeout=15)
         print(f"[RealTgDriver] driver -> @{self._agent}: {text!r}", flush=True)
