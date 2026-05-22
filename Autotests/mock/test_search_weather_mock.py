@@ -20,12 +20,12 @@ from helpers import (
 REF_TEMP_C = 18.0
 
 
-def test_search_weather_mock(llm):
+def test_search_weather_mock(llm, comm):
     with Checker("search weather valencia (mock)") as c:
         print(f"\n=== OmegaClaw: Valencia weather mock (run-id {c.run_id}) ===",
               flush=True)
 
-        c.step("send prompt via IRC with mocked send response")
+        c.step("send prompt via comm channel with mocked send response")
         prompt = make_prompt(
             c.run_id,
             "What's the weather in Valencia Spain today? "
@@ -35,9 +35,9 @@ def test_search_weather_mock(llm):
             f"Current weather in Valencia, Spain: about {REF_TEMP_C:.1f}°C."
         )
         llm.set_answer(prompt, f'(send "{mocked_reply}")')
-        if not send_prompt(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"run-id={c.run_id}")
+        if not comm.send_message(prompt):
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"run-id={c.run_id}")
 
         c.step("verify (send ...) carries a plausible Celsius temperature")
 

@@ -17,12 +17,12 @@ from helpers import (
 )
 
 
-def test_skill_metta_mock(llm):
+def test_skill_metta_mock(llm, comm):
     with Checker("metta skill invocation (mock)") as c:
         print(f"\n=== OmegaClaw: metta mock (run-id {c.run_id}) ===",
               flush=True)
 
-        c.step("send prompt via IRC with mocked metta + send response")
+        c.step("send prompt via comm channel with mocked metta + send response")
         prompt = make_prompt(
             c.run_id,
             "Please demonstrate your `metta` skill: pick any short MeTTa "
@@ -36,9 +36,9 @@ def test_skill_metta_mock(llm):
             prompt,
             '(metta "(+ 2 2)") (send "The metta skill evaluated (+ 2 2) and returned 4.")',
         )
-        if not send_prompt(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"run-id={c.run_id}")
+        if not comm.send_message(prompt):
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"run-id={c.run_id}")
 
         c.step("verify agent invoked (metta ...)")
         metta_arg = wait_for_skill_call(c.run_id, "metta", timeout=30)

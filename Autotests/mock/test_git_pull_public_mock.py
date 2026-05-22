@@ -28,7 +28,7 @@ def _normalize_git_url(url: str) -> str:
     return url
 
 
-def test_git_pull_public_mock(llm):
+def test_git_pull_public_mock(llm, comm):
     remote = get_git_remote()
 
     with Checker("git pull public (mock)", cleanup_dirs=[TARGET_DIR]) as c:
@@ -45,7 +45,7 @@ def test_git_pull_public_mock(llm):
         dexec_root("git", "config", "--global", "--add", "safe.directory", TARGET_DIR)
         c.ok("pre-create dir", TARGET_DIR)
 
-        c.step("send prompt via IRC with mocked response")
+        c.step("send prompt via comm channel with mocked response")
         prompt = make_prompt(
             c.run_id,
             f"Clone the public git repository {remote} into {TARGET_DIR}/. "
@@ -58,9 +58,9 @@ def test_git_pull_public_mock(llm):
             prompt,
             f'(shell "rm -rf {TARGET_DIR} && git clone {remote} {TARGET_DIR}")',
         )
-        if not send_prompt(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"run-id={c.run_id}")
+        if not comm.send_message(prompt):
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"run-id={c.run_id}")
 
         c.step("wait for valid cloned repository")
         deadline = time.time() + 60

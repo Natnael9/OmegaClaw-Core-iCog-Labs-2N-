@@ -38,7 +38,7 @@ def chromadb_vector_count():
         return None
 
 
-def test_memory_chromadb_mock(llm):
+def test_memory_chromadb_mock(llm, comm):
     with Checker("chromadb vector write (mock)") as c:
         print(f"\n=== OmegaClaw: chromadb mock (run-id {c.run_id}) ===",
               flush=True)
@@ -49,7 +49,7 @@ def test_memory_chromadb_mock(llm):
             c.fail("chromadb", f"cannot query {CHROMA_SQLITE}")
         c.ok("chromadb before", f"{count_before} vectors")
 
-        c.step("send remember prompt via IRC with mocked response")
+        c.step("send remember prompt via comm channel with mocked response")
         marker = f"CI-SMOKE-{c.run_id}"
         c.add_cleanup_marker(marker)
         prompt = make_prompt(
@@ -61,9 +61,9 @@ def test_memory_chromadb_mock(llm):
             prompt,
             f'(remember "Unique smoke marker {marker} was emitted by CI.")',
         )
-        if not send_prompt(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"run-id={c.run_id}")
+        if not comm.send_message(prompt):
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"run-id={c.run_id}")
 
         c.step("verify agent invoked (remember ...) with our marker")
         arg = wait_for_skill_call(

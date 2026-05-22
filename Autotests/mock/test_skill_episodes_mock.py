@@ -23,7 +23,7 @@ from helpers import (
 )
 
 
-def test_skill_episodes_mock(llm):
+def test_skill_episodes_mock(llm, comm):
     with Checker("episodes skill recall (mock)") as c:
         print(f"\n=== OmegaClaw: episodes mock (run-id {c.run_id}) ===",
               flush=True)
@@ -42,9 +42,9 @@ def test_skill_episodes_mock(llm):
             f"reply once.",
         )
         llm.set_answer(seed_prompt, f'(send "Acknowledged keyword {marker}.")')
-        if not send_prompt(seed_prompt):
-            c.fail("irc-seed", "could not deliver seed prompt within 60s")
-        c.ok("irc-seed", f"run-id={seed_id}, time={seed_time:%H:%M:%S}")
+        if not comm.send_message(seed_prompt):
+            c.fail("comm-seed", "could not deliver seed prompt within 60s")
+        c.ok("comm-seed", f"run-id={seed_id}, time={seed_time:%H:%M:%S}")
 
         c.step("seed: wait for agent reply (history records the turn)")
         seed_send = wait_for_skill_call(seed_id, "send", timeout=30)
@@ -72,9 +72,9 @@ def test_skill_episodes_mock(llm):
             recall_prompt,
             f'(episodes "{time_str}") (send "The unique keyword was {marker}.")',
         )
-        if not send_prompt(recall_prompt):
-            c.fail("irc-recall", "could not deliver recall prompt within 60s")
-        c.ok("irc-recall", f"run-id={recall_id}")
+        if not comm.send_message(recall_prompt):
+            c.fail("comm-recall", "could not deliver recall prompt within 60s")
+        c.ok("comm-recall", f"run-id={recall_id}")
 
         c.step("verify agent invoked (episodes ...)")
         ep_arg = wait_for_skill_call(recall_id, "episodes", timeout=30)

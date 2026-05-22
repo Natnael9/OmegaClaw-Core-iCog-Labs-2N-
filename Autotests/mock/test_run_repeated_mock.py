@@ -22,7 +22,7 @@ SCRIPT_CONTENT = '#!/bin/sh\ndate >> /tmp/test_repeat/update.txt\n'
 EXPECTED_RUNS = 10
 
 
-def test_run_repeated_mock(llm):
+def test_run_repeated_mock(llm, comm):
     with Checker("run repeated script (mock)", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== OmegaClaw: run 10x mock (run-id {c.run_id}) ===",
               flush=True)
@@ -41,7 +41,7 @@ def test_run_repeated_mock(llm):
 
         start_ts = int(time.time()) - 1
 
-        c.step("send prompt via IRC with mocked response")
+        c.step("send prompt via comm channel with mocked response")
         prompt = make_prompt(
             c.run_id,
             f"Run the script {SCRIPT_FILE} exactly {EXPECTED_RUNS} times in "
@@ -50,9 +50,9 @@ def test_run_repeated_mock(llm):
         )
         repeated = " ".join(f'(shell "{SCRIPT_FILE}")' for _ in range(EXPECTED_RUNS))
         llm.set_answer(prompt, repeated)
-        if not send_prompt(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"run-id={c.run_id}")
+        if not comm.send_message(prompt):
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"run-id={c.run_id}")
 
         c.step(f"wait for {OUTPUT_FILE}")
         mtime = wait_for_file(OUTPUT_FILE, start_ts, timeout=30)
