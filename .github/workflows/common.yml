@@ -92,7 +92,9 @@ jobs:
       - name: Autotests - Phase 1 (Blocking Checks)
         if: inputs.run_tests
         working-directory: Autotests
-        run: pytest -s -v @run_mandatory
+        run: |
+          python ../src/helper.py
+          pytest -s -v @run_mandatory
         env:
           OMEGACLAW_CONTAINER: ${{ env.AUTOTESTS_OMEGACLAW_CONTAINER }}
           OMEGACLAW_IRC_CHANNEL: ${{ env.AUTOTESTS_OMEGACLAW_IRC_CHANNEL }}
