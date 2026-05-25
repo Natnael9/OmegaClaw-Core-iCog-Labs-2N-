@@ -43,7 +43,7 @@ if _SELF_DIR not in sys.path:
     sys.path.insert(0, _SELF_DIR)
 
 from llm import LlmMockController  # noqa: E402
-from rpc import PORT_DEFAULT as LLM_PORT_DEFAULT  # noqa: E402
+from llm import LLM_MOCK_PORT as LLM_PORT_DEFAULT  # noqa: E402
 
 from real_driver import RealTgDriver  # noqa: E402
 
