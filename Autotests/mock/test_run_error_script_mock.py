@@ -26,7 +26,7 @@ echo "unreachable"
 """
 
 
-def test_run_error_script_mock(llm):
+def test_run_error_script_mock(llm, comm):
     with Checker("run error script (mock)", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== OmegaClaw: error script mock (run-id {c.run_id}) ===",
               flush=True)
@@ -45,7 +45,7 @@ def test_run_error_script_mock(llm):
 
         start_ts = int(time.time()) - 1
 
-        c.step("send prompt via IRC with mocked response")
+        c.step("send prompt via comm channel with mocked response")
         prompt = make_prompt(
             c.run_id,
             f"Run the script {SCRIPT_FILE} and save BOTH stdout and stderr "
@@ -56,9 +56,9 @@ def test_run_error_script_mock(llm):
             prompt,
             f'(shell "sh {SCRIPT_FILE} > {OUTPUT_FILE} 2>&1")',
         )
-        if not send_prompt(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"run-id={c.run_id}")
+        if not comm.send_message(prompt):
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"run-id={c.run_id}")
 
         c.step(f"wait for {OUTPUT_FILE}")
         mtime = wait_for_file(OUTPUT_FILE, start_ts, timeout=30)

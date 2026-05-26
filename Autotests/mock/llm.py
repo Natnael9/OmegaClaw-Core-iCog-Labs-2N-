@@ -33,8 +33,21 @@ class LlmMockAgent:
         except SyntaxError:
             return ""
 
-        answer = self._answers.get(body)
+        # The agent escapes punctuation that would confuse its s-exp
+        # parser ('->_apostrophe_, "->_quote_, \n->_newline_) before
+        # the text reaches chat(). set_answer stores the literal
+        # prompt key, so try the raw body first, then the normalized
+        # form so prompts with quotes/apostrophes/newlines still match.
+        def normalize(text):
+            return (text
+                    .replace("_apostrophe_", "'")
+                    .replace("_quote_", '"')
+                    .replace("_newline_", "\n"))
+
+        with self._lock:
+            answer = self._answers.get(body) or self._answers.get(normalize(body))
         if answer:
+            print(f"[LlmMockAgent] Mock answers: {answer}")
             return answer
 
         # IRC may deliver multiple PRIVMSGs in one agent iteration; the
@@ -46,16 +59,8 @@ class LlmMockAgent:
             if ": " not in fragment:
                 continue
             prompt = fragment.split(": ", 1)[1]
-            # The agent escapes punctuation that would confuse its s-exp
-            # parser ('->_apostrophe_, "->_quote_, \n->_newline_) before
-            # the text reaches chat(). set_answer stores the literal
-            # prompt key, so reverse the escapes here to match.
-            normalized = (prompt
-                          .replace("_apostrophe_", "'")
-                          .replace("_quote_", '"')
-                          .replace("_newline_", "\n"))
             with self._lock:
-                a = self._answers.get(normalized) or self._answers.get(prompt)
+                a = self._answers.get(normalize(prompt)) or self._answers.get(prompt)
             if a:
                 answer = a
 
@@ -107,9 +112,9 @@ class LlmMockController:
 def llm_mock_controller(*args, **kwargs) -> LlmMockController:
     timeout = kwargs.pop("timeout", 30)
     controller = LlmMockController(*args, **kwargs)
-    if not controller.ping(timeout):
-        raise RuntimeError(f"Agent didn't answered in {timeout} seconds")
     try:
+        if not controller.ping(timeout):
+            raise RuntimeError(f"Agent didn't answered in {timeout} seconds")
         yield controller
     finally:
         controller.stop(5)

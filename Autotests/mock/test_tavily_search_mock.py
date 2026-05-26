@@ -46,21 +46,21 @@ FETCH_SUMMARY = (
 )
 
 
-def test_tavily_search_mock(llm):
+def test_tavily_search_mock(llm, comm):
     with Checker("tavily-search invocation (mock)") as c:
         print(f"\n=== OmegaClaw: tavily mock (run-id {c.run_id}) ===",
               flush=True)
 
-        c.step("send prompt via IRC with mocked send response")
+        c.step("send prompt via comm channel with mocked send response")
         prompt = make_prompt(
             c.run_id,
             "Use the tavily-search skill (not regular search) for query "
             "'Fetch.ai latest news'. Summarize what Tavily returns.",
         )
         llm.set_answer(prompt, f'(send "{FETCH_SUMMARY}")')
-        if not send_prompt(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"run-id={c.run_id}")
+        if not comm.send_message(prompt):
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"run-id={c.run_id}")
 
         c.step("wait for a (send ...) carrying real Fetch.ai content")
 

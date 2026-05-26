@@ -27,7 +27,7 @@ def docker_logs():
     return (res.stdout or "") + (res.stderr or "")
 
 
-def test_last_skill_results_visible_next_turn_mock(llm):
+def test_last_skill_results_visible_next_turn_mock(llm, comm):
     with Checker("LAST_SKILL_USE_RESULTS carries to next iteration (mock)") as c:
         print(f"\n=== OmegaClaw: lastresults carry (run-id {c.run_id}) ===",
               flush=True)
@@ -48,9 +48,9 @@ def test_last_skill_results_visible_next_turn_mock(llm):
             prompt1,
             f'(metta "(quote {sentinel})") (send "computed")',
         )
-        if not send_prompt(prompt1):
-            c.fail("irc-1", "could not deliver turn 1 prompt within 60s")
-        c.ok("irc-1", f"run-id={c.run_id}")
+        if not comm.send_message(prompt1):
+            c.fail("comm-1", "could not deliver turn 1 prompt within 60s")
+        c.ok("comm-1", f"run-id={c.run_id}")
 
         c.step("verify (metta ...) was invoked")
         metta_arg = wait_for_skill_call(

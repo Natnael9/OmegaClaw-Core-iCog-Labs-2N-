@@ -21,7 +21,7 @@ TARGET_DIR = "/tmp/git_local"
 COMMIT_FILE = "hello.txt"
 
 
-def test_git_local_commit_mock(llm):
+def test_git_local_commit_mock(llm, comm):
     with Checker("git local commit (mock)", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== git local commit mock (run-id {c.run_id}) ===", flush=True)
 
@@ -39,7 +39,7 @@ def test_git_local_commit_mock(llm):
         marker = f"omegaclaw run {c.run_id}"
         c.add_cleanup_marker(marker)
 
-        c.step("send prompt via IRC with mocked response")
+        c.step("send prompt via comm channel with mocked response")
         prompt = make_prompt(
             c.run_id,
             f"Initialise a new git repository at {TARGET_DIR}/. "
@@ -59,9 +59,9 @@ def test_git_local_commit_mock(llm):
             f'(shell "git -C {TARGET_DIR} add -A") '
             f'(shell "git -C {TARGET_DIR} commit -m \\"add hello {c.run_id}\\"")',
         )
-        if not send_prompt(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"run-id={c.run_id}")
+        if not comm.send_message(prompt):
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"run-id={c.run_id}")
 
         c.step(f"wait for {COMMIT_FILE} on disk")
         mtime = wait_for_file(commit_path, start_ts, timeout=30)

@@ -20,7 +20,7 @@ TARGET_FILE = "/tmp/test_empty/hello.txt"
 WAIT = 30
 
 
-def test_create_empty_file_mock(llm):
+def test_create_empty_file_mock(llm, comm):
     with Checker("create empty file (mock)", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== OmegaClaw: create empty file mock (run-id {c.run_id}) ===",
               flush=True)
@@ -29,7 +29,7 @@ def test_create_empty_file_mock(llm):
 
         start_ts = int(time.time()) - 1
 
-        c.step("send prompt via IRC with mocked response")
+        c.step("send prompt via comm channel with mocked response")
         prompt = make_prompt(
             c.run_id,
             f"Create file hello.txt in {TARGET_DIR}/ directory "
@@ -40,9 +40,9 @@ def test_create_empty_file_mock(llm):
             f'(shell "mkdir -p {TARGET_DIR}") '
             f'(write-file "{TARGET_FILE}" "")',
         )
-        if not send_prompt(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"run-id={c.run_id}")
+        if not comm.send_message(prompt):
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"run-id={c.run_id}")
 
         c.step(f"wait for {TARGET_FILE}")
         mtime = wait_for_file(TARGET_FILE, start_ts, timeout=WAIT)

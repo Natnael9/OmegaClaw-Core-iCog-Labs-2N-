@@ -21,7 +21,7 @@ LINE2 = "Second line"
 LINE3 = "Third line"
 
 
-def test_edit_delete_line_mock(llm):
+def test_edit_delete_line_mock(llm, comm):
     with Checker("edit delete line (mock)", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== OmegaClaw: delete second line mock (run-id {c.run_id}) ===",
               flush=True)
@@ -42,7 +42,7 @@ def test_edit_delete_line_mock(llm):
         precreate_mtime = int(dexec("stat", "-c", "%Y", TARGET_FILE).stdout.strip())
         time.sleep(2)
 
-        c.step("send prompt via IRC with mocked response")
+        c.step("send prompt via comm channel with mocked response")
         prompt = make_prompt(
             c.run_id,
             f"Delete the second line from the file {TARGET_FILE}. "
@@ -53,9 +53,9 @@ def test_edit_delete_line_mock(llm):
             prompt,
             f'(shell "sed -i 2d {TARGET_FILE}")',
         )
-        if not send_prompt(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"run-id={c.run_id}")
+        if not comm.send_message(prompt):
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"run-id={c.run_id}")
 
         c.step(f"wait for {TARGET_FILE} to be modified")
         mtime = wait_for_file(TARGET_FILE, precreate_mtime + 1, timeout=30)

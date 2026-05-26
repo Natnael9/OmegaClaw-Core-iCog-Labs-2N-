@@ -23,7 +23,7 @@ SCRIPT_PATH = f"{TARGET_DIR}/mkdirs.sh"
 EXPECTED_DIRS = ["test1", "test2", "test3"]
 
 
-def test_run_create_dirs_mock(llm):
+def test_run_create_dirs_mock(llm, comm):
     with Checker("create dirs script (mock)", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== OmegaClaw: create dirs mock (run-id {c.run_id}) ===",
               flush=True)
@@ -37,7 +37,7 @@ def test_run_create_dirs_mock(llm):
 
         start_ts = int(time.time()) - 1
 
-        c.step("send prompt via IRC with mocked response")
+        c.step("send prompt via comm channel with mocked response")
         prompt = make_prompt(
             c.run_id,
             f"Create script {SCRIPT_PATH} that creates dirs test1, test2, "
@@ -50,9 +50,9 @@ def test_run_create_dirs_mock(llm):
             f'(shell "chmod +x {SCRIPT_PATH}") '
             f'(shell "sh {SCRIPT_PATH}")',
         )
-        if not send_prompt(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"run-id={c.run_id}")
+        if not comm.send_message(prompt):
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"run-id={c.run_id}")
 
         c.step(f"wait for {SCRIPT_PATH}")
         mtime = wait_for_file(SCRIPT_PATH, start_ts, timeout=30)
