@@ -99,10 +99,7 @@ jobs:
         if: inputs.run_tests
         continue-on-error: true
         working-directory: Autotests
-        run: |
-          echo "Restarting container and wait..."
-          docker restart omegaclaw && sleep 5
-          pytest -s -v @run_optional
+        run: pytest -s -v @run_optional
         env:
           OMEGACLAW_CONTAINER: ${{ env.AUTOTESTS_OMEGACLAW_CONTAINER }}
           OMEGACLAW_GIT_TOKEN: ${{ secrets.CICD_GITHUB_PAT }}
