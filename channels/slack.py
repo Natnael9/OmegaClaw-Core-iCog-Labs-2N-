@@ -36,7 +36,7 @@ class _SlackRateLimitError(Exception):
         self.retry_after = retry_after
 
 
-_URL_DISPLAY_RE = re.compile(r"<([^|>\s]+)\|[^>]*>")
+_URL_DISPLAY_RE = re.compile(r"<[^|>\s]+\|([^>]*)>")
 _URL_BARE_RE = re.compile(r"<([^>\s]+)>")
 
 
@@ -46,9 +46,11 @@ def _slack_unwrap(text):
 
     chat.postMessage / conversations.history apply these transforms on
     the way out, regardless of the `text` parameter contents:
-    - URLs are wrapped: `https://x` -> `<https://x>` and
-      `<https://x|display>` for some auto-link cases (e.g. domain-only
-      strings like `Fetch.ai` become `<http://Fetch.ai|Fetch.ai>`).
+    - Bare URLs are wrapped as `<url>`.
+    - Domain-only strings get an auto-protocol-prefix plus display:
+      `Fetch.ai` -> `<http://Fetch.ai|Fetch.ai>`. The display segment
+      after `|` is the user's original typed string, so for the `|`
+      form we prefer the display and drop the url segment.
     - The HTML special characters `<`, `>`, `&` are entity-escaped to
       `&lt;`, `&gt;`, `&amp;`.
 
