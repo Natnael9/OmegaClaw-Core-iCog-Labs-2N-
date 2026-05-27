@@ -36,7 +36,7 @@ def chars_sent_lines():
     ]
 
 
-def test_pin_invisible_within_iteration_mock(llm):
+def test_pin_invisible_within_iteration_mock(llm, comm):
     with Checker("pin not visible inside its own iteration (mock)") as c:
         print(f"\n=== OmegaClaw: pin within-iteration (run-id {c.run_id}) ===",
               flush=True)
@@ -62,9 +62,9 @@ def test_pin_invisible_within_iteration_mock(llm):
             prompt,
             f'(pin "{marker}") (send "Pinned a progress code.")',
         )
-        if not send_prompt(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"run-id={c.run_id}")
+        if not comm.send_message(prompt):
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"run-id={c.run_id}")
 
         c.step("verify (pin ...) was actually invoked with the marker")
         pin_arg = wait_for_skill_call(

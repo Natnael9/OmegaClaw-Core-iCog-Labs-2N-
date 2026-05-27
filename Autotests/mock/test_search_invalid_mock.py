@@ -30,12 +30,12 @@ NEGATION_PHRASES = [
 ]
 
 
-def test_search_invalid_mock(llm):
+def test_search_invalid_mock(llm, comm):
     with Checker("search invalid (mock)") as c:
         print(f"\n=== OmegaClaw: invalid search mock (run-id {c.run_id}) ===",
               flush=True)
 
-        c.step("send prompt via IRC with mocked negation response")
+        c.step("send prompt via comm channel with mocked negation response")
         prompt = make_prompt(
             c.run_id,
             f"What is {GIBBERISH}? Search the web. "
@@ -46,9 +46,9 @@ def test_search_invalid_mock(llm):
             f'(send "No results found for {GIBBERISH}. The string appears to '
             f'be gibberish — no meaningful matches.")',
         )
-        if not send_prompt(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"run-id={c.run_id}")
+        if not comm.send_message(prompt):
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"run-id={c.run_id}")
 
         c.step("verify (send ...) carries a negation phrase")
 

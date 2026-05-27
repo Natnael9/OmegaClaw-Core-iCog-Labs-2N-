@@ -22,7 +22,7 @@ FILE_CONTENT = "# My Title\n\nSome paragraph text.\n\n- item one\n- item two\n"
 KEY_PHRASES = ["My Title", "Some paragraph text", "item one", "item two"]
 
 
-def test_convert_md_to_txt_mock(llm):
+def test_convert_md_to_txt_mock(llm, comm):
     with Checker("convert .md to .txt (mock)", cleanup_dirs=[TARGET_DIR]) as c:
         print(f"\n=== OmegaClaw: convert format mock (run-id {c.run_id}) ===",
               flush=True)
@@ -41,7 +41,7 @@ def test_convert_md_to_txt_mock(llm):
 
         start_ts = int(time.time()) - 1
 
-        c.step("send prompt via IRC with mocked response")
+        c.step("send prompt via comm channel with mocked response")
         prompt = make_prompt(
             c.run_id,
             f"Convert the file {SOURCE_FILE} from .md format to .txt format. "
@@ -52,9 +52,9 @@ def test_convert_md_to_txt_mock(llm):
             prompt,
             f'(shell "cp {SOURCE_FILE} {DEST_FILE}")',
         )
-        if not send_prompt(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"run-id={c.run_id}")
+        if not comm.send_message(prompt):
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"run-id={c.run_id}")
 
         c.step(f"wait for {DEST_FILE}")
         mtime = wait_for_file(DEST_FILE, start_ts, timeout=30)

@@ -53,7 +53,7 @@ def _api_base(remote_url):
     return f"https://api.github.com/repos/{parts[1]}"
 
 
-def test_git_push_to_remote_mock(llm):
+def test_git_push_to_remote_mock(llm, comm):
     token = get_git_token()
     if not token:
         pytest.skip("OMEGACLAW_GIT_TOKEN not set")
@@ -87,7 +87,7 @@ def test_git_push_to_remote_mock(llm):
         c.add_cleanup_marker(marker)
         start_ts = int(time.time()) - 1
 
-        c.step("send prompt via IRC with mocked response")
+        c.step("send prompt via comm channel with mocked response")
         prompt = make_prompt(
             c.run_id,
             f"Clone {remote} into {TARGET_DIR}/ and check out a NEW branch "
@@ -108,9 +108,9 @@ def test_git_push_to_remote_mock(llm):
             f"git push -u origin {branch}"
         )
         llm.set_answer(prompt, f'(shell "{chain}")')
-        if not send_prompt(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"run-id={c.run_id}")
+        if not comm.send_message(prompt):
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"run-id={c.run_id}")
 
         c.step(f"wait for {unique_file} on disk")
         mtime = wait_for_file(file_path, start_ts, timeout=60)

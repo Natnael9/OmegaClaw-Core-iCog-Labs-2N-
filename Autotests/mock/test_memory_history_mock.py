@@ -19,7 +19,7 @@ from helpers import (
 )
 
 
-def test_memory_history_mock(llm):
+def test_memory_history_mock(llm, comm):
     with Checker("history append (mock)") as c:
         print(f"\n=== OmegaClaw: history append mock (run-id {c.run_id}) ===",
               flush=True)
@@ -33,16 +33,16 @@ def test_memory_history_mock(llm):
 
         time.sleep(2)
 
-        c.step("send prompt via IRC with mocked acknowledgement")
+        c.step("send prompt via comm channel with mocked acknowledgement")
         prompt = make_prompt(
             c.run_id,
             f"Acknowledge with one short line that you received marker {c.run_id}.",
         )
         ack = f"Marker {c.run_id} received. REQ-{c.run_id} acknowledged."
         llm.set_answer(prompt, f'(send "{ack}")')
-        if not send_prompt(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"run-id={c.run_id}")
+        if not comm.send_message(prompt):
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"run-id={c.run_id}")
 
         c.step("verify history contains an s-exp record quoting our REQ-tag")
         deadline = time.time() + 60

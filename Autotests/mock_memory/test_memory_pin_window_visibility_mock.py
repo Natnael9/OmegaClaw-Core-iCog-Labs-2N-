@@ -26,7 +26,7 @@ def history_tail_bytes(n):
     return res.stdout if res.returncode == 0 else ""
 
 
-def test_memory_pin_window_visibility_mock(llm):
+def test_memory_pin_window_visibility_mock(llm, comm):
     with Checker("pin visibility in HISTORY window (mock)") as c:
         print(f"\n=== OmegaClaw: pin window visibility (run-id {c.run_id}) ===",
               flush=True)
@@ -45,9 +45,9 @@ def test_memory_pin_window_visibility_mock(llm):
             prompt1,
             f'(pin "{pin_marker}") (send "Pinned {pin_marker}.")',
         )
-        if not send_prompt(prompt1):
-            c.fail("irc-1", "could not deliver turn 1 prompt within 60s")
-        c.ok("irc-1", f"run-id={c.run_id}")
+        if not comm.send_message(prompt1):
+            c.fail("comm-1", "could not deliver turn 1 prompt within 60s")
+        c.ok("comm-1", f"run-id={c.run_id}")
 
         c.step("verify pin was invoked")
         pin_arg = wait_for_skill_call(
@@ -96,9 +96,9 @@ def test_memory_pin_window_visibility_mock(llm):
             prompt2,
             f'(send "I pinned {pin_marker} previously.")',
         )
-        if not send_prompt(prompt2):
-            c.fail("irc-2", "could not deliver turn 2 prompt within 60s")
-        c.ok("irc-2", f"run-id={recall_id}")
+        if not comm.send_message(prompt2):
+            c.fail("comm-2", "could not deliver turn 2 prompt within 60s")
+        c.ok("comm-2", f"run-id={recall_id}")
 
         c.step("verify agent sent acknowledgement in turn 2")
         send_arg = wait_for_skill_call(recall_id, "send", timeout=60)
