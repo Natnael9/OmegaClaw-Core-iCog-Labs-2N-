@@ -16,7 +16,7 @@ from helpers import (
 STEP_KEYWORDS = ("step", "alpha", "beta", "gamma", "restart", "server", "done")
 
 
-def test_skill_pin_mock(llm):
+def test_skill_pin_mock(llm, comm):
     with Checker("pin skill invocation (mock)") as c:
         print(f"\n=== OmegaClaw: pin mock (run-id {c.run_id}) ===", flush=True)
 
@@ -33,9 +33,9 @@ def test_skill_pin_mock(llm):
             '(pin "Server restart progress: alpha done; beta and gamma pending.") '
             '(send "Tracking: alpha done, beta and gamma pending.")',
         )
-        if not send_prompt(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"run-id={c.run_id}")
+        if not comm.send_message(prompt):
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"run-id={c.run_id}")
 
         c.step("verify agent invoked (pin ...) with task-state content")
 

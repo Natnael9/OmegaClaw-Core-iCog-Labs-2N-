@@ -26,7 +26,7 @@ from helpers import (
 )
 
 
-def test_memory_episode_mock(llm):
+def test_memory_episode_mock(llm, comm):
     with Checker("memory episode recall (mock)") as c:
         print(f"\n=== OmegaClaw: memory episode mock (run-id {c.run_id}) ===",
               flush=True)
@@ -48,9 +48,9 @@ def test_memory_episode_mock(llm):
             prompt1,
             '(remember "Barney the dog lost his first baby tooth at the vet today.")',
         )
-        if not send_prompt(prompt1):
-            c.fail("irc-1", "could not deliver first prompt within 60s")
-        c.ok("irc-1", f"run-id={fact_marker}")
+        if not comm.send_message(prompt1):
+            c.fail("comm-1", "could not deliver first prompt within 60s")
+        c.ok("comm-1", f"run-id={fact_marker}")
 
         c.step("verify agent invoked (remember ...) with dog/tooth content")
 
@@ -91,9 +91,9 @@ def test_memory_episode_mock(llm):
             prompt2,
             f'(query "Barney tooth") (send "{recall_reply}")',
         )
-        if not send_prompt(prompt2):
-            c.fail("irc-2", "could not deliver recall prompt within 60s")
-        c.ok("irc-2", f"run-id={recall_marker}")
+        if not comm.send_message(prompt2):
+            c.fail("comm-2", "could not deliver recall prompt within 60s")
+        c.ok("comm-2", f"run-id={recall_marker}")
 
         c.step("verify agent invoked (query ...) or (episodes ...)")
         q_arg = wait_for_skill_call(recall_marker, "query", timeout=30)

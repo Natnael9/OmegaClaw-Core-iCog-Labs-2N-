@@ -35,7 +35,7 @@ def chromadb_vector_count():
         return None
 
 
-def test_transition_metta_to_remember_mock(llm):
+def test_transition_metta_to_remember_mock(llm, comm):
     with Checker("metta reasoning -> remember (mock)") as c:
         print(f"\n=== OmegaClaw: metta->remember (run-id {c.run_id}) ===",
               flush=True)
@@ -68,9 +68,9 @@ def test_transition_metta_to_remember_mock(llm):
             prompt,
             f'{metta_call} {remember_call} (send "Reasoned and remembered.")',
         )
-        if not send_prompt(prompt):
-            c.fail("irc", "could not deliver prompt within 60s")
-        c.ok("irc", f"run-id={c.run_id}")
+        if not comm.send_message(prompt):
+            c.fail("comm", "could not deliver prompt within 60s")
+        c.ok("comm", f"run-id={c.run_id}")
 
         c.step("verify (metta ...) was invoked")
         metta_arg = wait_for_skill_call(c.run_id, "metta", timeout=60)

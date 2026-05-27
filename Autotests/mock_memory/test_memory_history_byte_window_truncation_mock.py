@@ -34,7 +34,7 @@ def history_tail(n):
     return res.stdout if res.returncode == 0 else ""
 
 
-def test_memory_history_byte_window_truncation_mock(llm):
+def test_memory_history_byte_window_truncation_mock(llm, comm):
     with Checker("history.metta byte-window truncation (mock)") as c:
         print(f"\n=== OmegaClaw: history window truncation (run-id {c.run_id}) ===",
               flush=True)
@@ -52,9 +52,9 @@ def test_memory_history_byte_window_truncation_mock(llm):
             f"Send back exactly this token in a single send: {early_marker}",
         )
         llm.set_answer(prompt1, f'(send "{early_marker}")')
-        if not send_prompt(prompt1):
-            c.fail("irc-1", "could not deliver turn 1 prompt within 60s")
-        c.ok("irc-1", f"run-id={c.run_id}")
+        if not comm.send_message(prompt1):
+            c.fail("comm-1", "could not deliver turn 1 prompt within 60s")
+        c.ok("comm-1", f"run-id={c.run_id}")
 
         send_arg = wait_for_skill_call(
             c.run_id, "send", timeout=60, arg_substr=early_marker,
@@ -86,9 +86,9 @@ def test_memory_history_byte_window_truncation_mock(llm):
             prompt2,
             f'(remember "{padding_body}") (send "padded")',
         )
-        if not send_prompt(prompt2):
-            c.fail("irc-2", "could not deliver padding prompt within 60s")
-        c.ok("irc-2", f"run-id={c.run_id + 1}")
+        if not comm.send_message(prompt2):
+            c.fail("comm-2", "could not deliver padding prompt within 60s")
+        c.ok("comm-2", f"run-id={c.run_id + 1}")
 
         c.step("verify the padding (remember ...) call landed")
         rem_arg = wait_for_skill_call(
