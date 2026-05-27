@@ -112,9 +112,9 @@ class LlmMockController:
 def llm_mock_controller(*args, **kwargs) -> LlmMockController:
     timeout = kwargs.pop("timeout", 30)
     controller = LlmMockController(*args, **kwargs)
-    if not controller.ping(timeout):
-        raise RuntimeError(f"Agent didn't answered in {timeout} seconds")
     try:
+        if not controller.ping(timeout):
+            raise RuntimeError(f"Agent didn't answered in {timeout} seconds")
         yield controller
     finally:
         controller.stop(5)
