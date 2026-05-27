@@ -37,10 +37,10 @@ Notes:
 - `TEST_SERVER_IP=172.17.0.1` is the host's docker-bridge address used by both the mock LLM provider and the test channel client.
 - The container is created with the name `omegaclaw` (the script default).
 
-Wait until the container has joined the test channel:
+Wait until the agent loop is up. The first `CHARS_SENT:` line in the container log marks the end of `initChannels` / `initMemory`, so it is a reliable readiness signal:
 
 ```
-docker logs omegaclaw 2>&1 | grep -E "Joined|Test channel"
+until docker logs omegaclaw 2>&1 | grep -q "CHARS_SENT:"; do sleep 2; done
 ```
 
 ## 4. Configure the test environment
