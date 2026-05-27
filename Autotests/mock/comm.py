@@ -97,9 +97,9 @@ class CommMockServer:
 def comm_mock_server(*args, **kwargs) -> CommMockServer:
     timeout = kwargs.pop("timeout", 30)
     server = CommMockServer(*args, **kwargs)
-    if not server.ping(timeout):
-        raise RuntimeError(f"Client didn't answered in {timeout} seconds")
     try:
+        if not server.ping(timeout):
+            raise RuntimeError(f"Client didn't answered in {timeout} seconds")
         yield server
     finally:
         server.stop(5)
