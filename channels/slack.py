@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import threading
 import time
 import urllib.error
@@ -33,6 +34,33 @@ class _SlackRateLimitError(Exception):
     def __init__(self, retry_after):
         super().__init__(f"Slack rate limited (retry after {retry_after}s)")
         self.retry_after = retry_after
+
+
+_URL_DISPLAY_RE = re.compile(r"<([^|>\s]+)\|[^>]*>")
+_URL_BARE_RE = re.compile(r"<([^>\s]+)>")
+
+
+def _slack_unwrap(text):
+    """Undo Slack's auto-formatting so downstream layers see the user's
+    original text.
+
+    chat.postMessage / conversations.history apply these transforms on
+    the way out, regardless of the `text` parameter contents:
+    - URLs are wrapped: `https://x` -> `<https://x>` and
+      `<https://x|display>` for some auto-link cases (e.g. domain-only
+      strings like `Fetch.ai` become `<http://Fetch.ai|Fetch.ai>`).
+    - The HTML special characters `<`, `>`, `&` are entity-escaped to
+      `&lt;`, `&gt;`, `&amp;`.
+
+    Applied in receive (`_handle_messages`), the agent's higher layers
+    (HUMAN-MSG, LLM prompt, mock matcher) see the original input.
+    """
+    if not text:
+        return text
+    text = _URL_DISPLAY_RE.sub(r"\1", text)
+    text = _URL_BARE_RE.sub(r"\1", text)
+    text = text.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&")
+    return text
 
 
 def _set_last(msg):
@@ -335,7 +363,7 @@ def _poll_channel(channel_id):
         if message.get("subtype"):
             continue
 
-        text = str(message.get("text", "")).strip()
+        text = _slack_unwrap(str(message.get("text", "")).strip())
         user_id = str(message.get("user", "")).strip()
         if not text or not user_id:
             continue
