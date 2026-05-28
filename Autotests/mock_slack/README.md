@@ -12,39 +12,92 @@ The 26 tests in this directory mirror `Autotests/mock/test_*_mock.py` 1:1: same 
 - A Slack workspace where you can create two apps. The free tier is enough.
 - A shared Slack channel in that workspace (public is simplest), where both bots will be members.
 
-## 2. Configure Slack apps
+## 2. Configure Slack apps (from scratch)
 
-Create two separate Slack apps at [api.slack.com/apps](https://api.slack.com/apps), one per role:
+The suite needs two Slack apps in the same workspace and a shared channel where both of their bot users are members. Walk-through below assumes nothing pre-existing.
 
-- **OmegaClaw Agent** — runs inside the container as the agent bot.
-- **OmegaClaw Driver** — used by the test harness to impersonate the user.
+### 2.1. Workspace (skip if you already have one)
 
-For each app, in **OAuth & Permissions → Scopes → Bot Token Scopes**, add at minimum:
+A free Slack workspace is enough. Create one at [slack.com/get-started](https://slack.com/get-started) if needed.
 
-- `channels:history`
-- `channels:read`
-- `chat:write`
-- `users:read`
+### 2.2. Shared channel
 
-If the shared channel is private, add `groups:history` and `groups:read` as well.
+In the Slack client, click `+` next to **Channels** in the sidebar, choose **Create channel**, give it a name (for example `omegaclaw-qa`), keep it public, create. A private channel works too, but requires extra scopes on both apps (see 2.4).
 
-Then **Install to Workspace** for each app. The page now shows a **Bot User OAuth Token** of the form `xoxb-...`. Record both tokens, one for the agent app and one for the driver app.
+### 2.3. Create the two apps
 
-Invite both bot users to the shared channel from any client connected to the workspace:
+For each role (agent and driver) repeat the same flow at [api.slack.com/apps](https://api.slack.com/apps), signed in with the same account that owns the workspace:
+
+1. Click **Create New App**, choose **From scratch**.
+2. Set **App Name** (for example `OmegaClaw Agent` for the first app and `OmegaClaw Driver` for the second; the names are arbitrary, only the resulting tokens matter).
+3. Pick the workspace from 2.1.
+4. Click **Create App**. You land on the **Basic Information** page of the new app.
+
+### 2.4. Bot Token Scopes (per app)
+
+For each of the two apps:
+
+1. Open **Features → OAuth & Permissions** in the left sidebar.
+2. Scroll to the **Scopes** section, sub-section **Bot Token Scopes** (do NOT use User Token Scopes).
+3. Click **Add an OAuth Scope** and add each of the following:
+   - `channels:history`
+   - `channels:read`
+   - `chat:write`
+   - `users:read`
+4. If the channel from 2.2 is private, also add `groups:history` and `groups:read`.
+
+### 2.5. Install each app to the workspace
+
+For each of the two apps:
+
+1. Still on **OAuth & Permissions**, scroll to the top section **OAuth Tokens**.
+2. Click **Install to Workspace** (or **Reinstall to Workspace** if you added scopes after a previous install).
+3. Slack shows a permissions confirmation page; click **Allow**.
+4. The page now shows a **Bot User OAuth Token** of the form `xoxb-...`. Copy it.
+   - The agent app's token is the value of `SL_BOT_TOKEN` used by the container in step 4 of this README.
+   - The driver app's token is the value of `SL_DRIVER_TOKEN` used by pytest in step 5.
+
+### 2.6. Invite both bots to the shared channel
+
+In the Slack client, inside the channel from 2.2, type:
 
 ```
 /invite @<agent-bot-username>
 /invite @<driver-bot-username>
 ```
 
-You will also need the **channel id** (`C0...`) of the shared channel (right-click on the channel name in the Slack UI → View channel details → bottom of the modal) and the **agent bot user id** (`U0...`). The user id can be read with one call:
+Each bot's username is the one Slack assigned when the app was installed (visible on the app's **Basic Information** page under **Display Information**, and in the workspace member list). Slack may show an "Add this app to the channel?" prompt; confirm. Both bots must show up in the channel's member list after this step.
+
+### 2.7. Channel id
+
+You need the channel id (`C0...`) of the shared channel. Two ways:
+
+- Slack UI: open the channel, click the channel name at the top to open details, scroll to the bottom of the side panel, the **Channel ID** is at the very bottom.
+- API: `curl -s -H "Authorization: Bearer <SL_BOT_TOKEN>" https://slack.com/api/conversations.list` and find the entry by `name`; the `id` field is the channel id.
+
+This value is `SL_CHANNEL_ID`, used both by the container (step 4) and by pytest (step 5).
+
+### 2.8. Agent bot user id
+
+You also need the bot user id (`U0...`) of the **agent** bot (not the driver). The driver harness filters incoming messages by author so it only treats messages from this user id as agent replies; without it the driver would mistake its own messages for the agent's.
+
+The user id is the `user_id` field returned by `auth.test` called with the agent token:
 
 ```
 curl -s -H "Authorization: Bearer <SL_BOT_TOKEN>" \
   https://slack.com/api/auth.test | python -m json.tool
 ```
 
-The `user_id` field in the response is what you need.
+This value is `SL_AGENT_USER_ID`, used by pytest only (step 5).
+
+### 2.9. Summary of what you should have collected
+
+| Value | Source | Used by |
+|---|---|---|
+| Agent `xoxb-...` token | Agent app, **OAuth & Permissions → Bot User OAuth Token** | container, as `SL_BOT_TOKEN` |
+| Driver `xoxb-...` token | Driver app, **OAuth & Permissions → Bot User OAuth Token** | pytest, as `SL_DRIVER_TOKEN` |
+| Channel id `C0...` | Slack UI or `conversations.list` | container and pytest, as `SL_CHANNEL_ID` |
+| Agent user id `U0...` | `auth.test` with the agent token | pytest, as `SL_AGENT_USER_ID` |
 
 ## 3. Build the local image
 
