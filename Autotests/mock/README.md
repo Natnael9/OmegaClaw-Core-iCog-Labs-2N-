@@ -20,6 +20,7 @@ docker build -t omegaclaw:mock .
 
 ## 3. Start the container with the Test provider
 
+<<<<<<< HEAD
 The container connects back to the host on TCP port 9765 to reach the mock LLM controller and on TCP port 9766 to reach the test communication channel server. `TEST_SERVER_IP` must hold the host IP that is reachable from inside the container; under the default Docker bridge this is `172.17.0.1`.
 
 ```
@@ -39,10 +40,19 @@ docker run -d -it \
   commchannel="test" \
   provider="Test" \
   embeddingprovider="Local"
+=======
+Use the `scripts/omegaclaw` wrapper. It takes care of `--init`, `--user`, the `--tmpfs` mounts, `--security-opt no-new-privileges`, the persistent memory volume, and the `commchannel`/`provider`/`embeddingprovider` arguments, so the test setup stays in sync with how the agent is started in production and in CI.
+
+The container connects back to the host on TCP port 9765 to reach the mock LLM controller and on TCP port 9766 to reach the test communication channel server. `TEST_SERVER_IP` must hold the host IP that is reachable from inside the container; under the default Docker bridge this is `172.17.0.1`.
+
+```
+env TEST_SERVER_IP=172.17.0.1 ./scripts/omegaclaw start -s 0000 -p Test -t test -d omegaclaw:mock
+>>>>>>> main
 ```
 
 Notes:
 
+<<<<<<< HEAD
 - `commchannel="test"` selects the in-process test communication channel; messages travel over a TCP RPC between the container and the host fixture, not over IRC, Telegram, or Slack.
 - `provider="Test"` selects the mock LLM dispatcher.
 - `embeddingprovider="Local"` keeps the embedding model in-process (no network call).
@@ -53,6 +63,19 @@ Wait until the container has joined the test channel:
 
 ```
 docker logs omegaclaw_mock 2>&1 | grep -E "Joined|Test channel"
+=======
+- `-t test` selects the in-process test communication channel; messages travel over a TCP RPC between the container and the host fixture, not over IRC, Telegram, or Slack.
+- `-p Test` selects the mock LLM dispatcher.
+- `-s 0000` sets `OMEGACLAW_AUTH_SECRET` inside the container.
+- `-d omegaclaw:mock` points at the local image built in step 2.
+- `TEST_SERVER_IP=172.17.0.1` is the host's docker-bridge address used by both the mock LLM provider and the test channel client.
+- The container is created with the name `omegaclaw` (the script default).
+
+Wait until the agent loop is up. The first runtime `CHARS_SENT:` line (with a byte count after the colon) in the container log marks the end of `initChannels` / `initMemory` and the start of real iterations; the bare `CHARS_SENT:` string also appears earlier as part of the MeTTa source dump, so match on the numeric form to avoid a premature exit:
+
+```
+until docker logs omegaclaw 2>&1 | grep -qE "CHARS_SENT: [0-9]+"; do sleep 2; done
+>>>>>>> main
 ```
 
 ## 4. Configure the test environment
@@ -60,13 +83,21 @@ docker logs omegaclaw_mock 2>&1 | grep -E "Joined|Test channel"
 Export the variables the test harness reads.
 
 ```
+<<<<<<< HEAD
 export OMEGACLAW_CONTAINER=omegaclaw_mock
+=======
+export OMEGACLAW_CONTAINER=omegaclaw
+>>>>>>> main
 export OMEGACLAW_GIT_TOKEN=<github_pat>     # only required by test_git_push_to_remote_mock
 ```
 
 | Variable | Required | Description |
 |---|---|---|
+<<<<<<< HEAD
 | `OMEGACLAW_CONTAINER` | Yes | Container name passed to `docker exec` from the harness. Must equal `--name` above. |
+=======
+| `OMEGACLAW_CONTAINER` | Yes | Container name passed to `docker exec` from the harness. Must equal the container name created in step 3 (`omegaclaw` when using the script). |
+>>>>>>> main
 | `OMEGACLAW_GIT_TOKEN` | No | GitHub PAT used by `test_git_push_to_remote_mock`. The test is skipped if this variable is unset. |
 
 ## 5. Run the suite
@@ -82,10 +113,18 @@ The `LlmMockController` and `CommMockServer` are provided by session-scoped fixt
 ## 6. Tear down
 
 ```
+<<<<<<< HEAD
 docker rm -f omegaclaw_mock
 docker volume rm omegaclaw-mock-memory
 ```
 
+=======
+./scripts/omegaclaw clean
+```
+
+This removes the `omegaclaw` container and the `omegaclaw-memory` volume created by the script in step 3.
+
+>>>>>>> main
 # Tests description
 
 All 33 tests follow the same pattern: the test registers a fixed mock-LLM answer for the prompt via `llm.set_answer(prompt, response)`, delivers the prompt to the agent over the test channel via `comm.send_message(prompt)`, then verifies the resulting skill calls and side effects (filesystem, `history.metta`, ChromaDB, docker logs). Because the LLM is deterministic, no `try_with_clarification` retries are needed; every test either passes on the first attempt or fails outright.
