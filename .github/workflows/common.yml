@@ -34,7 +34,7 @@ on:
       run_tests:
         description: 'Run tests'
         required: false
-        default: false
+        default: true
         type: boolean
     secrets:
       DOCKERHUB_USERNAME:
