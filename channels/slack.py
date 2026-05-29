@@ -5,6 +5,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import auth
 
 _running = False
 _last_message = ""
@@ -23,7 +24,6 @@ _auto_bind_channels = []
 _auto_bind_index = 0
 _auto_bind_last_refresh = 0.0
 
-_auth_secret = ""
 _authenticated_user_id = None
 _rate_limit_until = 0.0
 _AUTO_BIND_REFRESH_INTERVAL = 300
@@ -52,15 +52,6 @@ def getLastMessage():
         return tmp
 
 
-def _set_auth_secret(secret=None):
-    global _auth_secret, _authenticated_user_id
-    if secret is None:
-        secret = os.environ.get("OMEGACLAW_AUTH_SECRET", "")
-    with _state_lock:
-        _auth_secret = (secret or "").strip()
-        _authenticated_user_id = None
-
-
 def _parse_auth_candidate(msg):
     text = msg.strip()
     lower = text.lower()
@@ -70,6 +61,9 @@ def _parse_auth_candidate(msg):
         return text[6:].strip()
     return text
 
+def _is_auth_command(msg):
+    lower = msg.strip().lower()
+    return lower.startswith("auth ") or lower.startswith("/auth ")
 
 def _channel_label(channel_id):
     with _state_lock:
@@ -78,33 +72,24 @@ def _channel_label(channel_id):
 
 
 def _is_allowed_message(channel_id, user_id, msg):
-    global _authenticated_user_id
-    candidate = _parse_auth_candidate(msg)
+    global _channel_id, _authenticated_user_id
     with _state_lock:
         if _channel_id and channel_id != _channel_id:
             return "ignore"
-
-        if not _auth_secret:
+        if not auth.is_auth_enabled():
             if not _channel_id:
                 _bind_label = _channel_name_cache.get(channel_id, channel_id)
                 print(f"[SLACK] Auto-bound to channel {_bind_label}")
-                _set_bound_channel(channel_id)
+                _channel_id = channel_id
             return "allow"
-
-        if candidate == _auth_secret:
-            if _authenticated_user_id is None:
-                _authenticated_user_id = user_id
-                _set_bound_channel(channel_id)
-                return "auth_bound"
-            return "ignore"
-        if _authenticated_user_id is None:
-            return "ignore"
-        return "allow" if user_id == _authenticated_user_id else "ignore"
-
-
-def _set_bound_channel(channel_id):
-    global _channel_id
-    _channel_id = channel_id
+        if _authenticated_user_id is not None:
+            return "allow" if user_id == _authenticated_user_id else "ignore"
+        candidate = _parse_auth_candidate(msg)
+        if auth.verify_token(candidate):
+            _authenticated_user_id = user_id
+            _channel_id = channel_id
+            return "auth_bound"
+        return "ignore"
 
 
 def _parse_retry_after(value):
@@ -426,7 +411,6 @@ def start_slack(bot_token, channel_id, poll_interval=60, auth_secret=None):
     _auto_bind_last_refresh = 0.0
     _rate_limit_until = 0.0
     _connected = False
-    _set_auth_secret(auth_secret)
     _initialize_identity()
     if _channel_id:
         _validate_channel()

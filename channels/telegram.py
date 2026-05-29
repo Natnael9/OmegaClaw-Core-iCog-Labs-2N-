@@ -4,6 +4,7 @@ import threading
 import time
 import urllib.parse
 import urllib.request
+import auth
 
 _running = False
 _last_message = ""
@@ -17,9 +18,7 @@ _poll_timeout = 20
 _offset = None
 _connected = False
 
-_auth_secret = ""
 _authenticated_user_id = None
-_authenticated_chat_id = None
 
 
 def _set_last(msg):
@@ -37,16 +36,6 @@ def getLastMessage():
         tmp = _last_message
         _last_message = ""
         return tmp
-
-
-def _set_auth_secret(secret=None):
-    global _auth_secret, _authenticated_user_id, _authenticated_chat_id
-    if secret is None:
-        secret = os.environ.get("OMEGACLAW_AUTH_SECRET", "")
-    with _state_lock:
-        _auth_secret = (secret or "").strip()
-        _authenticated_user_id = None
-        _authenticated_chat_id = None
 
 
 def _parse_auth_candidate(msg):
@@ -120,30 +109,33 @@ def _initialize_offset():
             _offset = max_update + 1
 
 
+def _is_auth_command(msg):
+    lower = msg.strip().lower()
+    return lower.startswith("auth ") or lower.startswith("/auth ")
+
+
 def _is_allowed_message(chat_id, user_id, msg):
-    global _chat_id, _authenticated_user_id, _authenticated_chat_id
-    candidate = _parse_auth_candidate(msg)
+    global _chat_id, _authenticated_user_id
 
     with _state_lock:
         if _chat_id and chat_id != _chat_id:
             return "ignore"
-
-        if not _auth_secret:
+        if not auth.is_auth_enabled():
             if not _chat_id:
                 _chat_id = chat_id
             return "allow"
-
-        if _authenticated_user_id is None:
-            if candidate == _auth_secret:
-                _authenticated_user_id = user_id
-                _authenticated_chat_id = chat_id
-                _chat_id = chat_id
-                return "auth_bound"
+        if _authenticated_user_id is not None:
+            if chat_id != _chat_id:
+                return "ignore"
+            return "allow" if user_id == _authenticated_user_id else "ignore"
+        if not _is_auth_command(msg):
             return "ignore"
-
-        if chat_id != _authenticated_chat_id:
-            return "ignore"
-        return "allow" if user_id == _authenticated_user_id else "ignore"
+        candidate = _parse_auth_candidate(msg)
+        if auth.verify_token(candidate):
+            _authenticated_user_id = user_id
+            _chat_id = chat_id
+            return "auth_bound"
+        return "ignore"
 
 
 def _poll_loop():
@@ -215,7 +207,6 @@ def start_telegram(bot_token, chat_id="", poll_timeout=20, auth_secret=None):
     _offset = None
     _running = True
     _connected = False
-    _set_auth_secret(auth_secret)
     print(f"[TELEGRAM] Starting adapter with chat target: {_chat_id or 'auto-bind'}")
     _initialize_offset()
 
