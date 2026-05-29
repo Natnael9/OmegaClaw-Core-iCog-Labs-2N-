@@ -52,8 +52,8 @@ Telegram adapter using Bot API long polling.
 
 Slack adapter using Slack Web API polling.
 
-- `start_slack(bot_token, channel_id, poll_interval)` — starts a poll loop.
-- Requires `SL_BOT_TOKEN`; `SL_CHANNEL_ID` is optional.
+- `start_slack(channel_id, poll_interval)` — starts a poll loop.
+- `SL_CHANNEL_ID` is optional.
 - The bot user must already be invited to the target channel.
 - If `SL_CHANNEL_ID` is empty, the adapter auto-binds to the first channel where auth succeeds.
 - Adapter respects Slack `Retry-After` backoff on HTTP 429 and enforces a minimum 60s poll interval.

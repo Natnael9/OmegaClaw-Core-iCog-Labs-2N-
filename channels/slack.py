@@ -28,6 +28,7 @@ _authenticated_user_id = None
 _rate_limit_until = 0.0
 _AUTO_BIND_REFRESH_INTERVAL = 300
 
+_SL_URL = "https://slack.com"
 
 class _SlackRateLimitError(Exception):
     def __init__(self, retry_after):
@@ -116,13 +117,15 @@ def _wait_for_rate_limit_window():
 
 
 def _api_call(method, params=None, timeout=30):
+    global _SL_URL, _bot_token
+
     if not _bot_token:
         raise RuntimeError("Slack adapter not initialized")
 
     params = params or {}
     body = urllib.parse.urlencode(params).encode("utf-8")
     req = urllib.request.Request(
-        f"https://slack.com/api/{method}",
+        f"{_SL_URL}/api/{method}",
         data=body,
         headers={
             "Authorization": f"Bearer {_bot_token}",
@@ -387,13 +390,19 @@ def _poll_loop():
     print("[SLACK] Polling stopped")
 
 
-def start_slack(bot_token, channel_id, poll_interval=60):
+def start_slack(channel_id, poll_interval=60):
     global _running, _bot_token, _channel_id, _poll_interval, _connected
     global _rate_limit_until, _auto_bind_channels, _auto_bind_index, _auto_bind_last_refresh
+    global _SL_URL
 
-    _bot_token = str(bot_token).strip()
-    if not _bot_token:
-        raise ValueError("SL_BOT_TOKEN is required")
+    proxy = auth.get_proxy_url()
+    if proxy:
+        _SL_URL = f"{proxy}/slack"
+        _bot_token = "proxy"
+    else:
+        _bot_token = os.environ.get("SL_BOT_TOKEN", "").strip()
+        if not _bot_token:
+            raise ValueError("SL_BOT_TOKEN is required")
 
     _channel_id = str(channel_id).strip()
 

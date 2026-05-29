@@ -118,7 +118,6 @@ After start go to https://webchat.quakenet.org/ to communicate with the agent. J
 | `IRC_user` | `omegaclaw` | IRC nickname |
 | `TG_CHAT_ID` |  | Optional Telegram chat ID. If empty, OmegaClaw auto-binds after first valid inbound auth/message. |
 | `TG_POLL_TIMEOUT` | 20 | Telegram polling timeout in seconds. |
-| `SL_BOT_TOKEN` |  | Slack bot token (`xoxb-...`). |
 | `SL_CHANNEL_ID` |  | Optional Slack channel ID (for example `C0123456789`). If empty, OmegaClaw auto-binds on first successful auth message. |
 | `SL_POLL_INTERVAL` | 60 | Slack polling interval in seconds (minimum effective value is 60). |
 | `MM_URL` | `https://chat.singularitynet.io` | Mattermost base URL. |
@@ -128,6 +127,7 @@ After start go to https://webchat.quakenet.org/ to communicate with the agent. J
 |---|---|
 | `TG_BOT_TOKEN` | Telegram bot token. |
 | `MM_BOT_TOKEN` | Mattermost bot token. |
+| `SL_BOT_TOKEN` | Slack bot token (`xoxb-...`). |
 
 ---
 

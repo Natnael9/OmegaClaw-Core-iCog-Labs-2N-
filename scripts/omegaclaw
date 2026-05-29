@@ -489,6 +489,7 @@ start() {
             --tmpfs /var/tmp:size=64m,mode=1777
             -e "${api_token_var}"="${api_token}"
             -e "TG_BOT_TOKEN=${TG_BOT_TOKEN:-}"
+            -e "SL_BOT_TOKEN=${SL_BOT_TOKEN:-}"
             -e OMEGACLAW_AUTH_SECRET="$OMEGACLAW_AUTH_SECRET"
             -e LLM_SERVER_LOCAL_URL="$llm_server_local_url"
             "$image"
@@ -501,7 +502,6 @@ start() {
     elif [ "${commchannel}" = "telegram" ]; then
       docker_cmd+=("TG_POLL_TIMEOUT=${TG_POLL_TIMEOUT}")
     elif [ "${commchannel}" = "slack" ]; then
-      docker_cmd+=("SL_BOT_TOKEN=${SL_BOT_TOKEN}")
       docker_cmd+=("SL_CHANNEL_ID=${SL_CHANNEL_ID}")
       docker_cmd+=("SL_POLL_INTERVAL=${SL_POLL_INTERVAL}")
     elif [ "${commchannel}" = "test" ]; then

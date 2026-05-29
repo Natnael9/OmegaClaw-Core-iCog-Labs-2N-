@@ -115,6 +115,15 @@ http {
             proxy_read_timeout 300s;
         }
 
+        location /slack/ {
+            proxy_pass https://slack.com/;
+            proxy_set_header Authorization "Bearer ${SL_BOT_TOKEN}";
+            proxy_set_header Host slack.com;
+            proxy_ssl_server_name on;
+            proxy_ssl_protocols TLSv1.2 TLSv1.3;
+            proxy_http_version 1.1;
+        }
+
         # Auth secret verification — agent sends candidate token, proxy compares.
         # After envsubst, ${OMEGACLAW_AUTH_SECRET} becomes the literal secret.
         set $auth_secret_value "${OMEGACLAW_AUTH_SECRET}";
