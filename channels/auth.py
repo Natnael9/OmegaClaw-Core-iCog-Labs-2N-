@@ -6,7 +6,7 @@ _proxy_url = None
 _auth_enabled = None
 
 
-def _get_proxy_url():
+def get_proxy_url():
     global _proxy_url
     if _proxy_url is None:
         _proxy_url = os.environ.get("GATEWAY_URL", "").rstrip("/")
@@ -17,7 +17,7 @@ def is_auth_enabled():
     global _auth_enabled
     if _auth_enabled is not None:
         return _auth_enabled
-    proxy = _get_proxy_url()
+    proxy = get_proxy_url()
     if not proxy:
         _auth_enabled = False
         return False
@@ -32,7 +32,7 @@ def is_auth_enabled():
 
 
 def verify_token(candidate):
-    proxy = _get_proxy_url()
+    proxy = get_proxy_url()
     if not proxy:
         return True
     url = f"{proxy}/auth/verify"

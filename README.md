@@ -116,7 +116,6 @@ After start go to https://webchat.quakenet.org/ to communicate with the agent. J
 | `IRC_server` | `irc.quakenet.org` | IRC server hostname |
 | `IRC_port` | 6667 | IRC port |
 | `IRC_user` | `omegaclaw` | IRC nickname |
-| `TG_BOT_TOKEN` |  | Telegram bot token. |
 | `TG_CHAT_ID` |  | Optional Telegram chat ID. If empty, OmegaClaw auto-binds after first valid inbound auth/message. |
 | `TG_POLL_TIMEOUT` | 20 | Telegram polling timeout in seconds. |
 | `SL_BOT_TOKEN` |  | Slack bot token (`xoxb-...`). |
@@ -125,6 +124,10 @@ After start go to https://webchat.quakenet.org/ to communicate with the agent. J
 | `MM_URL` | `https://chat.singularitynet.io` | Mattermost base URL. |
 | `MM_CHANNEL_ID` | `8fjrmabjx7gupy7e5kjznpt5qh` | Mattermost channel ID. |
 | `MM_BOT_TOKEN` |  | Mattermost bot token. |
+
+| Environment variable | Meaning |
+|---|---|
+| `TG_BOT_TOKEN` | Telegram bot token. |
 
 ---
 

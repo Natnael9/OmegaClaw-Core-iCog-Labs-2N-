@@ -44,7 +44,7 @@ Mattermost adapter using a bot token.
 
 Telegram adapter using Bot API long polling.
 
-- `start_telegram(bot_token, chat_id, poll_timeout)` — starts a poll loop.
+- `start_telegram(chat_id, poll_timeout)` — starts a poll loop.
 - `TG_CHAT_ID` is optional; if empty, the adapter can auto-bind to the first valid inbound chat.
 - Outbound messages are chunked to Telegram-safe lengths.
 
