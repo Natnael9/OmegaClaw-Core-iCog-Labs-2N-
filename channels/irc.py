@@ -133,7 +133,7 @@ def _irc_loop(channel, server, port, nick):
     sock.close()
     print("[IRC] Disconnected")
 
-def start_irc(channel, server="irc.libera.chat", port=6667, nick="omegaclaw", auth_secret=None):
+def start_irc(channel, server="irc.libera.chat", port=6667, nick="omegaclaw"):
     global _running, _channel, _connected
     nick = f"{nick}{random.randint(1000, 9999)}"
     if not channel.startswith("#"):

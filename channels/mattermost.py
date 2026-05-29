@@ -129,7 +129,7 @@ def _ws_loop():
     ws.close()
     _connected = False
 
-def start_mattermost(MM_URL_, CHANNEL_ID_, BOT_TOKEN_, auth_secret=None):
+def start_mattermost(MM_URL_, CHANNEL_ID_, BOT_TOKEN_):
     global _running, MM_URL, CHANNEL_ID, BOT_TOKEN, _headers, _connected
     MM_URL = MM_URL_
     CHANNEL_ID = CHANNEL_ID_

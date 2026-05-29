@@ -189,7 +189,7 @@ def _poll_loop():
     print("[TELEGRAM] Polling stopped")
 
 
-def start_telegram(chat_id="", poll_timeout=20, auth_secret=None):
+def start_telegram(chat_id="", poll_timeout=20):
     global _running, _bot_token, _api_base, _chat_id, _poll_timeout, _offset, _connected
 
     proxy = auth.get_proxy_url()

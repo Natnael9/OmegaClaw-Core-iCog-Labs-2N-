@@ -387,7 +387,7 @@ def _poll_loop():
     print("[SLACK] Polling stopped")
 
 
-def start_slack(bot_token, channel_id, poll_interval=60, auth_secret=None):
+def start_slack(bot_token, channel_id, poll_interval=60):
     global _running, _bot_token, _channel_id, _poll_interval, _connected
     global _rate_limit_until, _auto_bind_channels, _auto_bind_index, _auto_bind_last_refresh
 
