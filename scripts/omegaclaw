@@ -481,7 +481,6 @@ start() {
     docker_cmd=(
         docker run -d -it
             --name omegaclaw
-            --user 65534:65534
             --security-opt no-new-privileges:true
             --init
             --volume omegaclaw-memory:/PeTTa/repos/OmegaClaw-Core/memory

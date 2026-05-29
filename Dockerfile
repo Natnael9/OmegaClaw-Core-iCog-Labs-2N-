@@ -92,6 +92,8 @@ RUN apt-get update \
       libgflags-dev \
       nano \
       git \
+      nginx-light \
+      gettext-base \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /PeTTa
@@ -100,6 +102,13 @@ COPY --from=builder /usr/local /usr/local
 COPY --from=builder /PeTTa /PeTTa
 COPY --from=builder /opt/huggingface /opt/huggingface
 COPY --from=builder /opt/sentence_transformers /opt/sentence_transformers
+
+# setup nginx proxy
+RUN usermod -a -G tty www-data
+RUN mkdir /opt/nginx
+RUN chown www-data:www-data /opt/nginx
+RUN chmod 0700 /opt/nginx
+COPY --chown=www-data:www-data --chmod=0600 ./proxy/* /opt/nginx/
 
 ENV OMEGACLAW_DIR=/PeTTa/repos/OmegaClaw-Core
 ENV MEMORY_DIR=${OMEGACLAW_DIR}/memory
@@ -115,7 +124,5 @@ RUN cp ${OMEGACLAW_DIR}/run.metta /PeTTa/run.metta \
  && chmod 0444 ${MEMORY_DIR}/prompt.txt \
  && chown -R 65534:65534 /opt/huggingface /opt/sentence_transformers
 
-USER 65534:65534
-
-ENTRYPOINT ["sh", "run.sh", "run.metta"]
+ENTRYPOINT ["sh", "/PeTTa/repos/OmegaClaw-Core/entrypoint.sh"]
 CMD []
