@@ -33,6 +33,16 @@ class AIProvider(AbstractAIProvider):
 
     def _create_client(self) -> Optional[openai.OpenAI]:
         """Create OpenAI client from environment."""
+        proxy_url = os.environ.get("GATEWAY_URL")
+        if proxy_url:
+            prefix = self._name.lower()
+            base_url = f"{proxy_url.rstrip('/')}/{prefix}/"
+            print(f"[lib_llm_ext.AIProvider._create_client] Connecting via proxy: {base_url}")
+            secret = os.environ.get("ASI_API_KEY")
+            return openai.OpenAI(
+                    api_key="proxy",
+                    base_url=base_url,
+                    )
         if self._var_name in os.environ:
             if self._var_name == "OLLAMA_API_KEY":
                 llm_server_local_url = os.environ.get("LLM_SERVER_LOCAL_URL")
@@ -48,7 +58,7 @@ class AIProvider(AbstractAIProvider):
     @property
     def is_available(self) -> bool:
         """Check if provider is configured (without initializing)."""
-        return bool(os.environ.get(self._var_name))
+        return bool(os.environ.get("GATEWAY_URL")) or bool(os.environ.get(self._var_name))
 
     def chat(self, content: str, max_tokens: int = 6000, **kwargs) -> str:
         """Send chat request, initializing client if needed."""
