@@ -37,8 +37,8 @@ IRC adapter with simple one-time-secret authentication.
 
 Mattermost adapter using a bot token.
 
-- `start_mattermost(url, channel_id, bot_token)` — connect to a Mattermost instance.
-- Requires `MM_BOT_TOKEN` configured (empty by default — set via `configure` or command line).
+- `start_mattermost(url, channel_id)` — connect to a Mattermost instance.
+- Requires `MM_BOT_TOKEN` environment variable.
 
 ## `channels/telegram.py`
 

@@ -123,11 +123,11 @@ After start go to https://webchat.quakenet.org/ to communicate with the agent. J
 | `SL_POLL_INTERVAL` | 60 | Slack polling interval in seconds (minimum effective value is 60). |
 | `MM_URL` | `https://chat.singularitynet.io` | Mattermost base URL. |
 | `MM_CHANNEL_ID` | `8fjrmabjx7gupy7e5kjznpt5qh` | Mattermost channel ID. |
-| `MM_BOT_TOKEN` |  | Mattermost bot token. |
 
 | Environment variable | Meaning |
 |---|---|
 | `TG_BOT_TOKEN` | Telegram bot token. |
+| `MM_BOT_TOKEN` | Mattermost bot token. |
 
 ---
 

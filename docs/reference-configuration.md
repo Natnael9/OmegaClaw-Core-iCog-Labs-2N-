@@ -49,11 +49,11 @@ This reads a command-line override via `argk` (`name=value` on the MeTTa command
 | `SL_POLL_INTERVAL` | 60 | Slack poll interval in seconds (minimum effective value is 60). |
 | `MM_URL` | `https://chat.singularitynet.io` | Mattermost base URL. |
 | `MM_CHANNEL_ID` | `8fjrmabjx7gupy7e5kjznpt5qh` | Target channel ID. |
-| `MM_BOT_TOKEN` | *(empty — set at runtime)* | Bot auth token. |
 
 | Environment variable | Meaning |
 |---|---|
 | `TG_BOT_TOKEN` | Telegram bot token (from BotFather). |
+| `MM_BOT_TOKEN` | Bot auth token. |
 
 ## Command-line overrides
 

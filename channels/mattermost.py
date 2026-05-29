@@ -15,6 +15,7 @@ _msg_lock = threading.Lock()
 _connected = False
 _auth_lock = threading.Lock()
 _authenticated_user_id = None
+_use_proxy = True
 
 # ---- Mattermost config (dummy token ok) ----
 MM_URL = "https://chat.singularitynet.io"
@@ -86,9 +87,13 @@ def _get_display_name(user_id):
     return u["username"]
 
 def _ws_loop():
-    global _ws, _connected, BOT_USER_ID
+    global _ws, _connected, BOT_USER_ID, _use_proxy
 
-    ws_url = MM_URL.replace("https", "wss") + "/api/v4/websocket"
+    if _use_proxy:
+        ws_url = MM_URL.replace("http", "ws")
+    else:
+        ws_url = MM_URL.replace("https", "wss")
+    ws_url = ws_url + "/api/v4/websocket"
     ws = websocket.WebSocket()
     ws.connect(ws_url, header=[f"Authorization: Bearer {BOT_TOKEN}"])
 
@@ -129,12 +134,20 @@ def _ws_loop():
     ws.close()
     _connected = False
 
-def start_mattermost(MM_URL_, CHANNEL_ID_, BOT_TOKEN_):
-    global _running, MM_URL, CHANNEL_ID, BOT_TOKEN, _headers, _connected
-    MM_URL = MM_URL_
+def start_mattermost(MM_URL_, CHANNEL_ID_):
+    global _running, MM_URL, CHANNEL_ID, BOT_TOKEN, _headers, _connected, _use_proxy
+    proxy = auth.get_proxy_url()
+    if proxy:
+        MM_URL = f"{proxy}/mattermost"
+        BOT_TOKEN = "proxy"
+        _headers = {}
+        _use_proxy = True
+    else:
+        MM_URL = MM_URL_
+        BOT_TOKEN = os.environ.get("MM_BOT_TOKEN", "").strip()
+        _headers = {"Authorization": f"Bearer {BOT_TOKEN}"} if BOT_TOKEN else {}
+        _use_proxy = False
     CHANNEL_ID = CHANNEL_ID_
-    BOT_TOKEN = BOT_TOKEN_
-    _headers = {"Authorization": f"Bearer {BOT_TOKEN}"}
     _running = True
     _connected = False
     t = threading.Thread(target=_ws_loop, daemon=True)
