@@ -41,22 +41,7 @@ _URL_BARE_RE = re.compile(r"<([^>\s]+)>")
 
 
 def _slack_unwrap(text):
-    """Undo Slack's auto-formatting so downstream layers see the user's
-    original text.
-
-    chat.postMessage / conversations.history apply these transforms on
-    the way out, regardless of the `text` parameter contents:
-    - Bare URLs are wrapped as `<url>`.
-    - Domain-only strings get an auto-protocol-prefix plus display:
-      `Fetch.ai` -> `<http://Fetch.ai|Fetch.ai>`. The display segment
-      after `|` is the user's original typed string, so for the `|`
-      form we prefer the display and drop the url segment.
-    - The HTML special characters `<`, `>`, `&` are entity-escaped to
-      `&lt;`, `&gt;`, `&amp;`.
-
-    Applied in receive (`_handle_messages`), the agent's higher layers
-    (HUMAN-MSG, LLM prompt, mock matcher) see the original input.
-    """
+    """Reverse Slack's outgoing auto-formatting so downstream layers see the original text."""
     if not text:
         return text
     text = _URL_DISPLAY_RE.sub(r"\1", text)
