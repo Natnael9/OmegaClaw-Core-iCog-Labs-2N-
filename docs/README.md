@@ -63,6 +63,6 @@ User-facing MeTTa skills the agent invokes. Each page follows the template **Sig
 ### Internals
 
 - [reference-internals-loop.md](./reference-internals-loop.md) — `src/loop.metta` lifecycle and turn structure
-- [reference-internals-memory-store.md](./reference-internals-memory-store.md) — The three-tier memory architecture, including `knowledge-priors` markdown seeding into ChromaDB
+- [reference-internals-memory-store.md](./reference-internals-memory-store.md) — The three-tier memory architecture
 - [reference-internals-skill-dispatch.md](./reference-internals-skill-dispatch.md) — How `(skill args)` calls resolve
 - [reference-internals-extension-points.md](./reference-internals-extension-points.md) — Where to hook in new skills, tools, channels, LLMs, engines
