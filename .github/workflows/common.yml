@@ -66,7 +66,7 @@ jobs:
       - name: Build image (no push)
         uses: docker/build-push-action@v7
         with:
-          platforms: ${{ inputs.platforms }}
+          platforms: linux/amd64
           load: ${{ inputs.run_tests }}
           push: false
           tags: singularitynet/omegaclaw:${{ env.AUTOTESTS_OMEGACLAW_TAG }}
