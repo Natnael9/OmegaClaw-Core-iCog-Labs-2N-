@@ -297,9 +297,6 @@ Restart OmegaClaw:
 Examine log file in case of problem:
   docker logs -f omegaclaw
 
-Auth secret (required once on first message in supported channels):
-  $OMEGACLAW_AUTH_SECRET
-
 EOF
 
 if [ "${commchannel}" = "irc" ]; then
