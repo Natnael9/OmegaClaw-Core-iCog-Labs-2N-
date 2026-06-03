@@ -20,6 +20,7 @@ LLM_COMMANDS = {
     "write-file",
 }
 
+
 def extract_timestamp(line):
     m = TS_RE.search(line)
     if not m:
@@ -28,6 +29,7 @@ def extract_timestamp(line):
         return datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S")
     except ValueError:
         return None
+
 
 def around_time(needle_time_str, k):
     needle_time_str = needle_time_str.replace(r'\"', '').replace('"', '').strip()
@@ -186,6 +188,7 @@ def balance_parentheses(s):
     ret = " ".join(sexprs)
     return "(" + ret + ")"
 
+
 def normalize_string(x):
     try:
         if isinstance(x, bytes):
@@ -194,24 +197,27 @@ def normalize_string(x):
     except Exception:
         return str(x)
 
+
 def test_balance_parenthesis():
-	assert balance_parentheses('(write-file test.txt hello world)') == '((write-file "test.txt" "hello world"))'
-	assert balance_parentheses('(append-file test.txt hello world)') == '((append-file "test.txt" "hello world"))'
-	assert balance_parentheses('(write-file "test.txt" hello world)') == '((write-file "test.txt" "hello world"))'
-	assert balance_parentheses('(write-file "test.txt" "hello world")') == '((write-file "test.txt" "hello world"))'
-	assert balance_parentheses('(write-file test.txt "hello world")') == '((write-file "test.txt" "hello world"))'
-	assert balance_parentheses('(send test.xt hello world)') == '((send "test.xt hello world"))'
-	assert balance_parentheses('write-file test.txt hello world') == '((write-file "test.txt" "hello world"))'
-	assert balance_parentheses('append-file test.txt hello world') == '((append-file "test.txt" "hello world"))'
-	assert balance_parentheses('write-file "test.txt" hello world') == '((write-file "test.txt" "hello world"))'
-	assert balance_parentheses('write-file "test.txt" "hello world"') == '((write-file "test.txt" "hello world"))'
-	assert balance_parentheses('write-file test.txt "hello world"') == '((write-file "test.txt" "hello world"))'
-	assert balance_parentheses('send test.xt hello world') == '((send "test.xt hello world"))'
-	assert balance_parentheses('send Here are the planets:\n1. Mercury\n2. Venus') == '((send "Here are the planets:\\n1. Mercury\\n2. Venus"))'
-	assert balance_parentheses('send Here are the options:\n- MacBook Air\n- ThinkPad X1\npin done') == '((send "Here are the options:\\n- MacBook Air\\n- ThinkPad X1") (pin "done"))'
-	assert balance_parentheses('send "Plain text version:"\n**Mars** - red planet\nNote: Pluto is a dwarf planet') == '((send "Plain text version:\\n**Mars** - red planet\\nNote: Pluto is a dwarf planet"))'
-	assert balance_parentheses('(send Here are the planets:\n1. Mercury\n2. Venus)') == '((send "Here are the planets:\\n1. Mercury\\n2. Venus"))'
-	assert balance_parentheses('send "hello" world') == '((send "\\"hello\\" world"))'
+    assert balance_parentheses('(write-file test.txt hello world)') == '((write-file "test.txt" "hello world"))'
+    assert balance_parentheses('(append-file test.txt hello world)') == '((append-file "test.txt" "hello world"))'
+    assert balance_parentheses('(write-file "test.txt" hello world)') == '((write-file "test.txt" "hello world"))'
+    assert balance_parentheses('(write-file "test.txt" "hello world")') == '((write-file "test.txt" "hello world"))'
+    assert balance_parentheses('(write-file test.txt "hello world")') == '((write-file "test.txt" "hello world"))'
+    assert balance_parentheses('(write-file test.txt "hello world")') == '((write-file "test.txt" "hello world"))'
+    assert balance_parentheses('((send test.xt hello world))') == '((send "test.xt hello world"))'
+    assert balance_parentheses('write-file test.txt hello world') == '((write-file "test.txt" "hello world"))'
+    assert balance_parentheses('append-file test.txt hello world') == '((append-file "test.txt" "hello world"))'
+    assert balance_parentheses('write-file "test.txt" hello world') == '((write-file "test.txt" "hello world"))'
+    assert balance_parentheses('write-file "test.txt" "hello world")') == '((write-file "test.txt" "hello world"))'
+    assert balance_parentheses('write-file test.txt "hello world"') == '((write-file "test.txt" "hello world"))'
+    assert balance_parentheses('send test.xt hello world') == '((send "test.xt hello world"))'
+
+    assert balance_parentheses('send Here are the planets:\n1. Mercury\n2. Venus') == '((send "Here are the planets:\\n1. Mercury\\n2. Venus"))'
+    assert balance_parentheses('send Here are the options:\n- MacBook Air\n- ThinkPad X1\npin done') == '((send "Here are the options:\\n- MacBook Air\\n- ThinkPad X1") (pin "done"))'
+    assert balance_parentheses('send "Plain text version:"\n**Mars** - red planet\nNote: Pluto is a dwarf planet') == '((send "Plain text version:\\n**Mars** - red planet\\nNote: Pluto is a dwarf planet"))'
+    assert balance_parentheses('(send Here are the planets:\n1. Mercury\n2. Venus)') == '((send "Here are the planets:\\n1. Mercury\\n2. Venus"))'
+    assert balance_parentheses('send "hello" world') == '((send "\\"hello\\"" world))'
 
 if __name__ == "__main__":
     test_balance_parenthesis()
