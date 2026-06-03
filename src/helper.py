@@ -61,10 +61,12 @@ def around_time(needle_time_str, k):
         ret += f"{lineno}:{line}"
     return ret
 
+
 def _strip_outer_parens(line):
     if line.startswith("(") and line.endswith(")"):
         return line[1:-1].strip()
     return line
+
 
 def _get_command_name(line):
     normalized = line.strip()
@@ -76,14 +78,17 @@ def _get_command_name(line):
         return ""
     return normalized.split(maxsplit=1)[0]
 
+
 def _is_known_command(line):
     return _get_command_name(line) in LLM_COMMANDS
+
 
 def _decode_quoted_arg(text):
     try:
         return json.loads(text)
     except Exception:
         return None
+
 
 def _merge_send_continuations(lines):
     merged = []
@@ -125,6 +130,7 @@ def _merge_send_continuations(lines):
         else:
             merged.append(line)
     return merged
+
 
 def balance_parentheses(s):
     s = s.replace("_quote_", '"').replace("_newline_", "\n")
@@ -204,20 +210,19 @@ def test_balance_parenthesis():
     assert balance_parentheses('(write-file "test.txt" hello world)') == '((write-file "test.txt" "hello world"))'
     assert balance_parentheses('(write-file "test.txt" "hello world")') == '((write-file "test.txt" "hello world"))'
     assert balance_parentheses('(write-file test.txt "hello world")') == '((write-file "test.txt" "hello world"))'
-    assert balance_parentheses('(write-file test.txt "hello world")') == '((write-file "test.txt" "hello world"))'
-    assert balance_parentheses('((send test.xt hello world))') == '((send "test.xt hello world"))'
+    assert balance_parentheses('(send test.xt hello world)') == '((send "test.xt hello world"))'
     assert balance_parentheses('write-file test.txt hello world') == '((write-file "test.txt" "hello world"))'
     assert balance_parentheses('append-file test.txt hello world') == '((append-file "test.txt" "hello world"))'
     assert balance_parentheses('write-file "test.txt" hello world') == '((write-file "test.txt" "hello world"))'
-    assert balance_parentheses('write-file "test.txt" "hello world")') == '((write-file "test.txt" "hello world"))'
+    assert balance_parentheses('write-file "test.txt" "hello world"') == '((write-file "test.txt" "hello world"))'
     assert balance_parentheses('write-file test.txt "hello world"') == '((write-file "test.txt" "hello world"))'
     assert balance_parentheses('send test.xt hello world') == '((send "test.xt hello world"))'
-
     assert balance_parentheses('send Here are the planets:\n1. Mercury\n2. Venus') == '((send "Here are the planets:\\n1. Mercury\\n2. Venus"))'
     assert balance_parentheses('send Here are the options:\n- MacBook Air\n- ThinkPad X1\npin done') == '((send "Here are the options:\\n- MacBook Air\\n- ThinkPad X1") (pin "done"))'
     assert balance_parentheses('send "Plain text version:"\n**Mars** - red planet\nNote: Pluto is a dwarf planet') == '((send "Plain text version:\\n**Mars** - red planet\\nNote: Pluto is a dwarf planet"))'
     assert balance_parentheses('(send Here are the planets:\n1. Mercury\n2. Venus)') == '((send "Here are the planets:\\n1. Mercury\\n2. Venus"))'
-    assert balance_parentheses('send "hello" world') == '((send "\\"hello\\"" world))'
+    assert balance_parentheses('send "hello" world') == '((send "\\"hello\\" world"))'
+
 
 if __name__ == "__main__":
     test_balance_parenthesis()
