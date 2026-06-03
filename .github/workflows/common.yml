@@ -84,6 +84,21 @@ jobs:
           chmod +x ./scripts/omegaclaw
           ./scripts/omegaclaw start -p Test -t test -d singularitynet/omegaclaw:${{ env.AUTOTESTS_OMEGACLAW_TAG }}
           pip install pytest
+          echo "Waiting for agent to become ready..."
+          ready=
+          for i in $(seq 1 90); do
+            if docker logs omegaclaw 2>&1 | grep -qE "CHARS_SENT: [0-9]+"; then
+              echo "Agent ready after ${i}s"
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ -z "$ready" ]; then
+            echo "::error::Agent did not become ready in 90s"
+            docker logs omegaclaw 2>&1 | tail -100
+            exit 1
+          fi
         env:
           TEST_SERVER_IP: 'host.docker.internal'
 
