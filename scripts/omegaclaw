@@ -419,7 +419,7 @@ options() {
     SL_CHANNEL_ID="${SL_CHANNEL_ID:-}"
     SL_POLL_INTERVAL="${SL_POLL_INTERVAL:-10}"
 
-    if [[ "$#" -ne 1 ]]; then
+    if [[ "$#" -eq 0 ]]; then
         help
         return 1
     fi
