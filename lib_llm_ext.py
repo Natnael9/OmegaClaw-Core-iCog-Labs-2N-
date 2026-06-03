@@ -1,5 +1,8 @@
 import os, openai
 from typing import Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 class AbstractAIProvider:
     def __init__(self, name: str):
@@ -75,6 +78,37 @@ class AIProvider(AbstractAIProvider):
         """Unescape special characters."""
         return text.replace("_quote_", '"').replace("_apostrophe_", "'")
 
+class OpenRouterProvider(AIProvider):
+    def chat(self, content: str, max_tokens: int = 6000, **kwargs) -> str:
+        self._ensure_client()
+
+        if self._client is None:
+            raise RuntimeError(f"{self.name} not configured (set {self._var_name})")
+
+        content = content.replace(":-:-:-:", " ")
+        try:
+            response = self._client.chat.completions.create(
+                model=self._model_name,
+                messages=[{"role": "user", "content": content}],
+                max_tokens=max_tokens,
+                extra_body={
+                    "reasoning": {
+                        "enabled": True,
+                        "max_tokens": 6000,
+                        "exclude": True,
+                    }
+                },
+                **kwargs
+            )
+
+            msg = response.choices[0].message
+            final = msg.content or ""
+
+            return self._clean_text(final)
+
+        except Exception as e:
+            logger.exception("[OpenRouterProvider.chat] OpenRouter request failed")
+            return ""
 
 class AsiOneProvider(AIProvider):
     """Lazy AI provider with on-demand initialization."""
@@ -153,7 +187,7 @@ _register_provider(name="ASICloud", var_name="ASI_API_KEY", model_name="minimax/
 _register_provider(name="Anthropic", var_name="ANTHROPIC_API_KEY", model_name="claude-opus-4-6", base_url="https://api.anthropic.com/v1/")
 _register_provider(name="Ollama-local", var_name="OLLAMA_API_KEY", model_name="qwen3.5:9b", base_url="http://localhost:11434/v1")
 _register_provider_instance(AsiOneProvider(name="ASIOne", var_name="ASIONE_API_KEY", model_name="asi1-ultra", base_url="https://api.asi1.ai/v1"))
-_register_provider(name="OpenRouter", var_name="OPENROUTER_API_KEY", model_name="z-ai/glm-5.1", base_url="https://openrouter.ai/api/v1")
+_register_provider_instance(OpenRouterProvider(name="OpenRouter", var_name="OPENROUTER_API_KEY", model_name="z-ai/glm-5.1", base_url="https://openrouter.ai/api/v1"))
 _register_provider_instance(TestProvider())
 # At the moment the OpenAI model call is in PeTTa, just init a default config here
 _register_provider(name="OpenAI", var_name="OPENAI_API_KEY", model_name="gpt-5.4", base_url="https://api.openai.com/v1")
