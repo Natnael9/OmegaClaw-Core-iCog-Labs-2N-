@@ -386,7 +386,7 @@ start
 }
 
 help() {
-    echo -e "Usage: ${0} [<image tag> | command] [options]"
+    echo -e "Usage: ${0} [<image tag> | command [options]]"
     echo
     echo -e "If used with <image tag> instead of command then boostrap Docker container"
     echo -e "in interactive mode."
@@ -418,6 +418,12 @@ options() {
     SL_BOT_TOKEN="${SL_BOT_TOKEN:-}"
     SL_CHANNEL_ID="${SL_CHANNEL_ID:-}"
     SL_POLL_INTERVAL="${SL_POLL_INTERVAL:-10}"
+
+    if [[ "$#" -eq 0 ]]; then
+        help
+        return 1
+    fi
+
     command=${1}
     shift 1
 
