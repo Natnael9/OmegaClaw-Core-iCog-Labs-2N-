@@ -56,11 +56,13 @@ RUN python3 -m pip install --no-cache-dir --break-system-packages \
     --index-url https://download.pytorch.org/whl/cpu \
     torch \
  && python3 -m pip install --no-cache-dir --break-system-packages \
+    aiogram \
     chromadb \
     janus-swi \
     openai \
     uagents \
-    sentence-transformers
+    sentence-transformers \
+    import-kb
 
 # Pre-download the sentence-transformers model so runtime does not need network access.
 RUN mkdir -p "${HF_HOME}" "${SENTENCE_TRANSFORMERS_HOME}" \
@@ -103,6 +105,9 @@ COPY --from=builder /opt/sentence_transformers /opt/sentence_transformers
 
 ENV OMEGACLAW_DIR=/PeTTa/repos/OmegaClaw-Core
 ENV MEMORY_DIR=${OMEGACLAW_DIR}/memory
+ENV CHROMA_DB_PATH=/PeTTa/chroma_db
+ENV IMPORT_KB_ON_START=1
+ENV IMPORT_KB_MODEL=text-embedding-3-large
 
 # Bring in only local OmegaClaw source (filtered by .dockerignore).
 COPY . ${OMEGACLAW_DIR}
@@ -110,6 +115,8 @@ COPY . ${OMEGACLAW_DIR}
 RUN cp ${OMEGACLAW_DIR}/run.metta /PeTTa/run.metta \
  && mkdir -p ${MEMORY_DIR}/chroma_db \
  && ln -s ${MEMORY_DIR}/chroma_db ./chroma_db \
+ && cp ${OMEGACLAW_DIR}/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh \
+ && chmod +x /usr/local/bin/docker-entrypoint.sh \
  && chown -R 65534:65534 ${MEMORY_DIR} \
  && find ${MEMORY_DIR} -type f -exec chmod 0644 {} \; \
  && chmod 0444 ${MEMORY_DIR}/prompt.txt \
@@ -117,5 +124,5 @@ RUN cp ${OMEGACLAW_DIR}/run.metta /PeTTa/run.metta \
 
 USER 65534:65534
 
-ENTRYPOINT ["sh", "run.sh", "run.metta"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD []
