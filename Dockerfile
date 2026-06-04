@@ -12,20 +12,20 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-      ca-certificates \
-      git \
-      build-essential \
-      cmake \
-      pkg-config \
-      python3 \
-      python3-dev \
-      python3-pip \
-      libopenblas-dev \
-      libblas-dev \
-      liblapack-dev \
-      gfortran \
-      libgflags-dev \
-      nano \
+       ca-certificates \
+       git \
+       build-essential \
+       cmake \
+       pkg-config \
+       python3 \
+       python3-dev \
+       python3-pip \
+       libopenblas-dev \
+       libblas-dev \
+       liblapack-dev \
+       gfortran \
+       libgflags-dev \
+       nano \
  && rm -rf /var/lib/apt/lists/*
 
 # Build dependencies from source. Pin refs at build time for reproducibility.
@@ -54,14 +54,15 @@ RUN mkdir -p /PeTTa/repos \
 
 RUN python3 -m pip install --no-cache-dir --break-system-packages \
     --index-url https://download.pytorch.org/whl/cpu \
-    torch \
+    torch==2.1.2 \
  && python3 -m pip install --no-cache-dir --break-system-packages \
     aiogram \
     chromadb \
     janus-swi \
     openai \
     uagents \
-    sentence-transformers \
+    transformers==4.35.2 \
+    sentence-transformers==2.2.2 \
     import-kb
 
 # Pre-download the sentence-transformers model so runtime does not need network access.
@@ -85,15 +86,15 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-      ca-certificates \
-      python3 \
-      libopenblas-dev \
-      libblas-dev \
-      liblapack-dev \
-      gfortran \
-      libgflags-dev \
-      nano \
-      git \
+       ca-certificates \
+       python3 \
+       libopenblas-dev \
+       libblas-dev \
+       liblapack-dev \
+       gfortran \
+       libgflags-dev \
+       nano \
+       git \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /PeTTa
