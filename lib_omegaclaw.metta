@@ -20,3 +20,4 @@
 !(import! &self (library OmegaClaw-Core ./src/loop))
 !(git-import! "https://github.com/patham9/petta_lib_chromadb.git")
 !(import! &self (library petta_lib_chromadb lib_chromadb))
+!(import! &self (library OmegaClaw-Core ./profile/policy))

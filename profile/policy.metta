@@ -1,0 +1,8 @@
+!(import! &self (library OmegaClaw-Core ./policy.py))
+
+(= (securityPolicyPath) (empty))
+
+(= (applySecurityPolicy)
+   (progn (println! "Configuring security policy")
+          (configure securityPolicyPath "")
+          (py-call (policy.apply_security_policy (securityPolicyPath)))))

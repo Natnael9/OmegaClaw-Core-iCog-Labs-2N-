@@ -13,14 +13,10 @@ filesystem_policy:
   - /sys/devices/system
   - /dev/shm
   read_write:
-  - /sandbox
-  - /PeTTa
+  - /PeTTa/repos/OmegaClaw-Core/memory
   - /tmp
   - /dev/null
   - /opt/huggingface
   - /opt/sentence_transformers
 landlock:
   compatibility: best_effort
-process:
-  run_as_user: sandbox
-  run_as_group: sandbox

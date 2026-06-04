@@ -4,6 +4,18 @@ from pathlib import Path
 import enum
 import os
 
+def apply_security_policy(path):
+    try:
+        if path:
+            policy = FileSystemPolicy()
+            policy.load_file(path)
+            policy.apply()
+        else:
+            print("[policy.apply_security_policy]: securityPolicyPath is not set")
+    except Exception as e:
+        print("[policy.apply_security_policy]: Unexpected exception: {repr(e)}")
+        raise
+
 class LandLockCompatibility(enum.Enum):
     BEST_EFFORT = 0,
     HARD_REQUIREMENT = 1,
@@ -26,6 +38,7 @@ class FileSystemPolicy:
         self._read_write = []
 
     def load_file(self, path: str|Path):
+        print(f"[FileSystemPolicy.load_file] loading policy from file {path}")
         policy = None
         with open(path, "r") as f:
             policy = yaml.safe_load(f)
@@ -74,6 +87,8 @@ class FileSystemPolicy:
             .add_path_rule(*rod, access=FileSystemPolicy.READ_ONLY_DIR_ACCESS) \
             .add_path_rule(*rof, access=FileSystemPolicy.READ_ONLY_FILE_ACCESS) \
             .apply()
+
+        print("[FileSystemPolicy.load_file] policy applied")
 
 # Unit tests
 

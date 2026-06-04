@@ -41,6 +41,7 @@
    (omegaclaw 1))
 (= (omegaclaw $k)
    (progn (if (== $k 1) (progn (initLoop)
+                               (applySecurityPolicy)
                                (initMemory)
                                (initChannels))
                         (change-state! &loops (- (get-state &loops) 1)))
