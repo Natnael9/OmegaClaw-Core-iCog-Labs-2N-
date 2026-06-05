@@ -52,16 +52,11 @@ RUN sh build.sh
 RUN mkdir -p /PeTTa/repos \
  && git clone --depth 1 --branch "${CHROMADB_REF}" "${CHROMADB_REPO}" /PeTTa/repos/petta_lib_chromadb
 
+COPY ./requirements.txt /tmp/requirements.txt
 RUN python3 -m pip install --no-cache-dir --break-system-packages \
     --index-url https://download.pytorch.org/whl/cpu \
     torch==2.5.1 \
- && python3 -m pip install --no-cache-dir --break-system-packages \
-    chromadb==1.5.9 \
-    janus-swi==1.5.2 \
-    openai==2.38.0 \
-    uagents==0.25.1 \
-    transformers==5.8.0 \
-    sentence-transformers==5.5.1
+ && python3 -m pip install --no-cache-dir --break-system-packages -r /tmp/requirements.txt
 
 # Pre-download the sentence-transformers model so runtime does not need network access.
 RUN mkdir -p "${HF_HOME}" "${SENTENCE_TRANSFORMERS_HOME}" \
