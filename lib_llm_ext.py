@@ -75,11 +75,11 @@ class AIProvider(AbstractAIProvider):
                 **kwargs
             )
 
-            raw = response.choices[0].message.content
+            raw = response.choices[0].message.content or ""
             _log_raw(self._name, self._model_name, raw)
             return self._clean_text(raw)
         except Exception as e:
-            print(f"[lib_llm_ext.AIProvider.chat] Exception while communicating with LLM: {e}")
+            logger.exception("[lib_llm_ext.AIProvider.chat] Exception while communicating with LLM")
             return ""
 
     def _clean_text(self, text: str) -> str:
@@ -87,36 +87,16 @@ class AIProvider(AbstractAIProvider):
         return text.replace("_quote_", '"').replace("_apostrophe_", "'")
 
 class OpenRouterProvider(AIProvider):
-    def chat(self, content: str, max_tokens: int = 6000, **kwargs) -> str:
-        self._ensure_client()
+    """OpenRouter provider with reasoning mode enabled (reasoning tokens excluded from the response)."""
 
-        if self._client is None:
-            raise RuntimeError(f"{self.name} not configured (set {self._var_name})")
-
-        content = content.replace(":-:-:-:", " ")
-        try:
-            response = self._client.chat.completions.create(
-                model=self._model_name,
-                messages=[{"role": "user", "content": content}],
-                max_tokens=max_tokens,
-                extra_body={
-                    "reasoning": {
-                        "enabled": True,
-                        "max_tokens": 6000,
-                        "exclude": True,
-                    }
-                },
-                **kwargs
-            )
-
-            msg = response.choices[0].message
-            final = msg.content or ""
-
-            return self._clean_text(final)
-
-        except Exception as e:
-            logger.exception("[OpenRouterProvider.chat] OpenRouter request failed")
-            return ""
+    def chat(self, content: str, max_tokens: int = 6000, reasoning: str = "medium", **kwargs) -> str:
+        return super().chat(content, max_tokens, reasoning, extra_body={
+            "reasoning": {
+                "enabled": True,
+                "max_tokens": 6000,
+                "exclude": True,
+            }
+        }, **kwargs)
 
 class AsiOneProvider(AIProvider):
     """Lazy AI provider with on-demand initialization."""
