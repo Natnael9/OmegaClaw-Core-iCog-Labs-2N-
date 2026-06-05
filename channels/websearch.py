@@ -3,6 +3,7 @@ import sys
 import urllib.parse
 import urllib.request
 from html.parser import HTMLParser
+from ddgs import DDGS
 
 class DDGParser(HTMLParser):
     def __init__(self):
@@ -39,18 +40,15 @@ class DDGParser(HTMLParser):
             self.current_snippet += data
 
 def search_(query, max_results=10):
-    url = "https://duckduckgo.com/html/?q=" + urllib.parse.quote_plus(query)
-    req = urllib.request.Request(
-        url,
-        headers={"User-Agent": "Mozilla/5.0"}
-    )
-
-    with urllib.request.urlopen(req, timeout=10) as r:
-        html = r.read().decode("utf-8", errors="ignore")
-
-    parser = DDGParser()
-    parser.feed(html)
-    return parser.results[:max_results]
+    with DDGS() as ddgs:
+        return [
+            {
+                "title": r.get("title", ""),
+                "url": r.get("href", ""),
+                "snippet": r.get("body", "")
+            }
+            for r in ddgs.text(query, max_results=max_results)
+        ]
 
 def search(query, max_results=10):
     try:
