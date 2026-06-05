@@ -6,7 +6,6 @@ filesystem_policy:
   - /lib
   - /proc
   - /dev/urandom
-  - /app
   - /etc
   - /opt
   - /var/log
