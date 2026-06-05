@@ -215,6 +215,7 @@ _embedding_model = None
 def initLocalEmbedding():
     model_name="intfloat/e5-large-v2"
     global _embedding_model
+    os.environ["HF_HUB_OFFLINE"] = "1"
     if _embedding_model is None:
         from sentence_transformers import SentenceTransformer
         _embedding_model = SentenceTransformer(model_name)
