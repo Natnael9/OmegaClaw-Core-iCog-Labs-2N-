@@ -11,6 +11,7 @@ filesystem_policy:
   - /var/log
   - /sys/devices/system
   - /dev/shm
+  - /PeTTa
   read_write:
   - /PeTTa/repos/OmegaClaw-Core/memory
   - /tmp

@@ -15,6 +15,7 @@ filesystem_policy:
   - .pytest_cache
   - {dir}/rw_dir
   - {dir}/rw_file
+  - {dir}/ro_dir/rw_dir
 landlock:
   compatibility: hard_requirement
 """
@@ -24,6 +25,7 @@ def temp_dir(tmp_path_factory):
     """Fixture creates the test directory structure"""
     dir = tmp_path_factory.mktemp("dir")
     Path(f"{dir}/ro_dir").mkdir()
+    Path(f"{dir}/ro_dir/rw_dir").mkdir()
     temp_file(f"{dir}/ro_dir/file", "Read only file")
     temp_file(f"{dir}/ro_file", "Read only file")
     Path(f"{dir}/rw_dir").mkdir()
@@ -152,4 +154,32 @@ def process_test_read_device(q, temp_dir):
     policy.apply()
     with open(f"/dev/urandom", "r") as f:
         pass
+    q.put((True, None))
+
+def test_read_write_dir_under_read_only_dir(temp_dir):
+    run_in_separate_process(process_test_read_write_dir_under_read_only_dir, (temp_dir,))
+
+def process_test_read_write_dir_under_read_only_dir(q, temp_dir):
+    apply_policy_to_dir(temp_dir)
+    try:
+        # new dir
+        Path(f"{temp_dir}/ro_dir/rw_dir/new_dir").mkdir()
+        with open(f"{temp_dir}/ro_dir/rw_dir/new_dir/new_file", "w") as f:
+            f.write("Hello, world!")
+        Path(f"{temp_dir}/ro_dir/rw_dir/new_dir/new_file").unlink()
+        Path(f"{temp_dir}/ro_dir/rw_dir/new_dir").rmdir()
+
+        # new file
+        with open(f"{temp_dir}/ro_dir/rw_dir/new_file", "w") as f:
+            f.write("Hello, world!")
+        Path(f"{temp_dir}/ro_dir/rw_dir/new_file").unlink()
+
+        # old file write
+        with open(f"{temp_dir}/ro_dir/rw_dir/file", "w") as f:
+            f.write("Hello, world!")
+
+        # old file remove
+        Path(f"{temp_dir}/ro_dir/rw_dir/file").unlink()
+    except PermissionError:
+        q.put((False, f"Cannot write to read-write directory"))
     q.put((True, None))
