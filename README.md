@@ -96,6 +96,10 @@ After start go to https://webchat.quakenet.org/ to communicate with the agent. J
 | `provider` | `Anthropic` | LLM provider, see the table of the providers above |
 | `maxOutputToken` | 6000 | Output cap passed to the provider |
 | `reasoningMode` | `medium` | Reasoning-effort hint passed to the provider (OpenAI only) |
+| `securityPolicyPath` | | Path to the security profile written using
+[OpenShell
+YAML](https://docs.nvidia.com/openshell/reference/policy-schema#filesystem-policy).
+See [./profile/policy.xml](./profile/policy.xml) as an example. |
 
 ### Memory (`src/memory.metta`)
 
