@@ -136,3 +136,20 @@ def process_test_read_write_file(q, temp_dir):
     except PermissionError:
         q.put((False, f"Cannot write to read-write file"))
     q.put((True, None))
+
+def test_read_device(temp_dir):
+    run_in_separate_process(process_test_read_device, (temp_dir,))
+
+def process_test_read_device(q, temp_dir):
+    policy = FileSystemPolicy()
+    policy.load_str("""
+        version: 1
+        filesystem_policy:
+          include_workdir: false
+          read_only:
+          - /dev/urandom
+    """)
+    policy.apply()
+    with open(f"/dev/urandom", "r") as f:
+        pass
+    q.put((True, None))

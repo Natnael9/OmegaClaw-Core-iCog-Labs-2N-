@@ -77,9 +77,9 @@ class FileSystemPolicy:
 
     def apply(self):
         rod = list(filter(lambda p: p.is_dir(), self._read_only))
-        rof = list(filter(lambda p: p.is_file(), self._read_only))
+        rof = list(filter(lambda p: not p.is_dir(), self._read_only))
         rwd = list(filter(lambda p: p.is_dir(), self._read_write))
-        rwf = list(filter(lambda p: p.is_file(), self._read_write))
+        rwf = list(filter(lambda p: not p.is_dir(), self._read_write))
 
         Landlock(strict=self._strict) \
             .add_path_rule(*rwd, access=FileSystemPolicy.READ_WRITE_DIR_ACCESS) \
