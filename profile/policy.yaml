@@ -2,6 +2,7 @@ version: 1
 filesystem_policy:
   include_workdir: false
   read_only:
+  - /bin
   - /usr
   - /lib
   - /proc

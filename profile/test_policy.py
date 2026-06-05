@@ -2,6 +2,8 @@ from pathlib import Path
 import pytest
 import tempfile
 import multiprocessing
+import subprocess
+import traceback
 from policy import FileSystemPolicy
 
 _TEST_POLICY_YAML = """
@@ -9,6 +11,7 @@ version: 1
 filesystem_policy:
   include_workdir: true
   read_only:
+  - /
   - {dir}/ro_dir
   - {dir}/ro_file
   read_write:
@@ -62,7 +65,8 @@ def exception_catcher(q, func, args):
     try:
         func(q, *args)
     except Exception as e:
-        q.put((False, f"Unexpected exception: {repr(e)}"))
+        q.put((False, f"Unexpected exception: {e}"))
+        traceback.print_exc()
 
 def temp_file(path, text):
     with open(path, "w") as f:
@@ -182,4 +186,16 @@ def process_test_read_write_dir_under_read_only_dir(q, temp_dir):
         Path(f"{temp_dir}/ro_dir/rw_dir/file").unlink()
     except PermissionError:
         q.put((False, f"Cannot write to read-write directory"))
+    q.put((True, None))
+
+def test_execute_shell(temp_dir):
+    run_in_separate_process(process_test_execute_shell, (temp_dir,))
+
+def process_test_execute_shell(q, temp_dir):
+    apply_policy_to_dir(temp_dir)
+    path = Path(f'{temp_dir}/rw_dir/shell_dir')
+    assert not path.exists()
+    result = subprocess.run(['mkdir', '-p', str(path)])
+    assert path.exists()
+    path.rmdir()
     q.put((True, None))

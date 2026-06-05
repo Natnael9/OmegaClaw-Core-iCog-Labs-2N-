@@ -28,7 +28,8 @@ class FileSystemPolicy:
                              | AccessFs.WRITE_FILE | AccessFs.TRUNCATE
                              | AccessFs.MAKE_REG | AccessFs.MAKE_DIR
                              | AccessFs.MAKE_SYM | AccessFs.REMOVE_FILE
-                             | AccessFs.REMOVE_DIR)
+                             | AccessFs.REMOVE_DIR | AccessFs.MAKE_FIFO
+                             | AccessFs.MAKE_SOCK)
     READ_WRITE_FILE_ACCESS = (AccessFs.READ_FILE | AccessFs.WRITE_FILE |
                               AccessFs.TRUNCATE)
 
@@ -82,7 +83,9 @@ class FileSystemPolicy:
         rwf = list(filter(lambda p: not p.is_dir(), self._read_write))
 
         Landlock(strict=self._strict) \
+            .allow_all_scope() \
             .allow_all_network() \
+            .add_path_rule('/', access=AccessFs.EXECUTE) \
             .add_path_rule(*rwd, access=FileSystemPolicy.READ_WRITE_DIR_ACCESS) \
             .add_path_rule(*rwf, access=FileSystemPolicy.READ_WRITE_FILE_ACCESS) \
             .add_path_rule(*rod, access=FileSystemPolicy.READ_ONLY_DIR_ACCESS) \
