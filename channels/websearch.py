@@ -1,43 +1,5 @@
 #!/usr/bin/env python3
-import sys
-import urllib.parse
-import urllib.request
-from html.parser import HTMLParser
 from ddgs import DDGS
-
-class DDGParser(HTMLParser):
-    def __init__(self):
-        super().__init__()
-        self.in_title = False
-        self.in_snippet = False
-        self.current_title = None
-        self.current_snippet = None
-        self.results = []
-
-    def handle_starttag(self, tag, attrs):
-        attrs = dict(attrs)
-        if tag == "a" and attrs.get("class") == "result__a":
-            self.in_title = True
-            self.current_title = ""
-        elif tag == "a" and attrs.get("class") == "result__snippet":
-            self.in_snippet = True
-            self.current_snippet = ""
-
-    def handle_endtag(self, tag):
-        if tag == "a":
-            if self.in_snippet and self.current_title and self.current_snippet:
-                self.results.append({
-                    "title": self.current_title.strip(),
-                    "snippet": self.current_snippet.strip()
-                })
-            self.in_title = False
-            self.in_snippet = False
-
-    def handle_data(self, data):
-        if self.in_title:
-            self.current_title += data
-        elif self.in_snippet:
-            self.current_snippet += data
 
 def search_(query, max_results=10):
     with DDGS() as ddgs:
