@@ -1,4 +1,4 @@
-!(import! &self (library OmegaClaw-Core ./policy.py))
+!(import! &self "./profile/policy.py")
 
 (= (securityPolicyPath) (empty))
 
