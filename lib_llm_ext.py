@@ -1,9 +1,6 @@
 import os, time
 import openai
 from typing import Optional
-import logging
-
-logger = logging.getLogger(__name__)
 
 def _log_raw(provider: str, model: str, raw: str) -> None:
     ts = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
@@ -79,7 +76,7 @@ class AIProvider(AbstractAIProvider):
             _log_raw(self._name, self._model_name, raw)
             return self._clean_text(raw)
         except Exception as e:
-            logger.exception("[lib_llm_ext.AIProvider.chat] Exception while communicating with LLM")
+            print(f"[lib_llm_ext.AIProvider.chat] Exception while communicating with LLM: {e}")
             return ""
 
     def _clean_text(self, text: str) -> str:
