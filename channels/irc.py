@@ -4,6 +4,7 @@ import socket
 import threading
 import time
 import textwrap
+import auth
 
 _running = False
 _sock = None
@@ -13,7 +14,6 @@ _msg_lock = threading.Lock()
 _channel = None
 _connected = False
 _auth_lock = threading.Lock()
-_auth_secret = ""
 _authenticated_nick = None
 
 def _send(cmd):
@@ -38,15 +38,6 @@ def getLastMessage():
         return tmp
 
 
-def _set_auth_secret(secret=None):
-    global _auth_secret, _authenticated_nick
-    if secret is None:
-        secret = os.environ.get("OMEGACLAW_AUTH_SECRET", "")
-    with _auth_lock:
-        _auth_secret = (secret or "").strip()
-        _authenticated_nick = None
-
-
 def _normalize_nick(nick):
     return nick.strip().lower()
 
@@ -60,22 +51,25 @@ def _parse_auth_candidate(msg):
         return text[6:].strip()
     return text
 
+def _is_auth_command(msg):
+    lower = msg.strip().lower()
+    return lower.startswith("auth ") or lower.startswith("/auth ")
 
 def _is_allowed_message(nick, msg):
     global _authenticated_nick
-    candidate = _parse_auth_candidate(msg)
     norm_nick = _normalize_nick(nick)
     with _auth_lock:
-        if not _auth_secret:
+        if not auth.is_auth_enabled():
             return "allow"
-        if candidate == _auth_secret:
-            if _authenticated_nick is None:
-                _authenticated_nick = norm_nick
-                return "auth_bound"
+        if _authenticated_nick is not None:
+            return "allow" if norm_nick == _authenticated_nick else "ignore"
+        if not _is_auth_command(msg):
             return "ignore"
-        if _authenticated_nick is None:
-            return "ignore"
-        return "allow" if norm_nick == _authenticated_nick else "ignore"
+        candidate = _parse_auth_candidate(msg)
+        if auth.verify_token(candidate):
+            _authenticated_nick = norm_nick
+            return "auth_bound"
+        return "ignore"
 
 def _irc_loop(channel, server, port, nick):
     global _running, _sock, _connected
@@ -131,15 +125,15 @@ def _irc_loop(channel, server, port, nick):
                         _set_last(f"{nick}: {msg}")
                     elif state == "auth_bound":
                         _send(f"PRIVMSG {_channel} :Authentication successful for {nick}.")
-                except Exception:
-                    pass  # never let IRC parsing kill the thread
+                except Exception as e:
+                    print(f"[IRC]: exception caught {repr(e)}")
     _connected = False
     with _sock_lock:
         _sock = None
     sock.close()
     print("[IRC] Disconnected")
 
-def start_irc(channel, server="irc.libera.chat", port=6667, nick="omegaclaw", auth_secret=None):
+def start_irc(channel, server="irc.libera.chat", port=6667, nick="omegaclaw"):
     global _running, _channel, _connected
     nick = f"{nick}{random.randint(1000, 9999)}"
     if not channel.startswith("#"):
@@ -147,7 +141,6 @@ def start_irc(channel, server="irc.libera.chat", port=6667, nick="omegaclaw", au
     _running = True
     _connected = False
     _channel = channel
-    _set_auth_secret(auth_secret)
     t = threading.Thread(target=_irc_loop, args=(channel, server, port, nick), daemon=True)
     t.start()
     return t
