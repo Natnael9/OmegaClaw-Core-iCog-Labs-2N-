@@ -99,7 +99,7 @@ After start go to https://webchat.quakenet.org/ to communicate with the agent. J
 | `securityPolicyPath` | | Path to the security profile written using
 [OpenShell
 YAML](https://docs.nvidia.com/openshell/reference/policy-schema#filesystem-policy).
-See [./profile/policy.xml](./profile/policy.xml) as an example. |
+See [./profile/policy.yaml](./profile/policy.yaml) as an example. |
 
 ### Memory (`src/memory.metta`)
 
