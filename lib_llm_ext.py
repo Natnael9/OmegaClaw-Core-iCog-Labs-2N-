@@ -72,7 +72,7 @@ class AIProvider(AbstractAIProvider):
                 **kwargs
             )
 
-            raw = response.choices[0].message.content
+            raw = response.choices[0].message.content or ""
             _log_raw(self._name, self._model_name, raw)
             return self._clean_text(raw)
         except Exception as e:
@@ -83,6 +83,17 @@ class AIProvider(AbstractAIProvider):
         """Unescape special characters."""
         return text.replace("_quote_", '"').replace("_apostrophe_", "'")
 
+class OpenRouterProvider(AIProvider):
+    """OpenRouter provider with reasoning mode enabled (reasoning tokens excluded from the response)."""
+
+    def chat(self, content: str, max_tokens: int = 6000, reasoning: str = "medium", **kwargs) -> str:
+        return super().chat(content, max_tokens, reasoning, extra_body={
+            "reasoning": {
+                "enabled": True,
+                "max_tokens": 6000,
+                "exclude": True,
+            }
+        }, **kwargs)
 
 class AsiOneProvider(AIProvider):
     """Lazy AI provider with on-demand initialization."""
@@ -196,7 +207,7 @@ _register_provider(name="ASICloud", var_name="ASI_API_KEY", model_name="minimax/
 _register_provider(name="Anthropic", var_name="ANTHROPIC_API_KEY", model_name="claude-opus-4-6", base_url="https://api.anthropic.com/v1/")
 _register_provider(name="Ollama-local", var_name="OLLAMA_API_KEY", model_name="qwen3.5:9b", base_url="http://localhost:11434/v1")
 _register_provider_instance(AsiOneProvider(name="ASIOne", var_name="ASIONE_API_KEY", model_name="asi1-ultra", base_url="https://api.asi1.ai/v1"))
-_register_provider(name="OpenRouter", var_name="OPENROUTER_API_KEY", model_name="z-ai/glm-5.1", base_url="https://openrouter.ai/api/v1")
+_register_provider_instance(OpenRouterProvider(name="OpenRouter", var_name="OPENROUTER_API_KEY", model_name="z-ai/glm-5.1", base_url="https://openrouter.ai/api/v1"))
 _register_provider_instance(TestProvider())
 _register_provider_instance(OpenAIProvider(name="OpenAI", var_name="OPENAI_API_KEY", model_name="gpt-5.4", base_url="https://api.openai.com/v1"))
 
