@@ -121,7 +121,24 @@ jobs:
           OMEGACLAW_GIT_TOKEN: ${{ secrets.CICD_GITHUB_PAT }}
 
       - name: Build and push (release)
+        id: push
         if: success() && inputs.publish_docker
+        continue-on-error: true
+        uses: docker/build-push-action@v7
+        with:
+          platforms: ${{ inputs.platforms }}
+          push: ${{ inputs.publish_docker }}
+          tags: |
+            singularitynet/omegaclaw:${{ inputs.tag_name }}
+            ${{ inputs.move_latest && 'singularitynet/omegaclaw:latest' || '' }}
+          provenance: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=min
+          no-cache: ${{ inputs.no_build_cache }}
+
+      # Docker Hub occasionally returns a transient 400 on the large layer's blob PUT; retry the push once.
+      - name: Build and push (release, retry)
+        if: inputs.publish_docker && steps.push.outcome == 'failure'
         uses: docker/build-push-action@v7
         with:
           platforms: ${{ inputs.platforms }}
