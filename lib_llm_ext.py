@@ -39,6 +39,15 @@ class AIProvider(AbstractAIProvider):
 
     def _create_client(self) -> Optional[openai.OpenAI]:
         """Create OpenAI client from environment."""
+        proxy_url = os.environ.get("GATEWAY_URL")
+        if proxy_url:
+            prefix = self._name.lower()
+            base_url = f"{proxy_url.rstrip('/')}/{prefix}/"
+            print(f"[lib_llm_ext.AIProvider._create_client] Connecting via proxy: {base_url}")
+            return openai.OpenAI(
+                    api_key="proxy",
+                    base_url=base_url,
+                    )
         if self._var_name in os.environ:
             if self._var_name == "OLLAMA_API_KEY":
                 llm_server_local_url = os.environ.get("LLM_SERVER_LOCAL_URL")
@@ -54,7 +63,7 @@ class AIProvider(AbstractAIProvider):
     @property
     def is_available(self) -> bool:
         """Check if provider is configured (without initializing)."""
-        return bool(os.environ.get(self._var_name))
+        return bool(os.environ.get("GATEWAY_URL")) or bool(os.environ.get(self._var_name))
 
     def chat(self, content: str, max_tokens: int = 6000, reasoning: str = "medium", **kwargs) -> str:
         """Send chat request, initializing client if needed."""
@@ -72,7 +81,7 @@ class AIProvider(AbstractAIProvider):
                 **kwargs
             )
 
-            raw = response.choices[0].message.content
+            raw = response.choices[0].message.content or ""
             _log_raw(self._name, self._model_name, raw)
             return self._clean_text(raw)
         except Exception as e:
@@ -83,6 +92,17 @@ class AIProvider(AbstractAIProvider):
         """Unescape special characters."""
         return text.replace("_quote_", '"').replace("_apostrophe_", "'")
 
+class OpenRouterProvider(AIProvider):
+    """OpenRouter provider with reasoning mode enabled (reasoning tokens excluded from the response)."""
+
+    def chat(self, content: str, max_tokens: int = 6000, reasoning: str = "medium", **kwargs) -> str:
+        return super().chat(content, max_tokens, reasoning, extra_body={
+            "reasoning": {
+                "enabled": True,
+                "max_tokens": 6000,
+                "exclude": True,
+            }
+        }, **kwargs)
 
 class AsiOneProvider(AIProvider):
     """Lazy AI provider with on-demand initialization."""

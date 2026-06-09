@@ -29,7 +29,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # Build dependencies from source. Pin refs at build time for reproducibility.
-ARG PETTA_REPO=https://github.com/patham9/PeTTa.git
+ARG PETTA_REPO=https://github.com/trueagi-io/PeTTa.git
 ARG PETTA_REF=main
 ARG FAISS_REPO=https://github.com/facebookresearch/faiss.git
 ARG FAISS_REF=v1.8.0
@@ -52,17 +52,11 @@ RUN sh build.sh
 RUN mkdir -p /PeTTa/repos \
  && git clone --depth 1 --branch "${CHROMADB_REF}" "${CHROMADB_REPO}" /PeTTa/repos/petta_lib_chromadb
 
+COPY ./requirements.txt /tmp/requirements.txt
 RUN python3 -m pip install --no-cache-dir --break-system-packages \
     --index-url https://download.pytorch.org/whl/cpu \
     torch==2.5.1 \
- && python3 -m pip install --no-cache-dir --break-system-packages \
-    chromadb==1.5.9 \
-    janus-swi==1.5.2 \
-    openai==2.38.0 \
-    uagents==0.25.1 \
-    transformers==5.8.0 \
-    sentence-transformers==5.5.1 \
-    import-kb==0.1.7
+ && python3 -m pip install --no-cache-dir --break-system-packages -r /tmp/requirements.txt
 
 # Pre-download the sentence-transformers model so runtime does not need network access.
 RUN mkdir -p "${HF_HOME}" "${SENTENCE_TRANSFORMERS_HOME}" \
@@ -94,6 +88,8 @@ RUN apt-get update \
       libgflags-dev \
       nano \
       git \
+      nginx-light \
+      gettext-base \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /PeTTa
@@ -103,11 +99,19 @@ COPY --from=builder /PeTTa /PeTTa
 COPY --from=builder /opt/huggingface /opt/huggingface
 COPY --from=builder /opt/sentence_transformers /opt/sentence_transformers
 
+# setup nginx proxy
+RUN usermod -a -G tty www-data
+RUN mkdir /opt/nginx
+RUN chown www-data:www-data /opt/nginx
+RUN chmod 0700 /opt/nginx
+COPY --chown=www-data:www-data --chmod=0600 ./proxy/* /opt/nginx/
+
 ENV OMEGACLAW_DIR=/PeTTa/repos/OmegaClaw-Core
 ENV MEMORY_DIR=${OMEGACLAW_DIR}/memory
+# Start defaults for import-kb
 ENV CHROMA_DB_PATH=/PeTTa/chroma_db
 ENV IMPORT_KB_ON_START=1
-ENV IMPORT_KB_MODEL=text-embedding-3-large
+ENV EMBEDDING_PROVIDER=OpenAI
 
 # Bring in only local OmegaClaw source (filtered by .dockerignore).
 COPY . ${OMEGACLAW_DIR}
@@ -115,14 +119,10 @@ COPY . ${OMEGACLAW_DIR}
 RUN cp ${OMEGACLAW_DIR}/run.metta /PeTTa/run.metta \
  && mkdir -p ${MEMORY_DIR}/chroma_db \
  && ln -s ${MEMORY_DIR}/chroma_db ./chroma_db \
- && cp ${OMEGACLAW_DIR}/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh \
- && chmod +x /usr/local/bin/docker-entrypoint.sh \
  && chown -R 65534:65534 ${MEMORY_DIR} \
  && find ${MEMORY_DIR} -type f -exec chmod 0644 {} \; \
  && chmod 0444 ${MEMORY_DIR}/prompt.txt \
  && chown -R 65534:65534 /opt/huggingface /opt/sentence_transformers
 
-USER 65534:65534
-
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+ENTRYPOINT ["sh", "/PeTTa/repos/OmegaClaw-Core/entrypoint.sh"]
 CMD []
