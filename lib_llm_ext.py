@@ -44,7 +44,6 @@ class AIProvider(AbstractAIProvider):
             prefix = self._name.lower()
             base_url = f"{proxy_url.rstrip('/')}/{prefix}/"
             print(f"[lib_llm_ext.AIProvider._create_client] Connecting via proxy: {base_url}")
-            secret = os.environ.get("ASI_API_KEY")
             return openai.OpenAI(
                     api_key="proxy",
                     base_url=base_url,
