@@ -146,6 +146,8 @@ def balance_parentheses(s):
         # remove one outer (...) if present
         line = _strip_outer_parens(line)
         parts = line.split(maxsplit=1)
+        if not parts:
+            continue
         cmd = parts[0]
         rest = parts[1].strip() if len(parts) > 1 else ""
         if cmd in special_two_arg_cmds:
