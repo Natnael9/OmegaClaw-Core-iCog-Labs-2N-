@@ -5,3 +5,4 @@ openai==2.38.0
 uagents==0.25.1
 transformers==5.8.0
 sentence-transformers==5.5.1
+ddgs==9.14.4
