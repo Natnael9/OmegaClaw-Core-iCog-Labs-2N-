@@ -9,9 +9,12 @@ set -eu
 # entrypoint as well.
 export MM_UPSTREAM_URL=${MM_URL:-https://chat.singularitynet.io}
 SUBST_VARS=$(grep -o '\${[A-Z_0-9]*}' /opt/nginx/nginx.conf.template | sort -u | tr '\n' ' ')
+NGINX_CONFIG=/opt/nginx/nginx.conf
+touch "${NGINX_CONFIG}"
+chmod 0600 "${NGINX_CONFIG}"
 envsubst "$SUBST_VARS" \
     < /opt/nginx/nginx.conf.template \
-    > /opt/nginx/nginx.conf
+    > "${NGINX_CONFIG}"
 
-nginx -c /opt/nginx/nginx.conf
+nginx -c "${NGINX_CONFIG}"
 
