@@ -71,7 +71,7 @@ jobs:
           push: false
           tags: singularitynet/omegaclaw:${{ env.AUTOTESTS_OMEGACLAW_TAG }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min
           no-cache: ${{ inputs.no_build_cache }}
 
       - name: Autotests - Checkout
@@ -84,6 +84,21 @@ jobs:
           chmod +x ./scripts/omegaclaw
           ./scripts/omegaclaw start -p Test -t test -d singularitynet/omegaclaw:${{ env.AUTOTESTS_OMEGACLAW_TAG }}
           pip install pytest
+          echo "Waiting for agent to become ready..."
+          ready=
+          for i in $(seq 1 90); do
+            if docker logs omegaclaw 2>&1 | grep -qE "CHARS_SENT: [0-9]+"; then
+              echo "Agent ready after ${i}s"
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ -z "$ready" ]; then
+            echo "::error::Agent did not become ready in 90s"
+            docker logs omegaclaw 2>&1 | tail -100
+            exit 1
+          fi
         env:
           TEST_SERVER_IP: 'host.docker.internal'
 
@@ -106,7 +121,9 @@ jobs:
           OMEGACLAW_GIT_TOKEN: ${{ secrets.CICD_GITHUB_PAT }}
 
       - name: Build and push (release)
+        id: push
         if: success() && inputs.publish_docker
+        continue-on-error: true
         uses: docker/build-push-action@v7
         with:
           platforms: ${{ inputs.platforms }}
@@ -114,6 +131,22 @@ jobs:
           tags: |
             singularitynet/omegaclaw:${{ inputs.tag_name }}
             ${{ inputs.move_latest && 'singularitynet/omegaclaw:latest' || '' }}
+          provenance: false
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min
+          no-cache: ${{ inputs.no_build_cache }}
+
+      # Docker Hub occasionally returns a transient 400 on the large layer's blob PUT; retry the push once.
+      - name: Build and push (release, retry)
+        if: inputs.publish_docker && steps.push.outcome == 'failure'
+        uses: docker/build-push-action@v7
+        with:
+          platforms: ${{ inputs.platforms }}
+          push: ${{ inputs.publish_docker }}
+          tags: |
+            singularitynet/omegaclaw:${{ inputs.tag_name }}
+            ${{ inputs.move_latest && 'singularitynet/omegaclaw:latest' || '' }}
+          provenance: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=min
           no-cache: ${{ inputs.no_build_cache }}
