@@ -37,14 +37,14 @@ IRC adapter with simple one-time-secret authentication.
 
 Mattermost adapter using a bot token.
 
-- `start_mattermost(url, channel_id, bot_token)` — connect to a Mattermost instance.
-- Requires `MM_BOT_TOKEN` configured (empty by default — set via `configure` or command line).
+- `start_mattermost(url, channel_id)` — connect to a Mattermost instance.
+- Requires `MM_BOT_TOKEN` environment variable.
 
 ## `channels/telegram.py`
 
 Telegram adapter using Bot API long polling.
 
-- `start_telegram(bot_token, chat_id, poll_timeout)` — starts a poll loop.
+- `start_telegram(chat_id, poll_timeout)` — starts a poll loop.
 - `TG_CHAT_ID` is optional; if empty, the adapter can auto-bind to the first valid inbound chat.
 - Outbound messages are chunked to Telegram-safe lengths.
 
@@ -52,8 +52,8 @@ Telegram adapter using Bot API long polling.
 
 Slack adapter using Slack Web API polling.
 
-- `start_slack(bot_token, channel_id, poll_interval)` — starts a poll loop.
-- Requires `SL_BOT_TOKEN`; `SL_CHANNEL_ID` is optional.
+- `start_slack(channel_id, poll_interval)` — starts a poll loop.
+- `SL_CHANNEL_ID` is optional.
 - The bot user must already be invited to the target channel.
 - If `SL_CHANNEL_ID` is empty, the adapter auto-binds to the first channel where auth succeeds.
 - Adapter respects Slack `Retry-After` backoff on HTTP 429 and enforces a minimum 60s poll interval.
