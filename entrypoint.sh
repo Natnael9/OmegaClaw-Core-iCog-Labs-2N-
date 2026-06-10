@@ -10,8 +10,14 @@ su www-data -s /bin/sh -c "sh /opt/nginx/nginx.sh"
 export CHROMA_DB_PATH="${CHROMA_DB_PATH:-/PeTTa/chroma_db}"
 IMPORT_KB_ON_START="${IMPORT_KB_ON_START:-1}"
 IMPORT_KB_FORCE="${IMPORT_KB_FORCE:-0}"
-EMBEDDING_PROVIDER="${embeddingprovider:-OpenAI}"
+EMBEDDING_PROVIDER="${embeddingprovider:-Local}"
 GATEWAY_URL="http://localhost:8080"
+
+for arg in "$@"; do
+  if [[ "$arg" == embeddingprovider=* ]]; then
+    export EMBEDDING_PROVIDER="${arg#*=}"
+  fi
+done
 
 mkdir -p "${CHROMA_DB_PATH}"
 
@@ -73,7 +79,7 @@ SAFE_VARS="HOME USER PATH HOSTNAME TERM LANG LC_ALL \
   GATEWAY_URL PYTHONDONTWRITEBYTECODE PYTHONUNBUFFERED \
   HF_HOME SENTENCE_TRANSFORMERS_HOME HF_HUB_OFFLINE TRANSFORMERS_OFFLINE \
   OMEGACLAW_DIR MEMORY_DIR LLM_SERVER_LOCAL_URL TEST_SERVER_IP \
-  CHROMA_DB_PATH OPENAI_API_KEY EMBEDDING_PROVIDER"
+  CHROMA_DB_PATH OPENAI_API_KEY embeddingprovider"
 
 env_args=""
 for var in $SAFE_VARS; do

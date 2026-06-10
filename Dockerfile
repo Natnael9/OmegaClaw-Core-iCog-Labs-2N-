@@ -105,6 +105,7 @@ RUN mkdir /opt/nginx
 RUN chown www-data:www-data /opt/nginx
 RUN chmod 0700 /opt/nginx
 COPY --chown=www-data:www-data --chmod=0600 ./proxy/* /opt/nginx/
+RUN chmod 0600 /opt/nginx/*
 
 ENV OMEGACLAW_DIR=/PeTTa/repos/OmegaClaw-Core
 ENV MEMORY_DIR=${OMEGACLAW_DIR}/memory
@@ -119,10 +120,11 @@ COPY . ${OMEGACLAW_DIR}
 RUN cp ${OMEGACLAW_DIR}/run.metta /PeTTa/run.metta \
  && mkdir -p ${MEMORY_DIR}/chroma_db \
  && ln -s ${MEMORY_DIR}/chroma_db ./chroma_db \
+ && chmod +x ${OMEGACLAW_DIR}/entrypoint.sh \
  && chown -R 65534:65534 ${MEMORY_DIR} \
  && find ${MEMORY_DIR} -type f -exec chmod 0644 {} \; \
  && chmod 0444 ${MEMORY_DIR}/prompt.txt \
  && chown -R 65534:65534 /opt/huggingface /opt/sentence_transformers
 
-ENTRYPOINT ["sh", "/PeTTa/repos/OmegaClaw-Core/entrypoint.sh"]
+ENTRYPOINT ["/PeTTa/repos/OmegaClaw-Core/entrypoint.sh"]
 CMD []
