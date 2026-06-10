@@ -101,6 +101,7 @@ jobs:
           fi
         env:
           TEST_SERVER_IP: 'host.docker.internal'
+          IMPORT_KB_ON_START: '0'
 
       - name: Autotests - Phase 1 (Blocking Checks)
         if: inputs.run_tests
