@@ -82,6 +82,15 @@ OMEGACLAW_AUTH_SECRET=<channel-secret> sh run.sh run.metta IRC_channel="<irc-cha
 ```
 After start go to https://webchat.quakenet.org/ to communicate with the agent. Join `<irc-channel>` and after agent is joined send `auth <channel-secret>` message to authenticate yourself as an agent owner. Please replace `<irc-channel>` and `<channel-secret>` by your own values.
 
+### Import-knowledge
+
+If your running OmegaClaw without the docker and would like to load it with a preset Knowledge you can do so by running the following:
+
+1. Set `embeddingprovider` in your env, Note that it can be OpenAI or Local; OpenAI embeddings will require `OpenAI_API_KEY` in your env as well
+2. Run `sh ./import_knowledge.sh`
+
+After the script is done your OmegaClaw bot will have the preset knowledge in its LTM.
+
 ## Reference — Configuration Options
 
 ### General
