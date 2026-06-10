@@ -20,7 +20,7 @@ mkdir -p "${CHROMA_DB_PATH}"
 
 # Optional knowledge-base import
 if [[ "${IMPORT_KB_ON_START}" == "1" ]]; then
-  "${OMEGACLAW_DIR}/import-knowledge.sh"
+  "${OMEGACLAW_DIR}/import_knowledge.sh"
 fi
 
 # Scrub environment: only allowlisted vars survive.
