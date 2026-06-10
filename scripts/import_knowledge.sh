@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 set -euo pipefail
 
 export CHROMA_DB_PATH="${CHROMA_DB_PATH:-/PeTTa/chroma_db}"
