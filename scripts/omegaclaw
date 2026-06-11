@@ -238,7 +238,7 @@ def _choose_provider():
 def _choose_import_kb():
     while True:
         c = input(
-            "Import knowledge base on startup? [Y/n]: "
+            "Import knowledge base on startup? Will improve results but takes about 30 minutes. [Y/n]: "
         ).strip().lower()
 
         if c in ("", "y", "yes"):

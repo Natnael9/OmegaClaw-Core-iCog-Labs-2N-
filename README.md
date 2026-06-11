@@ -91,8 +91,8 @@ If you are running OmegaClaw without Docker and would like to load it with prese
 2. Run:
 ```
   sh ./import_knowledge.sh
-  After the script finishes, your OmegaClaw bot will have the preset knowledge stored in its long-term memory (LTM).
 ```
+After the script finishes, your OmegaClaw bot will have the preset knowledge stored in its long-term memory (LTM).
 
 If you want to skip preloading the knowledge then run `export IMPORT_KB_ON_START=0`
 
