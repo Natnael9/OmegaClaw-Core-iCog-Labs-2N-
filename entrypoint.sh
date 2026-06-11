@@ -6,7 +6,7 @@ cd /PeTTa
 su www-data -s /bin/sh -c "sh /opt/nginx/nginx.sh"
 
 GATEWAY_URL="http://localhost:8080"
-EMBEDDING_PROVIDER="${embeddingprovider:-Local}"
+EMBEDDING_PROVIDER="${EMBEDDING_PROVIDER:-Local}"
 
 for arg in "$@"; do
   if [[ "$arg" == embeddingprovider=* ]]; then
