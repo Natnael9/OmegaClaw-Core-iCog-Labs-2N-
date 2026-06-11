@@ -4,7 +4,7 @@ import tempfile
 import multiprocessing
 import subprocess
 import traceback
-from policy import FileSystemPolicy
+from policy import FileSystemPolicy, LandLockCompatibility
 
 _TEST_POLICY_YAML = """
 version: 1
@@ -199,3 +199,22 @@ def process_test_execute_shell(q, temp_dir):
     assert path.exists()
     path.rmdir()
     q.put((True, None))
+
+def test_load_landlock_compatibility_flag():
+    policy = FileSystemPolicy()
+    policy.load_str( """
+        version: 1
+        landlock:
+          compatibility: best_effort
+        """)
+    assert policy._compatibility == LandLockCompatibility.BEST_EFFORT
+
+    policy = FileSystemPolicy()
+    policy.load_str( """
+        version: 1
+        landlock:
+          compatibility: hard_requirement
+        """)
+    assert policy._compatibility == LandLockCompatibility.HARD_REQUIREMENT
+
+

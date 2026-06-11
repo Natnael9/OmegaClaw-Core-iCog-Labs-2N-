@@ -34,7 +34,7 @@ class FileSystemPolicy:
                               AccessFs.TRUNCATE)
 
     def __init__(self):
-        self._strict = LandLockCompatibility.BEST_EFFORT
+        self._compatibility = LandLockCompatibility.BEST_EFFORT
         self._read_only = []
         self._read_write = []
 
@@ -53,12 +53,12 @@ class FileSystemPolicy:
         version = policy.get('version')
         assert version == 1
 
-        self._strict = LandLockCompatibility.BEST_EFFORT
+        self._compatibility = LandLockCompatibility.BEST_EFFORT
         ll = policy.get('landlock')
         if ll:
             comp = ll.get('compatibility')
             if comp:
-                self._strict = LandLockCompatibility[comp.upper()]
+                self._compatibility = LandLockCompatibility[comp.upper()]
 
         fs = policy.get('filesystem_policy')
 
@@ -82,7 +82,8 @@ class FileSystemPolicy:
         rwd = list(filter(lambda p: p.is_dir(), self._read_write))
         rwf = list(filter(lambda p: not p.is_dir(), self._read_write))
 
-        Landlock(strict=self._strict) \
+        strict = self._compatibility == LandLockCompatibility.HARD_REQUIREMENT
+        Landlock(strict=strict) \
             .allow_all_scope() \
             .allow_all_network() \
             .add_path_rule('/', access=AccessFs.EXECUTE) \
