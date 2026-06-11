@@ -5,22 +5,11 @@ cd /PeTTa
 
 su www-data -s /bin/sh -c "sh /opt/nginx/nginx.sh"
 
-export CHROMA_DB_PATH="${CHROMA_DB_PATH:-/PeTTa/chroma_db}"
-export IMPORT_KB_ON_START="${IMPORT_KB_ON_START:-1}"
-export EMBEDDING_PROVIDER="${EMBEDDING_PROVIDER:-${embeddingprovider:-Local}}"
-export GATEWAY_URL="http://localhost:8080"
-
-for arg in "$@"; do
-  if [[ "$arg" == embeddingprovider=* ]]; then
-    export EMBEDDING_PROVIDER="${arg#*=}"
-  fi
-done
-
-mkdir -p "${CHROMA_DB_PATH}"
+GATEWAY_URL="http://localhost:8080"
 
 # Optional knowledge-base import
 if [[ "${IMPORT_KB_ON_START}" == "1" ]]; then
-  "${OMEGACLAW_DIR}/scripts/import_knowledge.sh"
+  su nobody -s /bin/sh -c "${OMEGACLAW_DIR}/scripts/import_knowledge.sh"
 fi
 
 # Scrub environment: only allowlisted vars survive.

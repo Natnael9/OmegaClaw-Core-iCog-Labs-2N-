@@ -101,7 +101,7 @@ jobs:
           fi
         env:
           TEST_SERVER_IP: 'host.docker.internal'
-          IMPORT_KB_ON_START: '0'
+          IMPORT_KB_ON_START: '0' # TODO: this is turned off because Python dependencies are not installed to the workflow environment
 
       - name: Autotests - Phase 1 (Blocking Checks)
         if: inputs.run_tests

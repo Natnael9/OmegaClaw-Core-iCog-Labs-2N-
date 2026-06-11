@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-export CHROMA_DB_PATH="${CHROMA_DB_PATH:-/PeTTa/chroma_db}"
+CHROMA_DB_PATH="${CHROMA_DB_PATH:-/PeTTa/chroma_db}"
 IMPORT_KB_FORCE="${IMPORT_KB_FORCE:-0}"
-EMBEDDING_PROVIDER="${EMBEDDING_PROVIDER:-${embeddingprovider:-Local}}"
+EMBEDDING_PROVIDER="${embeddingprovider:-Local}"
+
+for arg in "$@"; do
+  if [[ "$arg" == embeddingprovider=* ]]; then
+    export EMBEDDING_PROVIDER="${arg#*=}"
+  fi
+done
 
 normalize_provider() {
   echo "$1" | tr '[:upper:]' '[:lower:]'
@@ -41,7 +47,7 @@ case "${PROVIDER}" in
     else
       echo "[import-kb] Running import-knowledge with local embeddings."
       echo "[import-kb] CHROMA_DB_PATH=${CHROMA_DB_PATH}"
-      import-knowledge --local --model ${EMBEDDING_MODEL:-intfloat/e5-large-v2}
+      import-knowledge --local
       date -Iseconds > "${SENTINEL}"
       echo "[import-kb] Import complete."
     fi
@@ -53,5 +59,3 @@ case "${PROVIDER}" in
     exit 1
     ;;
 esac
-
-chown -R nobody "${CHROMA_DB_PATH}" 2>/dev/null || true
