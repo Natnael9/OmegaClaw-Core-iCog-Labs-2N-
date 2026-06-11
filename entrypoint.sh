@@ -6,6 +6,13 @@ cd /PeTTa
 su www-data -s /bin/sh -c "sh /opt/nginx/nginx.sh"
 
 GATEWAY_URL="http://localhost:8080"
+EMBEDDING_PROVIDER="${embeddingprovider:-Local}"
+
+for arg in "$@"; do
+  if [[ "$arg" == embeddingprovider=* ]]; then
+    export EMBEDDING_PROVIDER="${arg#*=}"
+  fi
+done
 
 # Optional knowledge-base import
 if [[ "${IMPORT_KB_ON_START}" == "1" ]]; then

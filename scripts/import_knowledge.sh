@@ -3,13 +3,6 @@ set -euo pipefail
 
 CHROMA_DB_PATH="${CHROMA_DB_PATH:-/PeTTa/chroma_db}"
 IMPORT_KB_FORCE="${IMPORT_KB_FORCE:-0}"
-EMBEDDING_PROVIDER="${embeddingprovider:-Local}"
-
-for arg in "$@"; do
-  if [[ "$arg" == embeddingprovider=* ]]; then
-    export EMBEDDING_PROVIDER="${arg#*=}"
-  fi
-done
 
 normalize_provider() {
   echo "$1" | tr '[:upper:]' '[:lower:]'
@@ -54,8 +47,8 @@ case "${PROVIDER}" in
     ;;
 
   *)
-    echo "ERROR: Unsupported EMBEDDING_PROVIDER='${EMBEDDING_PROVIDER}'." >&2
-    echo "Use EMBEDDING_PROVIDER=OpenAI or EMBEDDING_PROVIDER=Local." >&2
+    echo "ERROR: Unsupported embeddingprovider='${EMBEDDING_PROVIDER}'." >&2
+    echo "Use embeddingprovider=OpenAI or embeddingprovider=Local." >&2
     exit 1
     ;;
 esac
