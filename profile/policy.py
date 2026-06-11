@@ -13,7 +13,7 @@ def apply_security_policy(path):
         else:
             print("[policy.apply_security_policy]: securityPolicyPath is not set")
     except Exception as e:
-        print("[policy.apply_security_policy]: Unexpected exception: {repr(e)}")
+        print(f"[policy.apply_security_policy]: Unexpected exception: {e}")
         raise
 
 class LandLockCompatibility(enum.Enum):
