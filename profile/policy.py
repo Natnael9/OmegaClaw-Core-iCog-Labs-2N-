@@ -17,8 +17,8 @@ def apply_security_policy(path):
         raise
 
 class LandLockCompatibility(enum.Enum):
-    BEST_EFFORT = 0,
-    HARD_REQUIREMENT = 1,
+    BEST_EFFORT = 0
+    HARD_REQUIREMENT = 1
 
 class FileSystemPolicy:
 
