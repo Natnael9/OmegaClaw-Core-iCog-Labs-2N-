@@ -79,17 +79,17 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-      ca-certificates \
-      python3 \
-      libopenblas-dev \
-      libblas-dev \
-      liblapack-dev \
-      gfortran \
-      libgflags-dev \
-      nano \
-      git \
-      nginx-light \
-      gettext-base \
+    ca-certificates \
+    python3 \
+    libopenblas-dev \
+    libblas-dev \
+    liblapack-dev \
+    gfortran \
+    libgflags-dev \
+    nano \
+    git \
+    nginx-light \
+    gettext-base \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /PeTTa
