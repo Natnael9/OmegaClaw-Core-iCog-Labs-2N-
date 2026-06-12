@@ -86,7 +86,7 @@ After start go to https://webchat.quakenet.org/ to communicate with the agent. J
 
 If you are running OmegaClaw without Docker and would like to load it with preset knowledge, follow these steps:
 
-1. Set embeddingprovider in your environment. It can be set to either OpenAI or Local. OpenAI embeddings also require OPENAI_API_KEY to be set in your environment.
+1. Set EMBEDDING_PROVIDER in your environment. It can be set to either OpenAI or Local. OpenAI embeddings also require OPENAI_API_KEY to be set in your environment.
 
 2. Run:
 ```
