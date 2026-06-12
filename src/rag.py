@@ -141,8 +141,15 @@ def _chunk_markdown(text, filename):
 
 def openai_embed_batch(texts):
     """Embed a list of texts via OpenAI. Returns list of float vectors."""
-    client = openai.OpenAI()
-    resp = client.embeddings.create(model=EMBEDDING_MODEL, input=texts)
+    proxy_url = os.environ.get("GATEWAY_URL")
+    if proxy_url:
+        client = openai.OpenAI(base_url=f"{proxy_url.rstrip('/')}/openai/", api_key="unused")
+    else:
+        raise RuntimeError("OpenAI GATEWAY_URL not found! Cannot create embeddings")
+    try:
+        resp = client.embeddings.create(model=EMBEDDING_MODEL, input=texts)
+    except Exception as e:
+        raise RuntimeError(f"Embedding request failed: {e}") from e
     return [item.embedding for item in resp.data]
 
 def local_embed_batch(texts):
@@ -285,48 +292,3 @@ def init_knowledge(embedding_selection):
     except Exception as e:
         traceback.print_exc()
         return f"Knowledge init failed: {e}"
-
-
-def query_knowledge(query_str, k=TOP_K):
-    """Retrieve top-k relevant knowledge chunks for a query string."""
-    global _last_query, _last_result
-
-    if not query_str or query_str in ("", "(@ none)"):
-        return ""
-
-    if query_str == _last_query and _last_result is not None:
-        return _last_result
-
-    try:
-        collection = _get_collection()
-        if collection.count() == 0:
-            return ""
-
-        decoded = _decode_metta(query_str)
-        query_vec = _embed_batch([decoded])[0]
-
-        results = collection.query(
-            query_embeddings=[query_vec],
-            n_results=k,
-            where={"type": "chunk"},
-            include=["documents", "metadatas"],
-        )
-
-        docs = results.get("documents", [[]])[0]
-        metas = results.get("metadatas", [[]])[0]
-
-        parts = []
-        for doc, meta in zip(docs, metas):
-            bc = meta.get("breadcrumb", "")
-            text = doc[:2000] if len(doc) > 2000 else doc
-            parts.append(f"[{bc}] {text}")
-
-        result = "\n---\n".join(parts)
-
-        _last_query = query_str
-        _last_result = result
-        return result
-
-    except Exception as e:
-        logger.warning(f"Knowledge query failed: {e}")
-        return ""
