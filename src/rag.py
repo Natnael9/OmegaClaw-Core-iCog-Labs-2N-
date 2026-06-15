@@ -145,7 +145,7 @@ def openai_embed_batch(texts):
     if proxy_url:
         client = openai.OpenAI(base_url=f"{proxy_url.rstrip('/')}/openai/", api_key="unused")
     else:
-        raise RuntimeError("OpenAI GATEWAY_URL not found! Cannot create embeddings")
+        client = openai.OpenAI()
     try:
         resp = client.embeddings.create(model=EMBEDDING_MODEL, input=texts)
     except Exception as e:
