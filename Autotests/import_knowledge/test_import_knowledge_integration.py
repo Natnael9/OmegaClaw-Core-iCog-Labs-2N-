@@ -51,11 +51,10 @@ def _start(import_kb_on_start):
     subprocess.run(["docker", "rm", "-f", NAME], capture_output=True)
     env = dict(os.environ)
     env["IMPORT_KB_ON_START"] = import_kb_on_start
-    env.setdefault("ASI_API_KEY", "test-dummy-key")
     env.setdefault("TEST_SERVER_IP", "127.0.0.1")
     r = subprocess.run(
         ["bash", str(REPO / "scripts" / "omegaclaw"),
-         "start", "-d", IMAGE, "-t", "test", "-p", "ASICloud"],
+         "start", "-d", IMAGE, "-t", "test", "-p", "Test"],
         env=env, cwd=str(REPO), capture_output=True, text=True,
     )
     assert r.returncode == 0, r.stdout + r.stderr
