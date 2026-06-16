@@ -90,6 +90,8 @@ RUN apt-get update \
       git \
       nginx-light \
       gettext-base \
+      poppler-utils \
+      curl \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /PeTTa
