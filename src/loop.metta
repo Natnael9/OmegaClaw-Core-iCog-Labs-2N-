@@ -47,6 +47,7 @@
    (omegaclaw 1))
 (= (omegaclaw $k)
    (progn (if (== $k 1) (progn (initLoop)
+                               (applySecurityPolicy)
                                (initMemory)
                                (initKnowledge)
                                (initChannels))
