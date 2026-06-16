@@ -82,6 +82,20 @@ OMEGACLAW_AUTH_SECRET=<channel-secret> sh run.sh run.metta IRC_channel="<irc-cha
 ```
 After start go to https://webchat.quakenet.org/ to communicate with the agent. Join `<irc-channel>` and after agent is joined send `auth <channel-secret>` message to authenticate yourself as an agent owner. Please replace `<irc-channel>` and `<channel-secret>` by your own values.
 
+### Import Knowledge
+
+If you are running OmegaClaw without Docker and would like to load it with preset knowledge, follow these steps:
+
+1. Set EMBEDDING_PROVIDER in your environment. It can be set to either OpenAI or Local. OpenAI embeddings also require OPENAI_API_KEY to be set in your environment.
+
+2. Run:
+```
+  sh ./import_knowledge.sh
+```
+After the script finishes, your OmegaClaw bot will have the preset knowledge stored in its long-term memory (LTM).
+
+If you want to skip preloading the knowledge then run `export IMPORT_KB_ON_START=0`
+
 ## Reference — Configuration Options
 
 ### General
@@ -96,6 +110,11 @@ After start go to https://webchat.quakenet.org/ to communicate with the agent. J
 | `provider` | `Anthropic` | LLM provider, see the table of the providers above |
 | `maxOutputToken` | 6000 | Output cap passed to the provider |
 | `reasoningMode` | `medium` | Reasoning-effort hint passed to the provider (OpenAI only) |
+| `securityPolicyPath` | ./repos/OmegaClaw-Core/profile/policy.yaml | Path to the security profile written using
+[OpenShell
+YAML](https://docs.nvidia.com/openshell/reference/policy-schema#filesystem-policy).
+See [./profile/policy.yaml](./profile/policy.yaml) as an example. Empty value
+disables restrictions. |
 
 ### Memory (`src/memory.metta`)
 
@@ -116,15 +135,18 @@ After start go to https://webchat.quakenet.org/ to communicate with the agent. J
 | `IRC_server` | `irc.quakenet.org` | IRC server hostname |
 | `IRC_port` | 6667 | IRC port |
 | `IRC_user` | `omegaclaw` | IRC nickname |
-| `TG_BOT_TOKEN` |  | Telegram bot token. |
 | `TG_CHAT_ID` |  | Optional Telegram chat ID. If empty, OmegaClaw auto-binds after first valid inbound auth/message. |
 | `TG_POLL_TIMEOUT` | 20 | Telegram polling timeout in seconds. |
-| `SL_BOT_TOKEN` |  | Slack bot token (`xoxb-...`). |
 | `SL_CHANNEL_ID` |  | Optional Slack channel ID (for example `C0123456789`). If empty, OmegaClaw auto-binds on first successful auth message. |
 | `SL_POLL_INTERVAL` | 60 | Slack polling interval in seconds (minimum effective value is 60). |
 | `MM_URL` | `https://chat.singularitynet.io` | Mattermost base URL. |
 | `MM_CHANNEL_ID` | `8fjrmabjx7gupy7e5kjznpt5qh` | Mattermost channel ID. |
-| `MM_BOT_TOKEN` |  | Mattermost bot token. |
+
+| Environment variable | Meaning |
+|---|---|
+| `TG_BOT_TOKEN` | Telegram bot token. |
+| `MM_BOT_TOKEN` | Mattermost bot token. |
+| `SL_BOT_TOKEN` | Slack bot token (`xoxb-...`). |
 
 ---
 

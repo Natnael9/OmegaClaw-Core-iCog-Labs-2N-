@@ -3,6 +3,7 @@ mock/test_convert_format_mock.py
 mock/test_create_empty_file_mock.py
 mock/test_create_file_mock.py
 mock/test_create_script_mock.py
+mock/test_credentials_scrubbed_mock.py
 mock/test_edit_add_timestamp_mock.py
 mock/test_edit_append_line_mock.py
 mock/test_edit_delete_line_mock.py
@@ -28,3 +29,4 @@ mock/test_technical_analysis_mock.py
 mock/test_transition_episodes_after_eviction_mock.py
 mock/test_transition_metta_to_remember_mock.py
 mock/test_transition_pin_to_remember_mock.py
+test_websearch_smoke.py

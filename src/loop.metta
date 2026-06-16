@@ -22,6 +22,12 @@
           (change-state! &lastresults "")
           (change-state! &loops (maxNewInputLoops))))
 
+(= (initKnowledge)
+   (progn (println! "Initializing knowledge base")
+          (if (== (embeddingprovider) OpenAI)
+              (println! (py-call (rag.init_knowledge "OpenAI")))
+              (println! (py-call (rag.init_knowledge "Local"))))))
+
 (= (getContext)
    (string-safe (py-str ("PROMPT: " (getPrompt) " SKILLS: " (getSkills)
                          " OUTPUT_FORMAT: Up to 5 lines, do not wrap quotes around args, do not use variables:" (newline)
@@ -41,7 +47,9 @@
    (omegaclaw 1))
 (= (omegaclaw $k)
    (progn (if (== $k 1) (progn (initLoop)
+                               (applySecurityPolicy)
                                (initMemory)
+                               (initKnowledge)
                                (initChannels))
                         (change-state! &loops (- (get-state &loops) 1)))
           (let $prompt (getContext)
