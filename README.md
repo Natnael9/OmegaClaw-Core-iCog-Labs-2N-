@@ -61,6 +61,16 @@ Install Python dependencies:
 ```
 python3 -m pip install -r ./repos/OmegaClaw-Core/requirements.txt
 ```
+---
+
+## Run OmegaClaw in Docker
+
+Ensure that you have [Docker installed](https://docs.docker.com/engine/install/)
+
+Run OmegaClaw using next command:
+```
+curl -fsSL https://raw.githubusercontent.com/asi-alliance/OmegaClaw-Core/refs/heads/main/scripts/omegaclaw | bash -s -- singularitynet/omegaclaw:latest
+```
 
 ---
 
