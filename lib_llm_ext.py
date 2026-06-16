@@ -251,4 +251,3 @@ def useLocalEmbedding(atom):
     ).tolist()
 
 
-

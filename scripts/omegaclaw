@@ -235,6 +235,24 @@ def _choose_provider():
         return provider, embeddingprovider, api_token_var, llm_server_local_url
 
 
+def _choose_import_kb():
+    while True:
+        c = input(
+            "Import knowledge base on startup? Will improve results but takes about 30 minutes. [Y/n]: "
+        ).strip().lower()
+
+        if c in ("", "y", "yes"):
+            return "1"
+
+        if c in ("n", "no"):
+            return "0"
+
+        if c == "q":
+            sys.exit(1)
+
+        print("Please enter y or n.")
+
+
 def _prompt_llm_token():
     while True:
         token = getpass.getpass("Please paste your LLM token and press ENTER or 'q' to exit: ").strip()
@@ -261,6 +279,7 @@ def config_run_omegaclaw(config_output_path):
 
     channel_config = _choose_channel()
     provider, embeddingprovider, api_token_var, llm_server_local_url = _choose_provider()
+    import_kb_on_start = _choose_import_kb()
     token = _prompt_llm_token()
 
     with open(config_output_path, "w", encoding="utf-8") as f:
@@ -270,6 +289,7 @@ def config_run_omegaclaw(config_output_path):
         _write_kv(f, "provider", provider)
         _write_kv(f, "embeddingprovider", embeddingprovider)
         _write_kv(f, "llm_server_local_url", llm_server_local_url)
+        _write_kv(f, "IMPORT_KB_ON_START", import_kb_on_start)
         for key, value in channel_config.items():
             _write_kv(f, key, value)
 
@@ -496,6 +516,7 @@ start() {
             -e "SL_BOT_TOKEN=${SL_BOT_TOKEN:-}"
             -e OMEGACLAW_AUTH_SECRET="$OMEGACLAW_AUTH_SECRET"
             -e LLM_SERVER_LOCAL_URL="$llm_server_local_url"
+            -e IMPORT_KB_ON_START="${IMPORT_KB_ON_START:-1}"
             "$image"
             "commchannel=${commchannel}"
             "provider=${provider}"
