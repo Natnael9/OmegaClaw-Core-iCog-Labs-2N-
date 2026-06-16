@@ -82,6 +82,20 @@ OMEGACLAW_AUTH_SECRET=<channel-secret> sh run.sh run.metta IRC_channel="<irc-cha
 ```
 After start go to https://webchat.quakenet.org/ to communicate with the agent. Join `<irc-channel>` and after agent is joined send `auth <channel-secret>` message to authenticate yourself as an agent owner. Please replace `<irc-channel>` and `<channel-secret>` by your own values.
 
+### Import Knowledge
+
+If you are running OmegaClaw without Docker and would like to load it with preset knowledge, follow these steps:
+
+1. Set EMBEDDING_PROVIDER in your environment. It can be set to either OpenAI or Local. OpenAI embeddings also require OPENAI_API_KEY to be set in your environment.
+
+2. Run:
+```
+  sh ./import_knowledge.sh
+```
+After the script finishes, your OmegaClaw bot will have the preset knowledge stored in its long-term memory (LTM).
+
+If you want to skip preloading the knowledge then run `export IMPORT_KB_ON_START=0`
+
 ## Reference — Configuration Options
 
 ### General
@@ -96,6 +110,11 @@ After start go to https://webchat.quakenet.org/ to communicate with the agent. J
 | `provider` | `Anthropic` | LLM provider, see the table of the providers above |
 | `maxOutputToken` | 6000 | Output cap passed to the provider |
 | `reasoningMode` | `medium` | Reasoning-effort hint passed to the provider (OpenAI only) |
+| `securityPolicyPath` | ./repos/OmegaClaw-Core/profile/policy.yaml | Path to the security profile written using
+[OpenShell
+YAML](https://docs.nvidia.com/openshell/reference/policy-schema#filesystem-policy).
+See [./profile/policy.yaml](./profile/policy.yaml) as an example. Empty value
+disables restrictions. |
 
 ### Memory (`src/memory.metta`)
 
