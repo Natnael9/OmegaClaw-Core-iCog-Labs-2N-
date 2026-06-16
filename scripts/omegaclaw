@@ -521,6 +521,7 @@ start() {
             "commchannel=${commchannel}"
             "provider=${provider}"
             "embeddingprovider=${embeddingprovider}"
+            "securityPolicyPath=/PeTTa/repos/OmegaClaw-Core/profile/policy.yaml"
     )
 
     if [ "${commchannel}" = "irc" ]; then

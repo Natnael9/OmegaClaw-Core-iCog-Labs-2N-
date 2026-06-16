@@ -110,6 +110,11 @@ If you want to skip preloading the knowledge then run `export IMPORT_KB_ON_START
 | `provider` | `Anthropic` | LLM provider, see the table of the providers above |
 | `maxOutputToken` | 6000 | Output cap passed to the provider |
 | `reasoningMode` | `medium` | Reasoning-effort hint passed to the provider (OpenAI only) |
+| `securityPolicyPath` | ./repos/OmegaClaw-Core/profile/policy.yaml | Path to the security profile written using
+[OpenShell
+YAML](https://docs.nvidia.com/openshell/reference/policy-schema#filesystem-policy).
+See [./profile/policy.yaml](./profile/policy.yaml) as an example. Empty value
+disables restrictions. |
 
 ### Memory (`src/memory.metta`)
 
