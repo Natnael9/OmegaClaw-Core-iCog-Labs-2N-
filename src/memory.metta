@@ -15,8 +15,11 @@
           (if (== (embeddingprovider) Local)
               (py-call (lib_llm_ext.initLocalEmbedding)) _)))
 
-(= (getPrompt)
-   (read-file (library OmegaClaw-Core ./memory/prompt.txt)))
+(= (getPrompt $provider)
+   (let $model_prompt (library OmegaClaw-Core (py-str ("./memory/prompt_" $provider ".txt")))
+     (if (exists-file $model_prompt)
+       (read-file $model_prompt)
+       (read-file (library OmegaClaw-Core ./memory/prompt.txt)))))
 
 (= (getHistory)
    (read_file_tail (library OmegaClaw-Core ./memory/history.metta) (maxHistory)))
