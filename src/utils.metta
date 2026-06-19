@@ -13,8 +13,9 @@
           True))
 
 (= (exists-file $file)
-   (progn (translatePredicate (exists_file $file))
-          True))
+   (case (translatePredicate (exists_file $file))
+     (($_ True)
+      (Empty False))))
 
 (= (string-replace $str $a $b)
    (atomic_list_concat (split_string $str $a "") $b))
