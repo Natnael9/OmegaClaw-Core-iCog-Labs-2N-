@@ -95,6 +95,21 @@ class AIProvider(AbstractAIProvider):
 class OpenRouterProvider(AIProvider):
     """OpenRouter provider with reasoning mode enabled (reasoning tokens excluded from the response)."""
 
+    def _create_client(self) -> Optional[openai.OpenAI]:
+        """Create OpenRouter client from environment."""
+        proxy_url = os.environ.get("GATEWAY_URL")
+        if proxy_url:
+            base_url = f"{proxy_url.rstrip('/')}/openrouter/"
+            print(f"[lib_llm_ext.OpenRouterProvider._create_client] Connecting via proxy: {base_url}")
+            return openai.OpenAI(
+                    api_key="proxy",
+                    base_url=base_url,
+                    )
+        if self._var_name in os.environ:
+            return openai.OpenAI(api_key=os.environ.get(self._var_name), base_url=self._base_url)
+
+        return None
+
     def chat(self, content: str, max_tokens: int = 6000, reasoning: str = "medium", **kwargs) -> str:
         return super().chat(content, max_tokens, reasoning, extra_body={
             "reasoning": {
@@ -217,6 +232,7 @@ _register_provider(name="Anthropic", var_name="ANTHROPIC_API_KEY", model_name="c
 _register_provider(name="Ollama-local", var_name="OLLAMA_API_KEY", model_name="qwen3.5:9b", base_url="http://localhost:11434/v1")
 _register_provider_instance(AsiOneProvider(name="ASIOne", var_name="ASIONE_API_KEY", model_name="asi1-ultra", base_url="https://api.asi1.ai/v1"))
 _register_provider_instance(OpenRouterProvider(name="OpenRouter", var_name="OPENROUTER_API_KEY", model_name="z-ai/glm-5.1", base_url="https://openrouter.ai/api/v1"))
+_register_provider_instance(OpenRouterProvider(name="MiniMaxM3", var_name="OPENROUTER_API_KEY", model_name="minimax/minimax-m3", base_url="https://openrouter.ai/api/v1"))
 _register_provider_instance(TestProvider())
 _register_provider_instance(OpenAIProvider(name="OpenAI", var_name="OPENAI_API_KEY", model_name="gpt-5.4", base_url="https://api.openai.com/v1"))
 
