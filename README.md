@@ -72,7 +72,7 @@ Run OmegaClaw using next command:
 curl -fsSL https://raw.githubusercontent.com/asi-alliance/OmegaClaw-Core/refs/heads/main/scripts/omegaclaw | bash -s -- singularitynet/omegaclaw:latest
 ```
 
-To run specific version of OmegaClaw set version in TAG variable and run setup script. For example:
+To run specific version of OmegaClaw set version in `TAG` environment variable and run the following command:
 ```
 export TAG=v0.1.15; curl -fsSL  https://github.com/asi-alliance/OmegaClaw-Core/raw/refs/tags/$TAG/scripts/omegaclaw | bash -s -- singularitynet/omegaclaw:$TAG
 ```
