@@ -58,15 +58,6 @@ body:
 # --- Additional context ---
 
 - type: input
-  id: version
-  attributes:
-    label: OmegaClaw version
-    description: What is OmegaClaw version you used?
-    placeholder: e.g. v0.1.10
-  validations:
-    required: false
-
-- type: input
   id: model
   attributes:
     label: Model provider
