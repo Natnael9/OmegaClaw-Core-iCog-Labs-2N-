@@ -170,6 +170,9 @@ class OpenAIProvider(AIProvider):
             sysmsg, usermsg = content.split(":-:-:-:", 1)
         else:
             sysmsg, usermsg = "", content
+        usermsg = usermsg.strip()
+        if not usermsg:
+            usermsg = "EMPTY / NO NEW USER INPUT."
         try:
             response = self._client.responses.create(
                 model=self._model_name,
