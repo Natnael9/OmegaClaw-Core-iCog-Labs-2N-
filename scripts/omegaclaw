@@ -504,7 +504,7 @@ options() {
 
 start() {
     docker rm -f omegaclaw 2>/dev/null || true
-    docker pull "${image}" || true
+    docker pull "${image}"  >/dev/null 2>&1 || true
 
     docker_cmd=(
         docker run -d -it
