@@ -227,7 +227,7 @@ def _get_provider(name: str) -> Optional[AIProvider]:
 
 
 # Register all providers (cheap - just stores config)
-_register_provider(name="ASICloud", var_name="ASI_API_KEY", model_name="minimax/minimax-m2.5", base_url="https://inference.asicloud.cudos.org/v1")
+_register_provider(name="ASICloud", var_name="ASI_API_KEY", model_name="minimax/minimax-m3", base_url="https://inference.asicloud.cudos.org/v1")
 _register_provider(name="Anthropic", var_name="ANTHROPIC_API_KEY", model_name="claude-opus-4-6", base_url="https://api.anthropic.com/v1/")
 _register_provider(name="Ollama-local", var_name="OLLAMA_API_KEY", model_name="qwen3.5:9b", base_url="http://localhost:11434/v1")
 _register_provider_instance(AsiOneProvider(name="ASIOne", var_name="ASIONE_API_KEY", model_name="asi1-ultra", base_url="https://api.asi1.ai/v1"))
