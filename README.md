@@ -43,6 +43,7 @@ python3 -m pip install -r ./repos/OmegaClaw-Core-iCog-Labs-2N-/requirements.txt
 ## Running the Agent
 
 ### NVIDIA Provider Configuration
+*Don't forget to export the api key as a virtual environment variable for more refer [Main Repo](https://github.com/asi-alliance/OmegaClaw-Core/) *
 
 To run this agent using the NVIDIA provider with the MiniMax M3 model, ensure your API keys are exported, then execute:
 
