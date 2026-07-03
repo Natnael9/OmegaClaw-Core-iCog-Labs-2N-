@@ -21,7 +21,7 @@ cd PeTTa
 mkdir -p repos
 git clone https://github.com/Natnael9/OmegaClaw-Core-iCog-Labs-2N-.git repos/OmegaClaw-Core-iCog-Labs-2N-
 git clone https://github.com/patham9/petta_lib_chromadb.git repos/petta_lib_chromadb
-cp repos/OmegaClaw-Core/run.metta ./
+cp repos/OmegaClaw-Core-iCog-Labs-2N-/run.metta ./
 
 ```
 
@@ -85,7 +85,7 @@ I have extended the platform to support automated compatibility verification. By
 
 This project is built upon the OmegaClaw framework, which is experimental, open-source software developed by SingularityNET Foundation.
 
-* **Full Documentation:** Located in `https://github.com/asi-alliance/OmegaClaw-Core/blob/main/docs/README.md`.
+* **Full Documentation:** Located in `[Docs from main repo](https://github.com/asi-alliance/OmegaClaw-Core/blob/main/docs/README.md)`.
 * **Disclaimer:** By using this software, you acknowledge that OmegaClaw is an autonomous agent that may execute shell commands and modify files. Always run in an isolated environment.
 
 ---
