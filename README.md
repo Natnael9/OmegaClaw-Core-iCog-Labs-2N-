@@ -19,7 +19,7 @@ Follow these steps to set up the environment:
 git clone https://github.com/trueagi-io/PeTTa
 cd PeTTa
 mkdir -p repos
-git clone https://github.com/asi-alliance/OmegaClaw-Core.git repos/OmegaClaw-Core
+git clone https://github.com/Natnael9/OmegaClaw-Core-iCog-Labs-2N-.git repos/OmegaClaw-Core-iCog-Labs-2N-
 git clone https://github.com/patham9/petta_lib_chromadb.git repos/petta_lib_chromadb
 cp repos/OmegaClaw-Core/run.metta ./
 
@@ -30,7 +30,7 @@ cp repos/OmegaClaw-Core/run.metta ./
 ```bash
 python3 -m venv ./.venv
 source ./.venv/bin/activate
-python3 -m pip install -r ./repos/OmegaClaw-Core/requirements.txt
+python3 -m pip install -r ./repos/OmegaClaw-Core-iCog-Labs-2N-/requirements.txt
 
 ```
 
