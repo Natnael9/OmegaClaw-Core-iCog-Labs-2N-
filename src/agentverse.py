@@ -94,39 +94,36 @@ def tavily_search(search_query: str, timeout: int = 60) -> str:
         return _format_tavily_results(response)
     except Exception as e:
         return f"error: {e}"
-def check_compatibility(base_lib: str, base_ver: str, target_libs: str) -> str:
+import json
+from agentverse import tavily_search
+from lib_llm_ext import callProvider
+
+def check_compatibility(json_str: str) -> str:
     """
-    1. Searches for compatibility data between target_libs and base_lib:base_ver.
-    2. Uses NVIDIA NIM as the LLM provider to synthesize the result.
+    Parses a JSON string containing compatibility request details 
+    and synthesizes an answer using NVIDIA.
     """
-    print(f"[AgentVerse] Checking compatibility via NVIDIA: {base_lib} {base_ver} with {target_libs}")
-    
-    # 1. Build a precise search query
-    # Including "compatibility matrix" helps Tavily find developer-focused data
-    query = f"compatibility matrix for {target_libs} with {base_lib} version {base_ver}"
-    
-    # 2. Perform the search using your existing tavily_search skill
-    from agentverse import tavily_search
     try:
-        search_results = tavily_search(query)
-    except Exception as e:
-        return f"Error: Search failed - {str(e)}"
-    
-    # 3. Use the NVIDIA provider for synthesis
-    from lib_llm_ext import callProvider
+        # Expected JSON: {"base_lib": "pytorch", "base_ver": "1.0.1", "target_libs": "pandas,scikit-learn"}
+        data = json.loads(json_str)
+        base_lib = data.get("base_lib")
+        base_ver = data.get("base_ver")
+        target_libs = data.get("target_libs")
+    except json.JSONDecodeError:
+        return "Error: Invalid JSON format. Please use: {\"base_lib\": \"...\", \"base_ver\": \"...\", \"target_libs\": \"...\"}"
+
+    # Search for compatibility matrix
+    query = f"compatibility matrix for {target_libs} with {base_lib} version {base_ver}"
+    search_results = tavily_search(query)
     
     prompt = f"""
-    You are a technical expert. Based on the following search results, 
-    determine the compatible versions for {target_libs} when using {base_lib} {base_ver}.
+    You are a technical expert. Based on these search results, determine the compatible versions for {target_libs} when using {base_lib} {base_ver}.
     
     Search Results:
     {search_results}
     
-    Format the output as a clear compatibility table or list. 
-    If a specific library version is unknown or unsupported, state that clearly.
+    Format the output as a clear table. If specific versions are unknown, state that clearly.
     """
     
-    # 'NVIDIA' matches the name registered in your _provider_registry in lib_llm_ext.py
-    report = callProvider("NVIDIA", prompt)
-    
-    return report if report else "Error: Could not retrieve compatibility information from NVIDIA provider."
+    # Use your registered NVIDIA provider
+    return callProvider("NVIDIA", prompt)
