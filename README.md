@@ -51,6 +51,7 @@ LLM=minimax-m3 \
 sh run.sh run.metta
 
 ```
+*I recommended NVIDIA Because It allowed me to use many tokens for free*
 
 ### Running via Telegram
 
@@ -75,7 +76,8 @@ sh run.sh run.metta
 
 I have extended the platform to support automated compatibility verification. By passing a target stack, the agent autonomously researches version constraints across the PyTorch ecosystem (torchvision, torchaudio, etc.) and returns verified results.
 
-* **IRC Interface:** * **Telegram Interface:**
+*eg. if you want to check the compatability of package B,C,D and E with version x.x.x of A it will give you a precise answer by scraping the web using the check_comptability property I created*
+ **IRC Interface:** * **Telegram Interface:**
 
 ---
 
@@ -83,9 +85,9 @@ I have extended the platform to support automated compatibility verification. By
 
 This project is built upon the OmegaClaw framework, which is experimental, open-source software developed by SingularityNET Foundation.
 
-* **Full Documentation:** Located in `docs/README.md`.
+* **Full Documentation:** Located in `https://github.com/asi-alliance/OmegaClaw-Core/blob/main/docs/README.md`.
 * **Disclaimer:** By using this software, you acknowledge that OmegaClaw is an autonomous agent that may execute shell commands and modify files. Always run in an isolated environment.
 
 ---
 
-*Developed by Natnael during iCog-Labs Training Cycle 2.*
+*Developed by Natnael during iCog-Labs Training Cycle 2. framework cloned from https://github.com/asi-alliance/OmegaClaw-Core/*
