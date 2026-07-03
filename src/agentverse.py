@@ -94,3 +94,39 @@ def tavily_search(search_query: str, timeout: int = 60) -> str:
         return _format_tavily_results(response)
     except Exception as e:
         return f"error: {e}"
+def check_compatibility(base_lib: str, base_ver: str, target_libs: str) -> str:
+    """
+    1. Searches for compatibility data between target_libs and base_lib:base_ver.
+    2. Uses NVIDIA NIM as the LLM provider to synthesize the result.
+    """
+    print(f"[AgentVerse] Checking compatibility via NVIDIA: {base_lib} {base_ver} with {target_libs}")
+    
+    # 1. Build a precise search query
+    # Including "compatibility matrix" helps Tavily find developer-focused data
+    query = f"compatibility matrix for {target_libs} with {base_lib} version {base_ver}"
+    
+    # 2. Perform the search using your existing tavily_search skill
+    from agentverse import tavily_search
+    try:
+        search_results = tavily_search(query)
+    except Exception as e:
+        return f"Error: Search failed - {str(e)}"
+    
+    # 3. Use the NVIDIA provider for synthesis
+    from lib_llm_ext import callProvider
+    
+    prompt = f"""
+    You are a technical expert. Based on the following search results, 
+    determine the compatible versions for {target_libs} when using {base_lib} {base_ver}.
+    
+    Search Results:
+    {search_results}
+    
+    Format the output as a clear compatibility table or list. 
+    If a specific library version is unknown or unsupported, state that clearly.
+    """
+    
+    # 'NVIDIA' matches the name registered in your _provider_registry in lib_llm_ext.py
+    report = callProvider("NVIDIA", prompt)
+    
+    return report if report else "Error: Could not retrieve compatibility information from NVIDIA provider."

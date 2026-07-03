@@ -1,4 +1,4 @@
-torch==2.5.1
+torch==2.9.0
 chromadb==1.5.9
 janus-swi==1.5.2
 openai==2.38.0
