@@ -50,31 +50,34 @@ class FileSystemPolicy:
         self.load_dict(policy)
 
     def load_dict(self, policy: dict):
-        version = policy.get('version')
-        assert version == 1
+        # 1. Determine the Project Root (Absolute path)
+        ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent
 
-        self._compatibility = LandLockCompatibility.BEST_EFFORT
-        ll = policy.get('landlock')
-        if ll:
-            comp = ll.get('compatibility')
-            if comp:
-                self._compatibility = LandLockCompatibility[comp.upper()]
+        fs = policy.get('filesystem_policy', {})
+        
+        # 2. Get your lists
+        ro = fs.get('read_only', []) or []
+        rw = fs.get('read_write', []) or []
+        
+        # 3. Handle 'include_workdir'
+        if fs.get('include_workdir', False):
+            rw.append(str(Path.cwd().resolve()))
 
-        fs = policy.get('filesystem_policy')
+        # 4. Define the Universal Resolver
+        def resolve_path(p):
+            path_obj = Path(p).expanduser()
+            # If it's absolute, use as-is. If relative, anchor to ROOT_DIR
+            final_path = path_obj if path_obj.is_absolute() else (ROOT_DIR / path_obj)
+            
+            # Resolve to canonical absolute path
+            resolved = final_path.resolve()
+            
+            # 5. Security: Only return existing paths to prevent Landlock PathError
+            return resolved if resolved.exists() else None
 
-        ro = []
-        rw = []
-        if fs:
-            ro = fs.get('read_only', [])
-            if ro is None:
-                ro = []
-            rw = fs.get('read_write', [])
-            if rw is None:
-                ro = []
-            if policy.get('include_workdir'):
-                rw.append(os.getcwd())
-        self._read_only = [Path(f'{p}') for p in ro]
-        self._read_write = [Path(f'{p}') for p in rw]
+        # Apply and filter
+        self._read_only = [p for p in (resolve_path(p) for p in ro) if p is not None]
+        self._read_write = [p for p in (resolve_path(p) for p in rw) if p is not None]
 
     def apply(self):
         rod = list(filter(lambda p: p.is_dir(), self._read_only))
