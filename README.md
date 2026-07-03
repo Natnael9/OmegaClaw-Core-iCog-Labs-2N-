@@ -28,7 +28,7 @@ cp repos/OmegaClaw-Core-iCog-Labs-2N-/run.metta ./
 
 2. **Environment Setup:**
 *make sure to install [ SWI-Prolog 10.0.2 or later](https://www.swi-prolog.org/)*
-*also install the *
+*also install the [hugging fce library](https://huggingface.co/intfloat/e5-large-v2)*
 ```bash
 python3 -m venv ./.venv
 source ./.venv/bin/activate

@@ -1,0 +1,27 @@
+version: 1
+
+filesystem_policy:
+  include_workdir: true # Set to true to allow relative paths based on the execution directory
+
+  read_only:
+    - /bin
+    - /usr
+    - /lib
+    - /proc
+    - /dev/urandom
+    - /etc
+    - /opt
+    - /var/log
+    - /sys/devices/system
+    - PeTTa
+    - ~/.cache/huggingface # edit the path to your huggingface cache directory if you have it in a different location
+    - ~/huggingface
+  read_write:
+    - ./repos/OmegaClaw-Core/memory
+    - /tmp
+    - /dev/null
+    - /var/tmp
+    - /dev/shm
+
+landlock:
+  compatibility: best_effort
