@@ -1,0 +1,26 @@
+from agentverse import tavily_search
+from lib_llm_ext import callProvider
+import json
+
+def check_compatibility(arg_string: str) -> str:
+    """
+    Parses a single string using ':' as a delimiter.
+    Expected format: "pytorch:1.3.0:torchvision,torchaudio,torchtext"
+    """
+    try:
+        parts = arg_string.split(":")
+        if len(parts) != 3:
+            return "Error: Format must be 'base_lib:version:target_libs'"
+            
+        base_lib, base_ver, target_libs = parts
+        
+        # Now proceed with your logic
+    
+        query = f"compatibility matrix for {target_libs} with {base_lib} version {base_ver}"
+        search_results = tavily_search(query)
+        
+        prompt = f"Expert analysis: Determine versions of {target_libs} compatible with {base_lib} {base_ver}. Results: {search_results}"
+        return callProvider("NVIDIA", prompt)
+        
+    except Exception as e:
+        return f"Error processing compatibility check: {str(e)}"

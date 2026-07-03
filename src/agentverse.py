@@ -95,35 +95,3 @@ def tavily_search(search_query: str, timeout: int = 60) -> str:
     except Exception as e:
         return f"error: {e}"
 import json
-from agentverse import tavily_search
-from lib_llm_ext import callProvider
-
-def check_compatibility(json_str: str) -> str:
-    """
-    Parses a JSON string containing compatibility request details 
-    and synthesizes an answer using NVIDIA.
-    """
-    try:
-        # Expected JSON: {"base_lib": "pytorch", "base_ver": "1.0.1", "target_libs": "pandas,scikit-learn"}
-        data = json.loads(json_str)
-        base_lib = data.get("base_lib")
-        base_ver = data.get("base_ver")
-        target_libs = data.get("target_libs")
-    except json.JSONDecodeError:
-        return "Error: Invalid JSON format. Please use: {\"base_lib\": \"...\", \"base_ver\": \"...\", \"target_libs\": \"...\"}"
-
-    # Search for compatibility matrix
-    query = f"compatibility matrix for {target_libs} with {base_lib} version {base_ver}"
-    search_results = tavily_search(query)
-    
-    prompt = f"""
-    You are a technical expert. Based on these search results, determine the compatible versions for {target_libs} when using {base_lib} {base_ver}.
-    
-    Search Results:
-    {search_results}
-    
-    Format the output as a clear table. If specific versions are unknown, state that clearly.
-    """
-    
-    # Use your registered NVIDIA provider
-    return callProvider("NVIDIA", prompt)

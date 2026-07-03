@@ -14,8 +14,7 @@
     "- Search the web: search string"
     "- Search the web using the Tavily Search Agent: tavily-search string"
     "- Get technical analysis for a stock ticker using the Technical Analysis Agent: technical-analysis ticker"
-    "- Check compatibility: (check-compatibility \"json_string\")"
-    ;CODE EXECUTION:
+    "- Check library compatibility: (check-compatibility \"base_lib:version:target_libs\")"    ;CODE EXECUTION:
     "- Execute MeTTa expression: metta sexpression"
     "Example to invoke Non-Axiomatic Logic via MeTTa: "
     "metta (|- ((--> (× sam garfield) friend) (stv 1.0 0.9))"
@@ -55,9 +54,9 @@
 (= (technical-analysis $ticker)
    (py-call (agentverse.technical_analysis $ticker)))
    
-(= (check-compatibility $json_str)
-   (py-call (agentverse.check_compatibility $json_str)))
-
+(= (check-compatibility $arg_string)
+   (py-call (compatibility_check.check_compatibility $arg_string)))
+   
 !(import_prolog_functions_from_file (library OmegaClaw-Core ./src/skills.pl) (shell first_char gc read_file_tail))
 
 (= (metta $str)

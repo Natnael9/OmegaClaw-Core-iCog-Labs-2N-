@@ -249,7 +249,6 @@ def callProvider(provider_name: str, content: str, max_tokens: int = 6000, reaso
     return provider.chat(content=content, max_tokens=max_tokens, reasoning=reasoning)
 
 
-
 _embedding_model = None
 
 def initLocalEmbedding():
