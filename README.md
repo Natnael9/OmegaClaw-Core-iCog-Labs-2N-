@@ -47,10 +47,7 @@ python3 -m pip install -r ./repos/OmegaClaw-Core-iCog-Labs-2N-/requirements.txt
 To run this agent using the NVIDIA provider with the MiniMax M3 model, ensure your API keys are exported, then execute:
 
 ```bash
-OMEGACLAW_AUTH_SECRET=<your-secret> \
-provider=NVIDIA \
-LLM=minimax-m3 \
-sh run.sh run.metta
+OMEGACLAW_AUTH_SECRET=<your-secret> provider=NVIDIA sh run.sh run.metta IRC_channel="<your-channel>"
 
 ```
 *I recommended NVIDIA Because It allowed me to use many tokens for free*
@@ -60,11 +57,8 @@ sh run.sh run.metta
 If you prefer to host your agent via **Telegram** instead of IRC, you can launch it using the following command. The agent will auto-bind to the first user that authenticates via the `auth <secret>` command:
 
 ```bash
-TG_BOT_TOKEN=<your-token-from-botfather> \
-OMEGACLAW_AUTH_SECRET=<your-secret> \
-commchannel=telegram \
-provider=NVIDIA \
-sh run.sh run.metta
+TG_BOT_TOKEN=<your-token-from-botfather> MEGACLAW_AUTH_SECRET=<your-secret>commchannel=telegram 
+provider=NVIDIA sh run.sh run.metta
 
 ```
 
@@ -79,6 +73,8 @@ sh run.sh run.metta
 I have extended the platform to support automated compatibility verification. By passing a target stack, the agent autonomously researches version constraints across the PyTorch ecosystem (torchvision, torchaudio, etc.) and returns verified results.
 
 *eg. if you want to check the compatability of package B,C,D and E with version x.x.x of A it will give you a precise answer by scraping the web using the check_comptability property I created*
+
+
  **IRC Interface:** * **Telegram Interface:**
 
 ---
@@ -90,6 +86,10 @@ This project is built upon the OmegaClaw framework, which is experimental, open-
 * **Full Documentation:** Located in `[Docs from main repo](https://github.com/asi-alliance/OmegaClaw-Core/blob/main/docs/README.md)`.
 * **Disclaimer:** By using this software, you acknowledge that OmegaClaw is an autonomous agent that may execute shell commands and modify files. Always run in an isolated environment.
 
+---
+* **Here are some screenshots from the implementation:** 
+![telegrm screenshot](/docs/assets/TG_Screenshot.png)
+![IRC screenshot](/docs/assets/IRC_Screenshot.png)
 ---
 
 *Developed by Natnael during iCog-Labs Training Cycle 2. framework cloned from https://github.com/asi-alliance/OmegaClaw-Core/*
